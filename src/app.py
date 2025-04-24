@@ -26,31 +26,54 @@ def menu_terminal():
 
 
         elif choix == "2":
-            u = input("Sommet de départ : ").strip().upper()
-            v = input("Sommet d’arrivée : ").strip().upper()
+            print("🛠 Sélectionne les liaisons à mettre en travaux (à optimiser automatiquement)")
+            liaisons_a_optimiser = []
 
-            if not liaison_existe(u, v, liaisons_actuelles):
-                print(f"❌ La liaison ({u}, {v}) n’existe pas.")
-                continue
+            while True:
+                u = input("Sommet de départ : ").strip().upper()
+                v = input("Sommet d’arrivée : ").strip().upper()
 
-            try:
-                nouvelle_capacite = int(input("Nouvelle capacité : "))
-            except ValueError:
-                print("❌ Capacité invalide.")
-                continue
+                if not liaison_existe(u, v, liaisons_actuelles):
+                    print(f"❌ La liaison ({u}, {v}) n’existe pas.")
+                    continue
 
-            
-            for i, (a, b, cap) in enumerate(liaisons_actuelles):
-                if (a == u and b == v) or (a == v and b == u):
-                    liaisons_actuelles[i] = (a, b, nouvelle_capacite)
-                    print(f"✅ Liaison ({a}, {b}) mise à jour à {nouvelle_capacite}")
+                liaisons_a_optimiser.append((u, v))
+                continuer = input("➕ Ajouter une autre liaison ? (o/n) : ").strip().lower()
+                if continuer != 'o':
                     break
 
+            print("🔍 Calcul des capacités optimales...")
+
+            # Sauvegarde de la version originale
+            original_liaisons = liaisons_actuelles[:]
+            meilleure_config = None
+            meilleur_flot = -1
+
+            # Pour chaque combinaison de capacités possibles (1 à 20 pour chaque liaison)
+            # Ici on teste indépendamment chaque liaison
+            for cap_test in range(1, 21):
+                test_liaisons = original_liaisons[:]
+                for i, (a, b, cap) in enumerate(test_liaisons):
+                    for (u, v) in liaisons_a_optimiser:
+                        if a == u and b == v:
+                            test_liaisons[i] = (a, b, cap_test)
+
+                result, index_noeuds = calculerFlotMaximal(test_liaisons)
+                if result.flow_value > meilleur_flot:
+                    meilleur_flot = result.flow_value
+                    meilleure_config = test_liaisons[:]
+
+            liaisons_actuelles[:] = meilleure_config
             result, index_noeuds = calculerFlotMaximal(liaisons_actuelles)
+
+            # Calcul de l’approvisionnement
+            appro = {p: result.flow[index_noeuds[p], index_noeuds['super_puits']] for p in ['J', 'K', 'L']}
+
+            print(f"✅ Capacités optimales appliquées. Nouveau flot maximal : {result.flow_value}")
             afficherCarte(result=result, index_noeuds=index_noeuds, liaisons=liaisons_actuelles)
 
-            # Demander à l'utilisateur s'il veut continuer
-            continuer = input("🔁 Modifier une autre liaison ? (o/n) : ").strip().lower()
+
+            continuer = input("🔁 Effectuer d'autres travaux ? (o/n) : ").strip().lower()
             if continuer != 'o':
                 break
 
