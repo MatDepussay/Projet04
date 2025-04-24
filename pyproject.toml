@@ -1,0 +1,17 @@
+[project]
+name = "04"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Mathias Depussay", email = "mathias.depussay@etu.univ-tours.fr" }
+]
+requires-python = ">=3.13"
+dependencies = []
+
+[project.scripts]
+04 = "04:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
