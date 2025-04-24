@@ -1,20 +1,10 @@
 [project]
-name = "04"
+name = "projet04"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-authors = [
-    { name = "Mathias Depussay", email = "mathias.depussay@etu.univ-tours.fr" }
-]
 requires-python = ">=3.13"
 dependencies = [
     "matplotlib>=3.10.1",
     "networkx>=3.4.2",
 ]
-
-[project.scripts]
-04 = "04:main"
-
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"

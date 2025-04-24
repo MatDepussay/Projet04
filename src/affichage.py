@@ -3,7 +3,7 @@ import networkx as nx
 from data import *
 
 def afficherCarte():
-    G = nx.Graph()
+    G = nx.DiGraph()
 
     # Ajouter les sommets
     G.add_nodes_from(ListeSommet)
@@ -13,7 +13,7 @@ def afficherCarte():
         G.add_edge(liaison[0], liaison[1], weight=liaison[2])
 
     # Positionnement automatique
-    pos = nx.spring_layout(G, seed=42)  # ou kamada_kawai_layout, shell_layout...
+    pos = nx.kamada_kawai_layout(G)  # meilleure alternative que spring_layout
 
     # Afficher les labels des sommets
     nx.draw(G, pos, with_labels=True, node_color='skyblue', node_size=800, font_size=12, font_weight='bold')
