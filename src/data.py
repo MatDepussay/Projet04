@@ -25,8 +25,6 @@ ListeLiaison: List[Tuple[str, str, int]] = [
     ("I", "L", 4),
     ("K", "J", 10),
 ]
-
-  
 def calculerFlotMaximal(liaisons):
     noeuds = ListeSommet + ['super_source', 'super_puits']
     index_noeuds = {nom: i for i, nom in enumerate(noeuds)}

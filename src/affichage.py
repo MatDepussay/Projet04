@@ -8,7 +8,7 @@ def afficherCarte(result=None, index_noeuds=None):
     G = nx.DiGraph()
     G.add_nodes_from(ListeSommet)
 
-    for u, v, cap in liaisons:
+    for u, v, cap in liaison:
         G.add_edge(u, v, weight=cap)
 
     pos = nx.spring_layout(G, seed=42)
