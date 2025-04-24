@@ -1,6 +1,7 @@
 from affichage import afficherCarte
 from data import ListeLiaison, ListeSommet, calculerFlotMaximal
 import copy
+
 def liaison_existe(u, v, liaisons):
     for a, b, _ in liaisons:
         if (a == u and b == v) or (a == v and b == u):
@@ -20,8 +21,9 @@ def menu_terminal():
         choix = input("Choix : ")
 
         if choix == "1":
-            result, _ = calculerFlotMaximal(liaisons_actuelles)
-            afficherCarte(result.flow_value, liaisons_actuelles)
+            result, index_noeuds = calculerFlotMaximal(liaisons_actuelles)
+            afficherCarte(result=result, index_noeuds=index_noeuds, liaisons=liaisons_actuelles)
+
 
         elif choix == "2":
             u = input("Sommet de départ : ").strip().upper()
@@ -44,8 +46,9 @@ def menu_terminal():
                     print(f"✅ Liaison ({a}, {b}) mise à jour à {nouvelle_capacite}")
                     break
 
-            result, _ = calculerFlotMaximal(liaisons_actuelles)
-            afficherCarte(result.flow_value, liaisons_actuelles)
+            result, index_noeuds = calculerFlotMaximal(liaisons_actuelles)
+            afficherCarte(result=result, index_noeuds=index_noeuds, liaisons=liaisons_actuelles)
+
 
 
         elif choix == "3":
