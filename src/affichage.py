@@ -17,10 +17,10 @@ def afficherCarte(flot_maximal=None):
     nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
 
     if flot_maximal is not None:
-        # Afficher le flot en bas à droite
-        plt.text(1.0, -0.1, f"Flot maximal : {flot_maximal}", fontsize=12, color='darkred',
-                 ha='right', va='top', transform=plt.gca().transAxes,
-                 bbox=dict(facecolor='white', edgecolor='darkred', boxstyle='round,pad=0.3'))
+        plt.gcf().text(0.95, 0.05, f"Flot maximal : {flot_maximal}", fontsize=12,
+                color='darkred', ha='right', va='bottom',
+                bbox=dict(facecolor='white', edgecolor='darkred', boxstyle='round,pad=0.3'))
+
 
     plt.title("Carte des Liaisons avec Flot Maximal")
     plt.axis('off')
