@@ -30,6 +30,7 @@ ListeLiaison: List[Tuple[str, str, int]] = [
 def calculerFlotMaximal(liaisons):
     noeuds = ListeSommet + ['super_source', 'super_puits']
     index_noeuds = {nom: i for i, nom in enumerate(noeuds)}
+    index_inverse = {i: nom for nom, i in index_noeuds.items()}
     n = len(noeuds)
 
     
@@ -45,17 +46,27 @@ def calculerFlotMaximal(liaisons):
     for s, cap in sources.items():
         matrice[index_noeuds['super_source']][index_noeuds[s]] = cap
 
-    
-    puits = {"J": 15, "K": 15, "L": 20}
-    for p, cap in puits.items():
+    villes = {"J": 15, "K": 15, "L": 20}
+    for p, cap in villes.items():
         matrice[index_noeuds[p]][index_noeuds['super_puits']] = cap
 
     
     matrice_sparse = sp.sparse.csr_matrix(matrice)
-    result = sp.sparse.csgraph.maximum_flow(
-        matrice_sparse,
-        index_noeuds['super_source'],
-        index_noeuds['super_puits']
-    )
+    
+    result = sp.sparse.csgraph.maximum_flow(matrice_sparse, index_noeuds['super_source'], index_noeuds['super_puits'])
+    
+    print(f"Flot total maximal : {result.flow_value} unités\n")
+    print("Flux sur chaque arête utilisée :\n")
+
+    # Récupération de la matrice de flots
+    flow_matrix = result.flow
+
+    for i in range(n):
+        for j in range(n):
+            flow = flow_matrix[i, j]
+            if flow > 0:
+                u = index_inverse[i]
+                v = index_inverse[j]
+                print(f"{u} ➝ {v} : {flow} unités")
 
     return result, index_noeuds
