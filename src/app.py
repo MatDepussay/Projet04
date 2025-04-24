@@ -49,6 +49,10 @@ def menu_terminal():
             result, index_noeuds = calculerFlotMaximal(liaisons_actuelles)
             afficherCarte(result=result, index_noeuds=index_noeuds, liaisons=liaisons_actuelles)
 
+            # Demander à l'utilisateur s'il veut continuer
+            continuer = input("🔁 Modifier une autre liaison ? (o/n) : ").strip().lower()
+            if continuer != 'o':
+                break
 
 
         elif choix == "3":
