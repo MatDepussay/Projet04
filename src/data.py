@@ -2,6 +2,8 @@ from typing import List, Tuple
 import scipy as sp
 from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import maximum_flow
+import networkx as nx
+from copy import deepcopy
 
 
 ListeSommet: List[str] = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"]
@@ -68,3 +70,4 @@ def calculerFlotMaximal(liaisons):
                 print(f"{u} ➝ {v} : {flow} unités")
 
     return result, index_noeuds
+
