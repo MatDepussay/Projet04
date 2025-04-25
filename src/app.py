@@ -1,6 +1,6 @@
-from affichage import afficherCarte
-from data import ListeLiaison, calculerFlotMaximal, liaison_existe, optimiser_liaisons
-from data import liaison as Liaison
+from src.affichage import afficherCarte
+from src.data import ListeLiaison, calculerFlotMaximal, liaison_existe, optimiser_liaisons
+from src.data import liaison as Liaison
 import copy
 
 
