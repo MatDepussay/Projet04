@@ -47,6 +47,6 @@ def test_optimiser_liaisons_priorise_meilleure_liaison():
     assert len(travaux) == 2
     assert travaux[0][2] <= travaux[1][2]  
 
- 
+
     for _, cap, _ in travaux:
         assert 1 <= cap <= 20
