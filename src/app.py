@@ -59,41 +59,38 @@ def menu_terminal():
                 meilleur_gain = -1
                 meilleure_liaison = None
                 meilleure_config_temp = None
+                meilleur_result_temp = None
 
                 for liaison_cible in liaisons_restantes:
                     for cap_test in range(1, 21):
-                        temp_temp_config = meilleure_config[:]
-                        for i, l in enumerate(temp_temp_config):
-                            a = l.depart
-                            b = l.arrivee
-                            cap = l.capacite
+                        # Construction d'une nouvelle configuration basée sur la dernière version
+                        temp_config = []
+                        for l in liaisons_actuelles:
+                            if (l.depart, l.arrivee) == liaison_cible or (l.arrivee, l.depart) == liaison_cible:
+                                temp_config.append(Liaison(l.depart, l.arrivee, cap_test))
+                            else:
+                                temp_config.append(Liaison(l.depart, l.arrivee, l.capacite))
 
-                            if (a, b) == liaison_cible or (b, a) == liaison_cible:
-                                temp_temp_config[i] = Liaison(a, b, cap_test)
-
-                        temp_result, _ = calculerFlotMaximal(temp_temp_config)
+                        temp_result, _ = calculerFlotMaximal(temp_config)
 
                         if temp_result.flow_value > meilleur_gain:
-                            meilleur_result_temp = temp_result    
                             meilleur_gain = temp_result.flow_value
                             meilleure_liaison = (liaison_cible, cap_test)
-                            meilleure_config_temp = temp_temp_config[:]
+                            meilleure_config_temp = temp_config
+                            meilleur_result_temp = temp_result
 
                 if meilleure_liaison:
-                    meilleure_config = meilleure_config_temp[:]
+                    liaisons_actuelles = meilleure_config_temp
                     travaux_effectues.append(meilleure_liaison)
                     liaisons_restantes.remove(meilleure_liaison[0])
-                    meilleur_flot = meilleur_result_temp.flow_value
-                    liaisons_actuelles = meilleure_config[:]
-
                     print(f"🔧 Travaux #{len(travaux_effectues)} : Liaison {meilleure_liaison[0][0]} ➝ {meilleure_liaison[0][1]}")
                     print(f"   ↪ Capacité choisie : {meilleure_liaison[1]} unités")
-                    print(f"   🚀 Nouveau flot maximal : {meilleur_flot} unités\n")
+                    print(f"   🚀 Nouveau flot maximal : {meilleur_result_temp.flow_value} unités\n")
 
-                    result, index_noeuds = calculerFlotMaximal(meilleure_config)
-                    afficherCarte(result=result, index_noeuds=index_noeuds, liaisons=meilleure_config)
+                    result, index_noeuds = calculerFlotMaximal(liaisons_actuelles)
+                    afficherCarte(result=result, index_noeuds=index_noeuds, liaisons=liaisons_actuelles)
                 else:
-                    break
+                    break  # Plus de gain possible
 
         elif choix == "3":
             print("Au revoir 👋")
