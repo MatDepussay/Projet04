@@ -80,6 +80,7 @@ def optimiser_liaisons(
     liaisons_actuelles: List[liaison],
     liaisons_a_optimiser: List[Tuple[str, str]]
 ) -> Tuple[List[liaison], List[Tuple[Tuple[str, str], int, int]]]:
+    
     """
     Optimise les capacités des liaisons spécifiées pour maximiser le flot global.
     Retourne la nouvelle config et une liste des travaux effectués :
