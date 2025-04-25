@@ -1,7 +1,6 @@
 import pytest 
 from src.data import *
-from src.affichage import afficherCarte
-from src.app import menu_terminal
+
 
 def test_modification_liaison_ameliore_flot():
     original = ListeLiaison[:]
