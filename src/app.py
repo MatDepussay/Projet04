@@ -73,13 +73,18 @@ def menu_terminal():
                     travaux_effectues.append(meilleure_liaison)
                     liaisons_restantes.remove(meilleure_liaison[0])
                     meilleur_flot = meilleur_result_temp.flow_value
+                    liaisons_actuelles = meilleure_config[:]  # Mise à jour de la configuration active
+
 
                     print(f"🔧 Travaux #{len(travaux_effectues)} : Liaison {meilleure_liaison[0][0]} ➝ {meilleure_liaison[0][1]}")
                     print(f"   ↪ Capacité choisie : {meilleure_liaison[1]} unités")
                     print(f"   🚀 Nouveau flot maximal : {meilleur_flot} unités\n")
+
+                    result, index_noeuds = calculerFlotMaximal(meilleure_config)
+                    afficherCarte(result=result, index_noeuds=index_noeuds, liaisons=meilleure_config)
+
                 else:
                     break  # Sécurité
-
 
 
 
