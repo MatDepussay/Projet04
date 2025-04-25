@@ -57,8 +57,8 @@ class ReseauHydraulique:
         # Calcul du flot
         result = maximum_flow(matrice_sparse, index_noeuds['super_source'], index_noeuds['super_puits'])
 
-        print(f"💧 Flot maximal total : {result.flow_value} unités\n")
-        print("➡️ Détail des flux utilisés :\n")
+        #print(f"💧 Flot maximal total : {result.flow_value} unités\n")
+        #print("➡️ Détail des flux utilisés :\n")
 
         flow_matrix = result.flow
         for i in range(n):
@@ -67,6 +67,6 @@ class ReseauHydraulique:
                 if flow > 0:
                     u = index_inverse[i]
                     v = index_inverse[j]
-                print(f"{u} ➝ {v} : {flow} unités")
+                #print(f"{u} ➝ {v} : {flow} unités")
 
-        return result
+        return result, index_noeuds
