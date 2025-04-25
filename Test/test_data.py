@@ -1,8 +1,5 @@
 import pytest 
-from src.data import liaison_existe, ListeLiaison, noeud, ReseauHydraulique, ListeNoeuds, liaison
-#from src.affichage import afficherCarte
-#from src.app import menu_terminal
-
+from src.data import *
 
 def test_modification_liaison_ameliore_flot():
     original = ListeLiaison[:]
@@ -27,3 +24,29 @@ def test_liaison_existe():
     assert liaison_existe("A","E", ListeLiaison) == True
     assert liaison_existe("A", "H", ListeLiaison) == False
     assert liaison_existe("E", "A", ListeLiaison) == False
+
+def test_optimiser_liaisons_priorise_meilleure_liaison():
+    
+    liste_noeuds = [
+        noeud("A", "source", 10),
+        noeud("B", "intermediaire"),
+        noeud("C", "ville", 10),
+    ]
+
+    
+    liste_liaisons = [
+        liaison("A", "B", 1),  
+        liaison("B", "C", 1),  
+    ]
+
+    
+    liaisons_a_optimiser = [("A", "B"), ("B", "C")]
+
+    
+    config_finale, travaux = optimiser_liaisons(liste_liaisons, liaisons_a_optimiser)
+    assert len(travaux) == 2
+    assert travaux[0][2] <= travaux[1][2]  
+
+ 
+    for _, cap, _ in travaux:
+        assert 1 <= cap <= 20
