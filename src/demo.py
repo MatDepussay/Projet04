@@ -38,14 +38,6 @@ liaisons = [
     liaison("K", "J", 10),
 ]
 
-matrice = [
-    [0, 10, 0],
-    [0, 0, 5],
-    [0, 0, 0],
-]
-
-matrice_sparse = csr_matrix(np.array(matrice))
-print(matrice_sparse)
 
 reseau = ReseauHydraulique(noeuds, liaisons)
 flot = reseau.calculerFlotMaximal()
