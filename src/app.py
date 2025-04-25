@@ -1,12 +1,16 @@
 from affichage import afficherCarte
-from data import ListeLiaison, ListeSommet, calculerFlotMaximal
+from data import ListeLiaison, calculerFlotMaximal
+
 import copy
 
 def liaison_existe(u, v, liaisons):
-    for a, b, _ in liaisons:
+    for l in liaisons:
+        a = l.depart
+        b = l.arrivee
         if (a == u and b == v) or (a == v and b == u):
             return True
     return False
+
 
 
 def menu_terminal():
@@ -23,7 +27,6 @@ def menu_terminal():
         if choix == "1":
             result, index_noeuds = calculerFlotMaximal(liaisons_actuelles)
             afficherCarte(result=result, index_noeuds=index_noeuds, liaisons=liaisons_actuelles)
-
 
         elif choix == "2":
             print("🛠 Sélectionne les liaisons à mettre en travaux (ordre optimisé automatiquement)")
@@ -58,10 +61,19 @@ def menu_terminal():
                 for liaison in liaisons_restantes:
                     for cap_test in range(1, 21):
                         temp_temp_config = meilleure_config[:]
-                        for i, (a, b, cap) in enumerate(temp_temp_config):
+                        for i, l in enumerate(temp_temp_config):
+                            a = l.depart
+                            b = l.arrivee
+                            cap = l.capacite
+
                             if (a, b) == liaison or (b, a) == liaison:
-                                temp_temp_config[i] = (a, b, cap_test)
-                        temp_result, _ = calculerFlotMaximal(temp_temp_config)
+                                temp_temp_config[i] = liaison(a, b, cap_test)  # Correction ici
+
+                        # Conversion des tuples de temp_temp_config en objets 'liaison'
+                        liaisons_objets = [liaison(a, b, cap) for (a, b, cap) in temp_temp_config]  # Correction ici
+
+                        temp_result, _ = calculerFlotMaximal(liaisons_objets)
+
                         if temp_result.flow_value > meilleur_gain:
                             meilleur_result_temp = temp_result    
                             meilleur_gain = temp_result.flow_value
@@ -75,7 +87,6 @@ def menu_terminal():
                     meilleur_flot = meilleur_result_temp.flow_value
                     liaisons_actuelles = meilleure_config[:]  # Mise à jour de la configuration active
 
-
                     print(f"🔧 Travaux #{len(travaux_effectues)} : Liaison {meilleure_liaison[0][0]} ➝ {meilleure_liaison[0][1]}")
                     print(f"   ↪ Capacité choisie : {meilleure_liaison[1]} unités")
                     print(f"   🚀 Nouveau flot maximal : {meilleur_flot} unités\n")
@@ -85,8 +96,6 @@ def menu_terminal():
 
                 else:
                     break  # Sécurité
-
-
 
         elif choix == "3":
             print("Au revoir 👋")

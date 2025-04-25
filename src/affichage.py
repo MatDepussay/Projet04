@@ -9,10 +9,14 @@ def afficherCarte(result=None, index_noeuds=None, liaisons=None):
     
     # Créer le graphe dirigé
     G = nx.DiGraph()
-    G.add_nodes_from(ListeSommet)
+    G.add_nodes_from([n.nom for n in ListeNoeuds])
+
 
     # Ajouter les arêtes avec leurs capacités
-    for u, v, cap in liaisons:
+    for l in liaisons:
+        u = l.depart
+        v = l.arrivee
+        cap = l.capacite
         G.add_edge(u, v, weight=cap)
 
     pos = nx.spring_layout(G, seed=42)

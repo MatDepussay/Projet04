@@ -52,7 +52,7 @@ class ReseauHydraulique:
 
         # Conversion en matrice creuse
         matrice_np = np.array(matrice)
-        matrice_sparse = sp.csr_matrix(matrice_np)
+        matrice_sparse = csr_matrix(matrice_np)
 
         # Calcul du flot
         result = maximum_flow(matrice_sparse, index_noeuds['super_source'], index_noeuds['super_puits'])
@@ -70,3 +70,49 @@ class ReseauHydraulique:
                 #print(f"{u} ➝ {v} : {flow} unités")
 
         return result, index_noeuds
+    
+# Définition des noeuds
+ListeNoeuds = [
+    noeud("A", "source", 15),
+    noeud("B", "source", 15),
+    noeud("C", "source", 15),
+    noeud("D", "source", 10),
+    noeud("E", "intermediaire"),
+    noeud("F", "intermediaire"),
+    noeud("G", "intermediaire"),
+    noeud("H", "intermediaire"),
+    noeud("I", "intermediaire"),
+    noeud("J", "ville", 15),
+    noeud("K", "ville", 20),
+    noeud("L", "ville", 15),
+]
+
+ListeLiaison = [
+    liaison("A", "E", 7),
+    liaison("B", "F", 10),
+    liaison("B", "G", 7),
+    liaison("C", "A", 5),
+    liaison("C", "F", 5),
+    liaison("D", "G", 10),
+    liaison("E", "F", 5),
+    liaison("E", "H", 4),
+    liaison("E", "I", 15),
+    liaison("F", "G", 5),
+    liaison("F", "I", 15),
+    liaison("G", "I", 15),
+    liaison("H", "J", 7),
+    liaison("I", "K", 30),
+    liaison("I", "L", 4),
+    liaison("K", "J", 10),
+]
+
+# Création du réseau global
+reseau = ReseauHydraulique(ListeNoeuds, ListeLiaison)
+
+# Pour compatibilité avec l’ancien code
+def calculerFlotMaximal(liaisons=None):
+    if liaisons:
+        reseau_temp = ReseauHydraulique(ListeNoeuds, liaisons)
+        return reseau_temp.calculerFlotMaximal()
+    else:
+        return reseau.calculerFlotMaximal()
