@@ -21,8 +21,6 @@ def test_creation_noeud():
     assert n.nom == "A"
     assert n.type == "source"
     assert n.capaciteMax == 10
-import pytest
-from src.data import ReseauHydraulique, ListeLiaison, liaison_existe, noeud, calculerFlotMaximal
 
 def test_liaison_existe():
     assert liaison_existe("A","E", ListeLiaison) == True
