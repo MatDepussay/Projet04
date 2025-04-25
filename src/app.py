@@ -26,7 +26,7 @@ def menu_terminal():
 
 
         elif choix == "2":
-            print("🛠 Sélectionne les liaisons à mettre en travaux (à optimiser automatiquement)")
+            print("🛠 Sélectionne les liaisons à mettre en travaux (ordre optimisé automatiquement)")
             liaisons_a_optimiser = []
 
             while True:
@@ -42,40 +42,45 @@ def menu_terminal():
                 if continuer != 'o':
                     break
 
-            print("🔍 Calcul des capacités optimales...")
+            print("🔍 Optimisation de l’ordre des travaux...")
 
-            # Sauvegarde de la version originale
-            original_liaisons = liaisons_actuelles[:]
-            meilleure_config = None
-            meilleur_flot = -1
+            meilleure_config = liaisons_actuelles[:]
+            liaisons_restantes = liaisons_a_optimiser[:]
+            travaux_effectues = []
+            flot_actuel, _ = calculerFlotMaximal(meilleure_config)
+            meilleur_flot = flot_actuel.flow_value
 
-            # Pour chaque combinaison de capacités possibles (1 à 20 pour chaque liaison)
-            # Ici on teste indépendamment chaque liaison
-            for cap_test in range(1, 21):
-                test_liaisons = original_liaisons[:]
-                for i, (a, b, cap) in enumerate(test_liaisons):
-                    for (u, v) in liaisons_a_optimiser:
-                        if a == u and b == v:
-                            test_liaisons[i] = (a, b, cap_test)
+            while liaisons_restantes:
+                meilleur_gain = -1
+                meilleure_liaison = None
+                meilleure_config_temp = None
 
-                result, index_noeuds = calculerFlotMaximal(test_liaisons)
-                if result.flow_value > meilleur_flot:
-                    meilleur_flot = result.flow_value
-                    meilleure_config = test_liaisons[:]
+                for liaison in liaisons_restantes:
+                    for cap_test in range(1, 21):
+                        temp_temp_config = meilleure_config[:]
+                        for i, (a, b, cap) in enumerate(temp_temp_config):
+                            if (a, b) == liaison or (b, a) == liaison:
+                                temp_temp_config[i] = (a, b, cap_test)
+                        temp_result, _ = calculerFlotMaximal(temp_temp_config)
+                        if temp_result.flow_value > meilleur_gain:
+                            meilleur_result_temp = temp_result    
+                            meilleur_gain = temp_result.flow_value
+                            meilleure_liaison = (liaison, cap_test)
+                            meilleure_config_temp = temp_temp_config[:]
 
-            liaisons_actuelles[:] = meilleure_config
-            result, index_noeuds = calculerFlotMaximal(liaisons_actuelles)
+                if meilleure_liaison:
+                    meilleure_config = meilleure_config_temp[:]
+                    travaux_effectues.append(meilleure_liaison)
+                    liaisons_restantes.remove(meilleure_liaison[0])
+                    meilleur_flot = meilleur_result_temp.flow_value
 
-            # Calcul de l’approvisionnement
-            appro = {p: result.flow[index_noeuds[p], index_noeuds['super_puits']] for p in ['J', 'K', 'L']}
+                    print(f"🔧 Travaux #{len(travaux_effectues)} : Liaison {meilleure_liaison[0][0]} ➝ {meilleure_liaison[0][1]}")
+                    print(f"   ↪ Capacité choisie : {meilleure_liaison[1]} unités")
+                    print(f"   🚀 Nouveau flot maximal : {meilleur_flot} unités\n")
+                else:
+                    break  # Sécurité
 
-            print(f"✅ Capacités optimales appliquées. Nouveau flot maximal : {result.flow_value}")
-            afficherCarte(result=result, index_noeuds=index_noeuds, liaisons=liaisons_actuelles)
 
-
-            continuer = input("🔁 Effectuer d'autres travaux ? (o/n) : ").strip().lower()
-            if continuer != 'o':
-                break
 
 
         elif choix == "3":

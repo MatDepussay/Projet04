@@ -55,8 +55,8 @@ def calculerFlotMaximal(liaisons):
     
     result = sp.sparse.csgraph.maximum_flow(matrice_sparse, index_noeuds['super_source'], index_noeuds['super_puits'])
     
-    print(f"Flot total maximal : {result.flow_value} unités\n")
-    print("Flux sur chaque arête utilisée :\n")
+    #print(f"Flot total maximal : {result.flow_value} unités\n")
+    #print("Flux sur chaque arête utilisée :\n")
 
     # Récupération de la matrice de flots
     flow_matrix = result.flow
@@ -67,7 +67,7 @@ def calculerFlotMaximal(liaisons):
             if flow > 0:
                 u = index_inverse[i]
                 v = index_inverse[j]
-                print(f"{u} ➝ {v} : {flow} unités")
+                #print(f"{u} ➝ {v} : {flow} unités")
 
     return result, index_noeuds
 
