@@ -1,6 +1,6 @@
 import networkx as nx
 import matplotlib.pyplot as plt
-from data import *
+from src.data import *
 
 def afficherCarte(result=None, index_noeuds=None, liaisons=None):
     # Par défaut, si aucune liaison n'est donnée, on utilise ListeLiaison
