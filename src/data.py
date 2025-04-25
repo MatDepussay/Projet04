@@ -72,7 +72,7 @@ class ReseauHydraulique:
     
 def liaison_existe(depart: str, arrivee: str, liaisons: List[liaison]) -> bool:
     for l in liaisons:
-        if (l.depart == depart and l.arrivee == arrivee) or (l.depart == arrivee and l.arrivee == depart):
+        if (l.depart == depart and l.arrivee == arrivee):
             return True
     return False
 
