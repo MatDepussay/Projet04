@@ -1,6 +1,6 @@
-from src.affichage import afficherCarte
-from src.data import ListeLiaison, calculerFlotMaximal, liaison_existe, optimiser_liaisons
-from src.data import liaison as Liaison
+from affichage import afficherCarte
+from data import ListeLiaison, calculerFlotMaximal, liaison_existe, optimiser_liaisons, optimiser_liaisons_pour_approvisionnement
+from data import liaison as Liaison
 import copy
 
 
@@ -11,7 +11,8 @@ def menu_terminal():
         print("\n=== MENU ===")
         print("1. Afficher la carte actuelle (Départ)")
         print("2. Travaux")
-        print("3. Quitter")
+        print("3. Approvisionnement des villes")
+        print("4. Quitter")
 
         choix = input("Choix : ")
 
@@ -50,8 +51,23 @@ def menu_terminal():
             # 💧 Affichage de la carte finale
             result, index_noeuds = calculerFlotMaximal(config_finale)
             afficherCarte(result=result, index_noeuds=index_noeuds, liaisons=config_finale)
-
+        
         elif choix == "3":
+            # Définir les liaisons candidates (ou laisser en dur une liste raisonnable)
+            liaisons_possibles = [(l.depart, l.arrivee) for l in ListeLiaison][:20]
+
+            # Appel de la fonction avec objectif 50
+            config_finale, travaux = optimiser_liaisons_pour_approvisionnement(ListeLiaison, liaisons_possibles, objectif_flot=50)
+
+            # Affichage du résultat
+            print(f"✅ Objectif atteint avec {len(travaux)} travaux :")
+            for (u, v), cap, flot in travaux:
+                print(f"🔧 {u} → {v} capacité {cap} => flot = {flot} u")
+
+            # Affichage de la carte
+            result, index_noeuds = calculerFlotMaximal(config_finale)
+            afficherCarte(result=result, index_noeuds=index_noeuds, liaisons=config_finale)
+        elif choix == "4":
             print("Au revoir 👋")
             break
         else:
@@ -59,3 +75,4 @@ def menu_terminal():
 
 if __name__ == "__main__":
     menu_terminal()
+

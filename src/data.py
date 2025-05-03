@@ -168,3 +168,66 @@ def calculerFlotMaximal(liaisons=None):
         return reseau_temp.calculerFlotMaximal()
     else:
         return reseau.calculerFlotMaximal()
+
+def optimiser_liaisons_pour_approvisionnement(
+    liaisons_actuelles: List[liaison],
+    liaisons_possibles: List[Tuple[str, str]],
+    objectif_flot: int = 50
+) -> Tuple[List[liaison], List[Tuple[Tuple[str, str], int, int]]]:
+    """
+    Optimise les liaisons pour atteindre exactement l'objectif de flot ( 50 unités)
+    avec le minimum de travaux (liaisons modifiées).
+    """
+    meilleure_config = liaisons_actuelles[:]
+    liaisons_restantes = liaisons_possibles[:]
+    travaux_effectues = []
+
+    result_init, _ = calculerFlotMaximal(meilleure_config)
+    flot_actuel = result_init.flow_value
+
+    if flot_actuel >= objectif_flot:
+        return meilleure_config, travaux_effectues  # Déjà bon !
+
+    while liaisons_restantes:
+        meilleure_liaison = None
+        meilleure_config_temp = None
+        meilleur_result_temp = None
+
+        for liaison_cible in liaisons_restantes:
+            for cap_test in range(1, 21):  # Capacités possibles
+                temp_config = deepcopy(meilleure_config)
+
+                # Modifier ou ajouter la liaison testée
+                modifie = False
+                for i, l in enumerate(temp_config):
+                    if (l.depart, l.arrivee) == liaison_cible or (l.arrivee, l.depart) == liaison_cible:
+                        temp_config[i] = liaison(l.depart, l.arrivee, cap_test)
+                        modifie = True
+                        break
+                if not modifie:
+                    temp_config.append(liaison(liaison_cible[0], liaison_cible[1], cap_test))
+
+                temp_result, _ = calculerFlotMaximal(temp_config)
+
+                if temp_result.flow_value > flot_actuel:
+                    meilleure_liaison = (liaison_cible, cap_test)
+                    meilleure_config_temp = temp_config
+                    meilleur_result_temp = temp_result
+
+                    if temp_result.flow_value >= objectif_flot:
+                        break
+            if meilleur_result_temp and meilleur_result_temp.flow_value >= objectif_flot:
+                break
+
+        if meilleure_liaison:
+            meilleure_config = meilleure_config_temp[:]
+            travaux_effectues.append((meilleure_liaison[0], meilleure_liaison[1], meilleur_result_temp.flow_value))
+            flot_actuel = meilleur_result_temp.flow_value
+            liaisons_restantes.remove(meilleure_liaison[0])
+
+            if flot_actuel >= objectif_flot:
+                break
+        else:
+            break  # Aucune amélioration possible
+
+    return meilleure_config, travaux_effectues
