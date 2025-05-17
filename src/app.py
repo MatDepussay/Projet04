@@ -98,7 +98,8 @@ def menu_terminal():
                     break
 
             # Recalcul du flot après travaux
-            result_modifie, index_noeuds_modifie = calculerFlotMaximal(liaisons=liaisons_actuelles)
+            reseau = ReseauHydraulique(ListeNoeuds, liaisons_actuelles)
+            result_modifie, index_noeuds_modifie = reseau.calculerFlotMaximal()
 
             # Affichage mis à jour
             afficherCarte(result=result_modifie, index_noeuds=index_noeuds_modifie, liaisons=liaisons_actuelles)
