@@ -1,4 +1,4 @@
-from affichage import afficherCarte
+from affichage import afficherCarte , afficherCarteEnoncer
 from data import  ListeNoeuds,ListeLiaison, calculerFlotMaximal, liaison_existe, optimiser_liaisons
 from data import liaison as Liaison
 import copy
@@ -9,13 +9,18 @@ def menu_terminal():
 
     while True:
         print("\n=== MENU ===")
-        print("1. Afficher la carte actuelle (Départ)")
+        print("0. Afficher la carte de l'énoncer")
+        print("1. Afficher la carte Enoncer avec fluxmax")
         print("2. Travaux")
         print("3. Generalisation")
         print("4. Quitter")
 
         choix = input("Choix : ")
 
+        if choix == "0":
+            result, index_noeuds = calculerFlotMaximal(liaisons_actuelles)
+            afficherCarteEnoncer(result=result, index_noeuds=index_noeuds, liaisons=liaisons_actuelles)
+        
         if choix == "1":
             result, index_noeuds = calculerFlotMaximal(liaisons_actuelles)
             afficherCarte(result=result, index_noeuds=index_noeuds, liaisons=liaisons_actuelles)
