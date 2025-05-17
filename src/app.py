@@ -1,5 +1,5 @@
 from affichage import afficherCarte
-from data import ListeLiaison, calculerFlotMaximal, liaison_existe, optimiser_liaisons
+from data import ListeLiaison, ReseauHydraulique, calculerFlotMaximal_temp, liaison_existe, optimiser_liaisons, ListeNoeuds
 from data import liaison as Liaison
 import copy
 import random
@@ -17,7 +17,7 @@ def menu_terminal():
         choix = input("Choix : ")
 
         if choix == "1":
-            result, index_noeuds = calculerFlotMaximal(liaisons_actuelles)
+            result, index_noeuds = calculerFlotMaximal_temp(ListeNoeuds,liaisons_actuelles)
             afficherCarte(result=result, index_noeuds=index_noeuds, liaisons=liaisons_actuelles)
 
         elif choix == "2":
@@ -40,7 +40,7 @@ def menu_terminal():
             print("🔍 Optimisation de l’ordre des travaux...")
 
             # 👉 Appel de la fonction d'optimisation du fichier data
-            config_finale, travaux = optimiser_liaisons(liaisons_actuelles, liaisons_a_optimiser)
+            config_finale, travaux = optimiser_liaisons(ListeNoeuds, liaisons_actuelles, liaisons_a_optimiser)
 
             for i, (liaison, cap, flot) in enumerate(travaux):
                 u, v = liaison
@@ -49,7 +49,7 @@ def menu_terminal():
                 print(f"   🚀 Nouveau flot maximal : {flot} unités\n")
 
             # 💧 Affichage de la carte finale
-            result, index_noeuds = calculerFlotMaximal(config_finale)
+            result, index_noeuds = calculerFlotMaximal_temp(ListeNoeuds, config_finale)
             afficherCarte(result=result, index_noeuds=index_noeuds, liaisons=config_finale)
 
         elif choix == "3":
@@ -70,7 +70,7 @@ def menu_terminal():
                     break
 
             # Recalcul du flot maximal
-            result, index_noeuds = calculerFlotMaximal(liaisons_actuelles)
+            result, index_noeuds = calculerFlotMaximal_temp(ListeNoeuds, liaisons_actuelles)
             afficherCarte(result=result, index_noeuds=index_noeuds, liaisons=liaisons_actuelles)
 
         elif choix == "4":

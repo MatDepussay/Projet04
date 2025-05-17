@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 import numpy as np
 import random
 import scipy as sp
@@ -8,26 +8,36 @@ import networkx as nx
 from copy import deepcopy
 from dataclasses import dataclass
 
-@dataclass(frozen=True, unsafe_hash=True)
+@dataclass
 class noeud:
     nom: str
-    type: str       # "source", "ville", "intermediaire"
+    type: str  # "source", "ville", "intermediaire"
     capaciteMax: int = 0
-@dataclass(frozen=True, unsafe_hash=True)
+
+    def __str__(self):
+        return f"Type : {self.type}\nNom : {self.nom}\nCapacité Maximale : {self.capaciteMax}"
+
+@dataclass
 class liaison:
     depart: str
     arrivee: str
     capacite: int
 
+    def __str__(self):
+        return f"Départ : {self.depart}\n Arrivée : {self.arrivee}\nCapacité : {self.capacite}"
 class ReseauHydraulique:
     def __init__(self, noeuds: List[noeud], liaisons: List[liaison]):
-        self.noeuds = noeuds
-        self.liaisons = liaisons
+        self.noeuds: Dict[str, noeud] = {n.nom: n for n in noeuds}
+        self.liaisons: List[liaison] = liaisons
 
+    def __str__(self):
+        noeuds_str = "\n".join(str(n) for n in self.noeuds.values())
+        liaisons_str = "\n".join(str(l) for l in self.liaisons)
+        return f"--- Noeuds ---\n{noeuds_str}\n\n--- Liaisons ---\n{liaisons_str}"
 
     def calculerFlotMaximal(self):
         # Liste des noms de noeuds + super-source/puits
-        noms_noeuds = [n.nom for n in self.noeuds] + ["super_source", "super_puits"]
+        noms_noeuds = list(self.noeuds.keys()) + ["super_source", "super_puits"]
         index_noeuds = {nom: i for i, nom in enumerate(noms_noeuds)}
         index_inverse = {i: nom for nom, i in index_noeuds.items()}
         n = len(noms_noeuds)
@@ -41,12 +51,12 @@ class ReseauHydraulique:
             matrice[i][j] = l.capacite
 
         # Connexions super_source -> sources
-        for node in self.noeuds:
+        for node in self.noeuds.values():
             if node.type == "source":
                 matrice[index_noeuds["super_source"]][index_noeuds[node.nom]] = node.capaciteMax
 
         # Connexions villes -> super_puits
-        for node in self.noeuds:
+        for node in self.noeuds.values():
             if node.type == "ville":
                 matrice[index_noeuds[node.nom]][index_noeuds["super_puits"]] = node.capaciteMax
 
@@ -78,6 +88,7 @@ def liaison_existe(depart: str, arrivee: str, liaisons: List[liaison]) -> bool:
     return False
 
 def optimiser_liaisons(
+    noeuds: List[noeud],
     liaisons_actuelles: List[liaison],
     liaisons_a_optimiser: List[Tuple[str, str]]
 ) -> Tuple[List[liaison], List[Tuple[Tuple[str, str], int, int]]]:
@@ -91,7 +102,8 @@ def optimiser_liaisons(
     liaisons_restantes = liaisons_a_optimiser[:]
     travaux_effectues = []
 
-    result_init, _ = calculerFlotMaximal(meilleure_config)
+    reseau_temp = ReseauHydraulique(noeuds, meilleure_config)
+    result_init, _ = reseau_temp.calculerFlotMaximal()
     meilleur_flot = result_init.flow_value
 
     while liaisons_restantes:
@@ -104,10 +116,11 @@ def optimiser_liaisons(
             for cap_test in range(1, 21):
                 temp_temp_config = meilleure_config[:]
                 for i, l in enumerate(temp_temp_config):
-                    if (l.depart, l.arrivee) == liaison_cible or (l.arrivee, l.depart) == liaison_cible:
+                    if (l.depart, l.arrivee) == liaison_cible:
                         temp_temp_config[i] = liaison(l.depart, l.arrivee, cap_test)
 
-                temp_result, _ = calculerFlotMaximal(temp_temp_config)
+                reseau_temp = ReseauHydraulique(noeuds, temp_temp_config)
+                temp_result, _ = reseau_temp.calculerFlotMaximal()
 
                 if temp_result.flow_value > meilleur_gain:
                     meilleur_result_temp = temp_result
@@ -163,9 +176,7 @@ ListeLiaison = [
 reseau = ReseauHydraulique(ListeNoeuds, ListeLiaison)
 
 # Pour compatibilité avec l’ancien code
-def calculerFlotMaximal(liaisons=None):
-    if liaisons:
-        reseau_temp = ReseauHydraulique(ListeNoeuds, liaisons)
-        return reseau_temp.calculerFlotMaximal()
-    else:
-        return reseau.calculerFlotMaximal()
+def calculerFlotMaximal_temp(noeuds: List[noeud], liaisons: List[liaison]):
+    reseau_temp = ReseauHydraulique(noeuds, liaisons)
+    return reseau_temp.calculerFlotMaximal()
+
