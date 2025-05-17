@@ -5,7 +5,7 @@ from data import ListeLiaison, calculerFlotMaximal, liaison_existe, optimiser_li
 from data import liaison as Liaison
 import copy
 
-
+# Classe principale de l'application
 class App:
     def __init__(self, root):
         self.root = root
