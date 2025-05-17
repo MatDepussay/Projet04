@@ -63,7 +63,7 @@ def menu_terminal():
             if not sources:
                 print("❌ Aucune source trouvée.")
                 continue
-
+            
             # Choisir une source aléatoire
             source_choisie = random.choice(sources)
             print(f"🎲 Source choisie aléatoirement : {source_choisie.nom}")

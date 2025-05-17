@@ -8,7 +8,7 @@ import networkx as nx
 from copy import deepcopy
 from dataclasses import dataclass
 
-@dataclass(frozen=True, unsafe_hash=True)
+@dataclass( unsafe_hash=True)
 class noeud:
     nom: str
     type: str       # "source", "ville", "intermediaire"
