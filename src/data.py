@@ -7,12 +7,12 @@ import networkx as nx
 from copy import deepcopy
 from dataclasses import dataclass
 
-@dataclass
+@dataclass(frozen=True, unsafe_hash=True)
 class noeud:
     nom: str
     type: str       # "source", "ville", "intermediaire"
     capaciteMax: int = 0
-@dataclass
+@dataclass(frozen=True, unsafe_hash=True)
 class liaison:
     depart: str
     arrivee: str
