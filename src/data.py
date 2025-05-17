@@ -13,7 +13,7 @@ class noeud:
     nom: str
     type: str       # "source", "ville", "intermediaire"
     capaciteMax: int = 0
-@dataclass(frozen=True, unsafe_hash=True)
+@dataclass( unsafe_hash=True)
 class liaison:
     depart: str
     arrivee: str
