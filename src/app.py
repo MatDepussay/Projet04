@@ -19,7 +19,8 @@ def menu_terminal():
         choix = input("Choix : ")
 
         if choix == "1":
-            result, index_noeuds = calculerFlotMaximal_temp(ListeNoeuds,liaisons_actuelles)
+            reseau = ReseauHydraulique(ListeNoeuds, liaisons_actuelles)
+            result, index_noeuds = reseau.calculerFlotMaximal()
             afficherCarte(result=result, index_noeuds=index_noeuds, liaisons=liaisons_actuelles)
 
         elif choix == "2":
