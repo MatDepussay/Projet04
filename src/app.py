@@ -1,21 +1,27 @@
-from affichage import afficherCarte
-from data import ListeLiaison, calculerFlotMaximal, liaison_existe, optimiser_liaisons, optimiser_liaisons_pour_approvisionnement
+from affichage import afficherCarte , afficherCarteEnoncer
+from data import  ListeNoeuds,ListeLiaison, calculerFlotMaximal, liaison_existe, optimiser_liaisons
 from data import liaison as Liaison
 import copy
-
+import random
+import matplotlib.pyplot as plt 
 
 def menu_terminal():
     liaisons_actuelles = copy.deepcopy(ListeLiaison)
 
     while True:
         print("\n=== MENU ===")
-        print("1. Afficher la carte actuelle (Départ)")
+        print("0. Afficher la carte de l'énoncer")
+        print("1. Afficher la carte Enoncer avec fluxmax")
         print("2. Travaux")
-        print("3. Approvisionnement des villes")
+        print("3. Generalisation")
         print("4. Quitter")
 
         choix = input("Choix : ")
 
+        if choix == "0":
+            result, index_noeuds = calculerFlotMaximal(liaisons_actuelles)
+            afficherCarteEnoncer(result=result, index_noeuds=index_noeuds, liaisons=liaisons_actuelles)
+        
         if choix == "1":
             result, index_noeuds = calculerFlotMaximal(liaisons_actuelles)
             afficherCarte(result=result, index_noeuds=index_noeuds, liaisons=liaisons_actuelles)
@@ -53,26 +59,69 @@ def menu_terminal():
             afficherCarte(result=result, index_noeuds=index_noeuds, liaisons=config_finale)
         
         elif choix == "3":
-            # Définir les liaisons candidates (ou laisser en dur une liste raisonnable)
-            liaisons_possibles = [(l.depart, l.arrivee) for l in ListeLiaison][:20]
 
-            # Appel de la fonction avec objectif 50
-            config_finale, travaux = optimiser_liaisons_pour_approvisionnement(ListeLiaison, liaisons_possibles, objectif_flot=50)
+            # Choisir une source aléatoire
+            sources = [n for n in ListeNoeuds if n.type == "source"]
+            if not sources:
+                print("❌ Aucune source trouvée.")
+                return
 
-            # Affichage du résultat
-            print(f"✅ Objectif atteint avec {len(travaux)} travaux :")
-            for (u, v), cap, flot in travaux:
-                print(f"🔧 {u} → {v} capacité {cap} => flot = {flot} u")
+            source_choisie = random.choice(sources)
+            print(f"🎲 Source choisie aléatoirement : {source_choisie.nom}")
 
-            # Affichage de la carte
-            result, index_noeuds = calculerFlotMaximal(config_finale)
-            afficherCarte(result=result, index_noeuds=index_noeuds, liaisons=config_finale)
+            # 💥 Mise à jour de la capacité de la source à 0
+            for n in ListeNoeuds:
+                if n.nom == source_choisie.nom:
+                    print(f"💧 Capacité de la source {n.nom} mise à 0.")
+                    n.capaciteMax = 0
+                    break
+
+            # Copie des liaisons
+            liaisons_actuelles = [Liaison(l.depart, l.arrivee, l.capacite) for l in ListeLiaison]
+
+            # Calcul du flot maximal initial
+            result, index_noeuds = calculerFlotMaximal(liaisons=liaisons_actuelles)
+
+            # Affichage de la carte en mode interactif
+            plt.ion()
+            afficherCarte(result=result, index_noeuds=index_noeuds, liaisons=liaisons_actuelles)
+            plt.pause(0.1)
+
+            # === Sélection d’une liaison à mettre en travaux pendant que la carte est ouverte ===
+            print("\n=== Sélectionne une liaison à mettre en travaux ===")
+            while True:
+                u = input("Sommet de départ : ").strip().upper()
+                v = input("Sommet d’arrivée : ").strip().upper()
+
+                if not liaison_existe(u, v, liaisons_actuelles):
+                    print(f"❌ La liaison ({u} ➝ {v}) n’existe pas. Réessaie.")
+                    continue
+                break
+
+            # Mise en travaux de la liaison
+            for liaison in liaisons_actuelles:
+                if liaison.depart == u and liaison.arrivee == v:
+                    print(f"🔧 Mise en travaux de la liaison : {u} ➝ {v}")
+                    print(f"   Capacité actuelle : {liaison.capacite}")
+                    liaison.capacite += 5
+                    print(f"   ✅ Nouvelle capacité : {liaison.capacite}")
+                    break
+
+            # Recalcul du flot après travaux
+            result_modifie, index_noeuds_modifie = calculerFlotMaximal(liaisons=liaisons_actuelles)
+
+            # Affichage mis à jour
+            afficherCarte(result=result_modifie, index_noeuds=index_noeuds_modifie, liaisons=liaisons_actuelles)
+            print(f"🚀 Nouveau flot maximal : {result_modifie.flow_value} u.")
+            plt.ioff()
+
         elif choix == "4":
             print("Au revoir 👋")
             break
         else:
             print("❌ Choix invalide.")
-
+        
+        
 if __name__ == "__main__":
     menu_terminal()
 
