@@ -45,3 +45,7 @@ Les prévisions des demandes journalières maximales sont de
    Déterminer l'ordre de la réfection des canalisations permettant d'augmenter
    le flot maximal après chaque travaux.
    Calculer ce flot maximal à chaque étape.
+
+4. Generalisation
+   Dans un premier temps on cherche a approvisioner les villes a 100% de leurs demandent. 
+   Selection aléatoire d'une source qui s'asseches comment la charge se repartie pour faire des travaux. 
