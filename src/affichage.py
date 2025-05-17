@@ -12,7 +12,7 @@ def afficherCarte(result=None, index_noeuds=None, liaisons=None):
     for l in liaisons:
         G.add_edge(l.depart, l.arrivee, weight=l.capacite)
 
-    pos = nx.spring_layout(G, seed=42)
+    pos = nx.kamada_kawai_layout(G)
 
     node_colors = []
     labels = {}
@@ -107,13 +107,13 @@ def afficherCarteEnoncer(result=None, index_noeuds=None, liaisons=None):
     nx.draw_networkx_labels(G, pos, labels, font_size=12, font_weight='bold')
 
     edge_labels = nx.get_edge_attributes(G, 'weight')
-    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_color='red')
+    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, ax=ax, font_color='red')
 
     if result:
         flot_maximal = result.flow_value
-        plt.gcf().text(0.95, 0.05, f"Flot maximal : {flot_maximal} u.",
-                    fontsize=12, color='darkred', ha='right', va='bottom',
-                    bbox=dict(facecolor='white', edgecolor='darkred', boxstyle='round,pad=0.3'))
+        ax.text(1.02, 0.02, f"Flot maximal : {flot_maximal} u.",
+                transform=ax.transAxes, fontsize=12, color='darkred',
+                bbox=dict(facecolor='white', edgecolor='darkred', boxstyle='round,pad=0.3'))
 
     plt.title("Carte des Liaisons (capacités des sources et puits)")
     plt.axis('off')

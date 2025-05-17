@@ -53,7 +53,7 @@ def menu_terminal():
             # 💧 Affichage de la carte finale
             result, index_noeuds = calculerFlotMaximal_temp(ListeNoeuds, config_finale)
             afficherCarte(result=result, index_noeuds=index_noeuds, liaisons=config_finale)
-
+        
         elif choix == "3":
 
             # Choisir une source aléatoire
@@ -115,3 +115,4 @@ def menu_terminal():
         
 if __name__ == "__main__":
     menu_terminal()
+
