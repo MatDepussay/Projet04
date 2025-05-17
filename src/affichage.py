@@ -61,8 +61,8 @@ def afficherCarte(result=None, index_noeuds=None, liaisons=None):
     if result:
         flot_maximal = result.flow_value
         plt.gcf().text(0.95, 0.05, f"Flot maximal : {flot_maximal} u.",
-                       fontsize=12, color='darkred', ha='right', va='bottom',
-                       bbox=dict(facecolor='white', edgecolor='darkred', boxstyle='round,pad=0.3'))
+                    fontsize=12, color='darkred', ha='right', va='bottom',
+                    bbox=dict(facecolor='white', edgecolor='darkred', boxstyle='round,pad=0.3'))
 
     plt.title("Carte des Liaisons avec Flot Effectif sur les Arêtes")
     plt.axis('off')

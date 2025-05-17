@@ -15,7 +15,7 @@ class noeud:
     capaciteMax: int = 0
 
     def __str__(self):
-        return f"Type : {self.type}\nNom : {self.nom}\nCapacité Maximale : {self.capaciteMax}"
+        return f"Type : {self.type}\n Nom : {self.nom}\nCapacité Maximale : {self.capaciteMax}"
 
 @dataclass
 class liaison:
@@ -194,7 +194,8 @@ def optimiser_liaisons_pour_approvisionnement(
     liaisons_restantes = liaisons_possibles[:]
     travaux_effectues = []
 
-    result_init, _ = calculerFlotMaximal(meilleure_config)
+    reseau = ReseauHydraulique(ListeNoeuds, liaisons_actuelles)
+    result_init, _ = reseau.calculerFlotMaximal()
     flot_actuel = result_init.flow_value
 
     if flot_actuel >= objectif_flot:
@@ -219,7 +220,7 @@ def optimiser_liaisons_pour_approvisionnement(
                 if not modifie:
                     temp_config.append(liaison(liaison_cible[0], liaison_cible[1], cap_test))
 
-                temp_result, _ = calculerFlotMaximal(temp_config)
+                temp_result, _ = reseau.calculerFlotMaximal()
 
                 if temp_result.flow_value > flot_actuel:
                     meilleure_liaison = (liaison_cible, cap_test)
