@@ -2,7 +2,7 @@ from affichage import afficherCarte
 from data import ListeLiaison, calculerFlotMaximal, liaison_existe, optimiser_liaisons
 from data import liaison as Liaison
 import copy
-
+import random
 
 def menu_terminal():
     liaisons_actuelles = copy.deepcopy(ListeLiaison)
@@ -11,7 +11,8 @@ def menu_terminal():
         print("\n=== MENU ===")
         print("1. Afficher la carte actuelle (Départ)")
         print("2. Travaux")
-        print("3. Quitter")
+        print("3. Generalisation")
+        print("4. Quitter")
 
         choix = input("Choix : ")
 
@@ -52,10 +53,32 @@ def menu_terminal():
             afficherCarte(result=result, index_noeuds=index_noeuds, liaisons=config_finale)
 
         elif choix == "3":
+            sources = [n for n in ListeNoeuds if n.type == "source"]
+            
+            if not sources:
+                print("❌ Aucune source trouvée.")
+                continue
+
+            # Choisir une source aléatoire
+            source_choisie = random.choice(sources)
+            print(f"🎲 Source choisie aléatoirement : {source_choisie.nom}")
+
+            # Mise à jour de la capacité de la source à 0
+            for n in ListeNoeuds:
+                if n.nom == source_choisie.nom:
+                    n.capaciteMax = 0
+                    break
+
+            # Recalcul du flot maximal
+            result, index_noeuds = calculerFlotMaximal(liaisons_actuelles)
+            afficherCarte(result=result, index_noeuds=index_noeuds, liaisons=liaisons_actuelles)
+
+        elif choix == "4":
             print("Au revoir 👋")
             break
         else:
             print("❌ Choix invalide.")
-
+        
+        
 if __name__ == "__main__":
     menu_terminal()

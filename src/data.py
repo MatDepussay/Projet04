@@ -1,5 +1,6 @@
 from typing import List, Tuple
 import numpy as np
+import random
 import scipy as sp
 from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import maximum_flow
