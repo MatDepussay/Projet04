@@ -1,9 +1,10 @@
 from affichage import afficherCarte, afficherCarteEnoncer
-from data import ListeLiaison, ReseauHydraulique, calculerFlotMaximal_temp, liaison_existe, optimiser_liaisons, ListeNoeuds
+from data import *
 from data import liaison as Liaison
 import copy
 import random
 import matplotlib.pyplot as plt 
+
 
 def menu_terminal():
     liaisons_actuelles = copy.deepcopy(ListeLiaison)
@@ -62,8 +63,45 @@ def menu_terminal():
             afficherCarte(result=result, index_noeuds=index_noeuds, liaisons=config_finale)
         
         elif choix == "3":
+            menu_generalisation()
 
-            # Choisir une source aléatoire
+        elif choix == "4":
+            print("Au revoir 👋")
+            break
+        else:
+            print("❌ Choix invalide.")
+        
+def menu_generalisation():
+    while True:
+        print("\n=== MENU GÉNÉRALISATION ===")
+        print("1. Optimiser les liaisons pour approvisionner 100% les villes")
+        print("2. Conserver le calcul actuel (flot maximal existant)")
+        print("3. Retour")
+
+        choix = input("Choix : ")
+
+        if choix == "1":
+            objectif = sum(n.capaciteMax for n in ListeNoeuds if n.type == "ville")
+            print(f"\n🎯 Objectif : Approvisionner {objectif} unités (100% des villes)")
+            
+            # Définir les liaisons modifiables : ici on autorise à modifier toutes les liaisons existantes
+            liaisons_modifiables = [(l.depart, l.arrivee) for l in ListeLiaison]
+
+            nouvelle_config, travaux = optimiser_liaisons_pour_approvisionnement(
+                liaisons_actuelles=ListeLiaison,
+                liaisons_possibles=liaisons_modifiables,
+                objectif_flot=objectif
+            )
+
+            print("\n🔧 Travaux effectués :")
+            for (depart, arrivee), cap, new_flot in travaux:
+                print(f"- Liaison {depart} ➝ {arrivee} ajustée à {cap} u. → Flot = {new_flot} u.")
+
+            print("\n📈 Résultat final avec nouvelle configuration :\n")
+            reseau_opt = ReseauHydraulique(ListeNoeuds, nouvelle_config)
+            result, _ = reseau_opt.calculerFlotMaximal()
+
+        elif choix == "2":
             sources = [n for n in ListeNoeuds if n.type == "source"]
             if not sources:
                 print("❌ Aucune source trouvée.")
@@ -80,8 +118,8 @@ def menu_terminal():
                     break
 
             # Recalcul du flot maximal
-            result, index_noeuds = calculerFlotMaximal_temp(ListeNoeuds, liaisons_actuelles)
-            afficherCarte(result=result, index_noeuds=index_noeuds, liaisons=liaisons_actuelles)
+            result, index_noeuds = calculerFlotMaximal_temp(ListeNoeuds, ListeLiaison)
+            afficherCarte(result=result, index_noeuds=index_noeuds, liaisons=ListeLiaison)
             plt.pause(0.1)
 
             # === Sélection d’une liaison à mettre en travaux pendant que la carte est ouverte ===
@@ -90,13 +128,13 @@ def menu_terminal():
                 u = input("Sommet de départ : ").strip().upper()
                 v = input("Sommet d’arrivée : ").strip().upper()
 
-                if not liaison_existe(u, v, liaisons_actuelles):
+                if not liaison_existe(u, v, ListeLiaison):
                     print(f"❌ La liaison ({u} ➝ {v}) n’existe pas. Réessaie.")
                     continue
                 break
 
             # Mise en travaux de la liaison
-            for liaison in liaisons_actuelles:
+            for liaison in ListeLiaison:
                 if liaison.depart == u and liaison.arrivee == v:
                     print(f"🔧 Mise en travaux de la liaison : {u} ➝ {v}")
                     print(f"   Capacité actuelle : {liaison.capacite}")
@@ -105,21 +143,20 @@ def menu_terminal():
                     break
 
             # Recalcul du flot après travaux
-            reseau = ReseauHydraulique(ListeNoeuds, liaisons_actuelles)
+            reseau = ReseauHydraulique(ListeNoeuds, ListeLiaison)
             result_modifie, index_noeuds_modifie = reseau.calculerFlotMaximal()
 
             # Affichage mis à jour
-            afficherCarte(result=result_modifie, index_noeuds=index_noeuds_modifie, liaisons=liaisons_actuelles)
+            afficherCarte(result=result_modifie, index_noeuds=index_noeuds_modifie, liaisons=ListeLiaison)
             print(f"🚀 Nouveau flot maximal : {result_modifie.flow_value} u.")
             plt.ioff()
 
-        elif choix == "4":
-            print("Au revoir 👋")
+        elif choix == "3":
             break
         else:
-            print("❌ Choix invalide.")
-        
-        
+            print("⛔ Choix invalide. Réessaie.")
+
+
 if __name__ == "__main__":
     menu_terminal()
 
