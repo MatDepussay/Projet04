@@ -1,4 +1,4 @@
-from affichage import afficherCarte
+from affichage import afficherCarte, afficherCarteEnoncer
 from data import ListeLiaison, ReseauHydraulique, calculerFlotMaximal_temp, liaison_existe, optimiser_liaisons, ListeNoeuds
 from data import liaison as Liaison
 import copy
@@ -17,6 +17,12 @@ def menu_terminal():
         print("4. Quitter")
 
         choix = input("Choix : ")
+
+        if choix == "0":
+            reseau = ReseauHydraulique(ListeNoeuds, liaisons_actuelles)
+            result, index_noeuds = reseau.calculerFlotMaximal()
+            afficherCarteEnoncer(result=result, index_noeuds=index_noeuds, liaisons=liaisons_actuelles)
+
 
         if choix == "1":
             reseau = ReseauHydraulique(ListeNoeuds, liaisons_actuelles)
