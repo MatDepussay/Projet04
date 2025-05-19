@@ -103,7 +103,8 @@ def menu_generalisation():
 
             print("\n📈 Résultat final avec nouvelle configuration :\n")
             reseau_opt = ReseauHydraulique(ListeNoeuds, nouvelle_config)
-            result, _ = reseau_opt.calculerFlotMaximal()
+            result, index_noeuds = reseau_opt.calculerFlotMaximal()  # Ce résultat est déjà correct
+            afficherCarte(result=result, index_noeuds=index_noeuds, liaisons=nouvelle_config)
 
         elif choix == "2":
             sources = [n for n in ListeNoeuds if n.type == "source"]

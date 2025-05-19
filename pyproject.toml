@@ -9,6 +9,7 @@ dependencies = [
     "matplotlib>=3.10.1",
     "networkx>=3.4.2",
     "numpy>=2.2.5",
+    "pyinstrument>=5.0.1",
     "pytest>=8.3.5",
     "pytest-cov>=6.1.1",
     "scipy>=1.15.2",
