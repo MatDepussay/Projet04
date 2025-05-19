@@ -7,7 +7,20 @@ from src.data import *
 import builtins
 from io import StringIO
 from src.app import menu_terminal
+from pyinstrument import Profiler
 
+profiler = Profiler()
+profiler.start()
+
+# 👉 Ici tu mets la fonction lente
+optimiser_liaisons_pour_approvisionnement(
+    liaisons_actuelles=ListeLiaison,
+    liaisons_possibles=[(l.depart, l.arrivee) for l in ListeLiaison],
+    objectif_flot=50
+)
+
+profiler.stop()
+print(profiler.output_text(unicode=True, color=True))
 
 def test_modification_liaison_ameliore_flot():
     original = ListeLiaison[:]
