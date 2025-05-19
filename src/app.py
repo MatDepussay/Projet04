@@ -92,6 +92,7 @@ def menu_generalisation():
             liaisons_modifiables = [(l.depart, l.arrivee) for l in ListeLiaison]
 
             nouvelle_config, travaux = optimiser_liaisons_pour_approvisionnement(
+                noeuds=ListeNoeuds,
                 liaisons_actuelles=ListeLiaison,
                 liaisons_possibles=liaisons_modifiables,
                 objectif_flot=objectif
