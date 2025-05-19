@@ -69,7 +69,6 @@ def afficherCarte(result=None, index_noeuds=None, liaisons=None):
     plt.tight_layout()
     plt.show()
 
-
 def afficherCarteEnoncer(result=None, index_noeuds=None, liaisons=None):
     if liaisons is None:
         liaisons = ListeLiaison
