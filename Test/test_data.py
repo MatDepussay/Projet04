@@ -1,20 +1,24 @@
 import sys
 import os
+from scipy.sparse import csr_matrix
+from pyinstrument import Profiler
+from io import StringIO
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
 
 import pytest 
-from src.data import *
+from data import ListeLiaison, ListeNoeuds, optimiser_liaisons, optimiser_liaisons_pour_approvisionnement, liaison_existe, ReseauHydraulique, liaison, noeud
 import builtins
-from io import StringIO
-from src.affichage import afficherCarteEnoncer, afficherCarte
-from src.app import menu_terminal
-from pyinstrument import Profiler
+
+from affichage import afficherCarteEnoncer, afficherCarte
+from app import menu_terminal
+
 
 profiler = Profiler()
 profiler.start()
 
 # 👉 Ici tu mets la fonction lente
 optimiser_liaisons_pour_approvisionnement(
+    noeuds=ListeNoeuds,
     liaisons_actuelles=ListeLiaison,
     liaisons_possibles=[(l.depart, l.arrivee) for l in ListeLiaison],
     objectif_flot=50
@@ -22,6 +26,7 @@ optimiser_liaisons_pour_approvisionnement(
 
 profiler.stop()
 print(profiler.output_text(unicode=True, color=True))
+
 
 def test_modification_liaison_ameliore_flot():
     original = ListeLiaison[:]
@@ -33,9 +38,6 @@ def test_modification_liaison_ameliore_flot():
     assert flot_apres.flow_value > flot_avant.flow_value
 
 
-def test_liaison_inexistante():
-    assert not liaison_existe("Z", "Q", ListeLiaison)
-
 def test_creation_noeud():
     n = noeud("A", "source", 10)
     assert n.nom == "A"
@@ -46,6 +48,10 @@ def test_liaison_existe():
     assert liaison_existe("A","E", ListeLiaison) == True
     assert liaison_existe("A", "H", ListeLiaison) == False
     assert liaison_existe("E", "A", ListeLiaison) == False
+
+
+def test_liaison_inexistante():
+    assert not liaison_existe("Z", "Q", ListeLiaison)
 
 def test_optimiser_liaisons_priorise_meilleure_liaison():
     
@@ -79,8 +85,7 @@ def test_menu_travaux(monkeypatch, capsys):
     ])
     
     monkeypatch.setattr("builtins.input", lambda _: next(inputs)) #monkeypatch input pour simuler les entrées utilisateur
-    
-    
+
     menu_terminal()
     
     out, _ = capsys.readouterr()

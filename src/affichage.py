@@ -1,6 +1,6 @@
 import networkx as nx
 import matplotlib.pyplot as plt
-from data import *
+from data import ListeNoeuds, ListeLiaison
 
 def afficherCarte(result=None, index_noeuds=None, liaisons=None):
     if liaisons is None:

@@ -1,10 +1,7 @@
 from typing import List, Tuple, Dict
-import numpy as np
-import random
-import scipy as sp
+from numpy import array
 from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import maximum_flow
-import networkx as nx
 from copy import deepcopy
 from dataclasses import dataclass
 
@@ -29,6 +26,33 @@ class ReseauHydraulique:
     def __init__(self, noeuds: List[noeud], liaisons: List[liaison]):
         self.noeuds: Dict[str, noeud] = {n.nom: n for n in noeuds}
         self.liaisons: List[liaison] = liaisons
+        
+        # Préparer le mapping des noeuds + super-source et super-puits
+        self.noms_noeuds = list(self.noeuds.keys()) + ["super_source", "super_puits"]
+        self.index_noeuds = {nom: i for i, nom in enumerate(self.noms_noeuds)}
+        self.index_inverse = {i: nom for nom, i in self.index_noeuds.items()}
+        self.n = len(self.noms_noeuds)
+
+        # Initialiser matrice des capacités (numpy array pour modifier facilement)
+        self.matrice_np = array([[0] * self.n for _ in range(self.n)])
+        
+        # Ajout des liaisons
+        for l in self.liaisons:
+            i, j = self.index_noeuds[l.depart], self.index_noeuds[l.arrivee]
+            self.matrice_np[i][j] = l.capacite
+
+        # Connexions super_source -> sources
+        for node in self.noeuds.values():
+            if node.type == "source":
+                self.matrice_np[self.index_noeuds["super_source"]][self.index_noeuds[node.nom]] = node.capaciteMax
+
+        # Connexions villes -> super_puits
+        for node in self.noeuds.values():
+            if node.type == "ville":
+                self.matrice_np[self.index_noeuds[node.nom]][self.index_noeuds["super_puits"]] = node.capaciteMax
+
+        # Conversion en matrice creuse
+        self.matrice_sparse = csr_matrix(self.matrice_np)
 
     def __str__(self):
         noeuds_str = "\n".join(str(n) for n in self.noeuds.values())
@@ -36,50 +60,25 @@ class ReseauHydraulique:
         return f"--- Noeuds ---\n{noeuds_str}\n\n--- Liaisons ---\n{liaisons_str}"
 
     def calculerFlotMaximal(self):
-        # Liste des noms de noeuds + super-source/puits
-        noms_noeuds = list(self.noeuds.keys()) + ["super_source", "super_puits"]
-        index_noeuds = {nom: i for i, nom in enumerate(noms_noeuds)}
-        index_inverse = {i: nom for nom, i in index_noeuds.items()}
-        n = len(noms_noeuds)
-
-        # Matrice de capacité
-        matrice = [[0] * n for _ in range(n)]
-
-        # Ajout des liaisons
-        for l in self.liaisons:
-            i, j = index_noeuds[l.depart], index_noeuds[l.arrivee]
-            matrice[i][j] = l.capacite
-
-        # Connexions super_source -> sources
-        for node in self.noeuds.values():
-            if node.type == "source":
-                matrice[index_noeuds["super_source"]][index_noeuds[node.nom]] = node.capaciteMax
-
-        # Connexions villes -> super_puits
-        for node in self.noeuds.values():
-            if node.type == "ville":
-                matrice[index_noeuds[node.nom]][index_noeuds["super_puits"]] = node.capaciteMax
-
-        # Conversion en matrice creuse
-        matrice_np = np.array(matrice)
-        matrice_sparse = csr_matrix(matrice_np)
 
         # Calcul du flot
-        result = maximum_flow(matrice_sparse, index_noeuds['super_source'], index_noeuds['super_puits'])
+        result = maximum_flow(self.matrice_sparse,
+                              self.index_noeuds['super_source'],
+                              self.index_noeuds['super_puits'])
 
         print(f"💧 Flot maximal total : {result.flow_value} unités\n")
         print("➡️ Détail des flux utilisés :\n")
 
         flow_matrix = result.flow
-        for i in range(n):
-            for j in range(n):
+        for i in range(self.n):
+            for j in range(self.n):
                 flow = flow_matrix[i, j]
                 if flow > 0:
-                    u = index_inverse[i]
-                    v = index_inverse[j]
+                    u = self.index_inverse[i]
+                    v = self.index_inverse[j]
                     print(f"{u} ➝ {v} : {flow} unités")
 
-        return result, index_noeuds
+        return result, self.index_noeuds
     
 def liaison_existe(depart: str, arrivee: str, liaisons: List[liaison]) -> bool:
     for l in liaisons:
@@ -208,29 +207,41 @@ def optimiser_liaisons_pour_approvisionnement(
         meilleur_result_temp = None
 
         for liaison_cible in liaisons_restantes:
-            for cap_test in range(1, 21):  # Capacités possibles
-                temp_config = deepcopy(meilleure_config)
+            # Cherche si la liaison existe déjà
+            index_exist = None
+            for i, l in enumerate(meilleure_config):
+                if (l.depart, l.arrivee) == liaison_cible:
+                    index_exist = i
+                    break
 
-                # Modifier ou ajouter la liaison testée
-                modifie = False
-                for i, l in enumerate(temp_config):
-                    if (l.depart, l.arrivee) == liaison_cible or (l.arrivee, l.depart) == liaison_cible:
-                        temp_config[i] = liaison(l.depart, l.arrivee, cap_test)
-                        modifie = True
-                        break
-                if not modifie:
-                    temp_config.append(liaison(liaison_cible[0], liaison_cible[1], cap_test))
+            for cap_test in [5, 10, 15, 20]:
+                if index_exist is not None:
+                    old_liaison = meilleure_config[index_exist]
+                    meilleure_config[index_exist] = liaison(old_liaison.depart, old_liaison.arrivee, cap_test)
+                else:
+                    meilleure_config.append(liaison(liaison_cible[0], liaison_cible[1], cap_test))
 
-                reseau_temp = ReseauHydraulique(noeuds, temp_config)
+                reseau_temp = ReseauHydraulique(noeuds, meilleure_config)
                 temp_result, _ = reseau_temp.calculerFlotMaximal()
 
                 if temp_result.flow_value > flot_actuel:
                     meilleure_liaison = (liaison_cible, cap_test)
-                    meilleure_config_temp = temp_config
+                    meilleure_config_temp = meilleure_config[:]
                     meilleur_result_temp = temp_result
-
                     if temp_result.flow_value >= objectif_flot:
+                        # restaurer avant break
+                        if index_exist is not None:
+                            meilleure_config[index_exist] = old_liaison
+                        else:
+                            meilleure_config.pop()
                         break
+
+                # restaurer
+                if index_exist is not None:
+                    meilleure_config[index_exist] = old_liaison
+                else:
+                    meilleure_config.pop()
+
             if meilleur_result_temp and meilleur_result_temp.flow_value >= objectif_flot:
                 break
 
