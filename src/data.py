@@ -220,7 +220,8 @@ def optimiser_liaisons_pour_approvisionnement(
                 if not modifie:
                     temp_config.append(liaison(liaison_cible[0], liaison_cible[1], cap_test))
 
-                temp_result, _ = reseau.calculerFlotMaximal()
+                reseau_temp = ReseauHydraulique(ListeNoeuds, temp_config)
+                temp_result, _ = reseau_temp.calculerFlotMaximal()
 
                 if temp_result.flow_value > flot_actuel:
                     meilleure_liaison = (liaison_cible, cap_test)

@@ -37,6 +37,10 @@ def menu_terminal():
             while True:
                 u = input("Sommet de départ : ").strip().upper()
                 v = input("Sommet d’arrivée : ").strip().upper()
+                
+                if u == v:
+                    print("❌ La liaison ne peut pas être entre un même sommet.")
+                    continue
 
                 if not liaison_existe(u, v, liaisons_actuelles):
                     print(f"❌ La liaison ({u}, {v}) n’existe pas.")
