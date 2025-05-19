@@ -1,6 +1,6 @@
 import sys
 import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import pytest 
 from src.data import *
@@ -15,6 +15,7 @@ profiler.start()
 
 # 👉 Ici tu mets la fonction lente
 optimiser_liaisons_pour_approvisionnement(
+    noeuds=ListeNoeuds,
     liaisons_actuelles=ListeLiaison,
     liaisons_possibles=[(l.depart, l.arrivee) for l in ListeLiaison],
     objectif_flot=50
