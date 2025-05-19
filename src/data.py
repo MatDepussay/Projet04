@@ -182,6 +182,7 @@ def calculerFlotMaximal_temp(noeuds: List[noeud], liaisons: List[liaison]):
 
 
 def optimiser_liaisons_pour_approvisionnement(
+    noeuds : List[noeud],
     liaisons_actuelles: List[liaison],
     liaisons_possibles: List[Tuple[str, str]],
     objectif_flot: int = 50
@@ -194,7 +195,7 @@ def optimiser_liaisons_pour_approvisionnement(
     liaisons_restantes = liaisons_possibles[:]
     travaux_effectues = []
 
-    reseau = ReseauHydraulique(ListeNoeuds, liaisons_actuelles)
+    reseau = ReseauHydraulique(noeuds, liaisons_actuelles)
     result_init, _ = reseau.calculerFlotMaximal()
     flot_actuel = result_init.flow_value
 
@@ -220,7 +221,7 @@ def optimiser_liaisons_pour_approvisionnement(
                 if not modifie:
                     temp_config.append(liaison(liaison_cible[0], liaison_cible[1], cap_test))
 
-                reseau_temp = ReseauHydraulique(ListeNoeuds, temp_config)
+                reseau_temp = ReseauHydraulique(noeuds, temp_config)
                 temp_result, _ = reseau_temp.calculerFlotMaximal()
 
                 if temp_result.flow_value > flot_actuel:

@@ -5,10 +5,12 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "coverage>=7.8.0",
     "matplotlib>=3.10.1",
     "networkx>=3.4.2",
     "numpy>=2.2.5",
     "pytest>=8.3.5",
+    "pytest-cov>=6.1.1",
     "scipy>=1.15.2",
 ]
 

@@ -1,13 +1,13 @@
 import sys
 import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
 
 import pytest 
 from src.data import *
 import builtins
 from io import StringIO
 from src.app import menu_terminal
-
+from src.affichage import afficherCarteEnoncer, afficherCarte
 
 def test_modification_liaison_ameliore_flot():
     original = ListeLiaison[:]
@@ -41,24 +41,19 @@ def test_optimiser_liaisons_priorise_meilleure_liaison():
         noeud("C", "ville", 10),
     ]
 
-    
     liste_liaisons = [
         liaison("A", "B", 1),  
         liaison("B", "C", 1),  
     ]
 
-    
     liaisons_a_optimiser = [("A", "B"), ("B", "C")]
 
-    
-    config_finale, travaux = optimiser_liaisons(liste_liaisons, liaisons_a_optimiser)
+    config_finale, travaux = optimiser_liaisons(liste_noeuds, liste_liaisons, liaisons_a_optimiser)
     assert len(travaux) == 2
     assert travaux[0][2] <= travaux[1][2]  
 
-
     for _, cap, _ in travaux:
         assert 1 <= cap <= 20
-
 
 def test_menu_travaux(monkeypatch, capsys):
     inputs = iter([
@@ -66,7 +61,7 @@ def test_menu_travaux(monkeypatch, capsys):
         "A", "E",
         "I", "L",
         "n",    
-        "3"     
+        "4"     
     ])
     
     monkeypatch.setattr("builtins.input", lambda _: next(inputs)) #monkeypatch input pour simuler les entrées utilisateur
@@ -75,7 +70,7 @@ def test_menu_travaux(monkeypatch, capsys):
     menu_terminal()
     
     out, _ = capsys.readouterr()
- 
+
     assert "Optimisation de l’ordre des travaux" in out
     assert "Travaux #1" in out
     assert "Au revoir" in out
