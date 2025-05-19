@@ -79,24 +79,22 @@ def afficherCarteEnoncer(result=None, index_noeuds=None, liaisons=None):
     for l in liaisons:
         G.add_edge(l.depart, l.arrivee, weight=l.capacite)
 
-    pos = nx.spring_layout(G, seed=42)
+    pos = nx.kamada_kawai_layout(G)
 
     node_colors = []
     labels = {}
-
-    # Création d'un dictionnaire pour accès rapide aux infos de noeuds
     infos_noeuds = {n.nom: n for n in ListeNoeuds}
 
     for node in G.nodes:
         if node in ['A', 'B', 'C', 'D']:  # Sources
             cap = infos_noeuds[node].capaciteMax
             node_colors.append('lightcoral')
-            labels[node] = f"{node}\n({cap})"
-        elif node in ['J', 'K', 'L']:  # Villes / puits
+            labels[node] = f"{node}\n({cap} u.)"
+        elif node in ['J', 'K', 'L']:  # Puits
             cap = infos_noeuds[node].capaciteMax
             node_colors.append('lightgreen')
-            labels[node] = f"{node}\n({cap})"
-        else:
+            labels[node] = f"{node}\n({cap} u.)"
+        else:  # Intermédiaires
             node_colors.append('skyblue')
             labels[node] = node
 
@@ -105,16 +103,17 @@ def afficherCarteEnoncer(result=None, index_noeuds=None, liaisons=None):
     nx.draw_networkx_edges(G, pos, edge_color='gray', arrows=True, arrowstyle='-|>', arrowsize=20)
     nx.draw_networkx_labels(G, pos, labels, font_size=12, font_weight='bold')
 
-    edge_labels = nx.get_edge_attributes(G, 'weight')
-    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, ax=ax, font_color='red')
+    # 👉 Afficher uniquement la capacité sur les arêtes
+    edge_labels = {(u, v): f"{G[u][v]['weight']}" for u, v in G.edges}
+    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_color='red')
 
     if result:
         flot_maximal = result.flow_value
-        ax.text(1.02, 0.02, f"Flot maximal : {flot_maximal} u.",
-                transform=ax.transAxes, fontsize=12, color='darkred',
-                bbox=dict(facecolor='white', edgecolor='darkred', boxstyle='round,pad=0.3'))
+        plt.gcf().text(0.95, 0.05, f"Flot maximal : {flot_maximal} u.",
+                       fontsize=12, color='darkred', ha='right', va='bottom',
+                       bbox=dict(facecolor='white', edgecolor='darkred', boxstyle='round,pad=0.3'))
 
-    plt.title("Carte des Liaisons (capacités des sources et puits)")
+    plt.title("Carte des Liaisons (Capacités maximales)")
     plt.axis('off')
     plt.tight_layout()
     plt.show()
