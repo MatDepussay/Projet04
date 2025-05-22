@@ -1,16 +1,17 @@
 import sys
 import os
+import builtins
 from scipy.sparse import csr_matrix
 from pyinstrument import Profiler
 from io import StringIO
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import pytest 
-from data import ListeLiaison, ListeNoeuds, optimiser_liaisons, optimiser_liaisons_pour_approvisionnement, liaison_existe, ReseauHydraulique, liaison, noeud
+from src.data import ListeLiaison, ListeNoeuds, optimiser_liaisons, optimiser_liaisons_pour_approvisionnement, liaison_existe, ReseauHydraulique, liaison, noeud
 import builtins
 
-from affichage import afficherCarteEnoncer, afficherCarte
-from app import menu_terminal
+from src.affichage import afficherCarteEnoncer, afficherCarte
+from src.app import menu_terminal, menu_generalisation
 
 
 profiler = Profiler()
@@ -93,3 +94,55 @@ def test_menu_travaux(monkeypatch, capsys):
     assert "Optimisation de l’ordre des travaux" in out
     assert "Travaux #1" in out
     assert "Au revoir" in out
+
+def simulate_inputs(inputs):
+    """ Utilitaire pour simuler les inputs utilisateur """
+    return lambda _: next(inputs)
+
+def test_menu_option_0(monkeypatch, capsys):
+    inputs = iter(["0", "4"])  # Affiche carte Enoncer, puis quitte
+    monkeypatch.setattr("builtins.input", simulate_inputs(inputs))
+    menu_terminal()
+    out, _ = capsys.readouterr()
+    assert "Carte des Liaisons" in out or "Flot maximal" in out
+
+def test_menu_option_1(monkeypatch, capsys):
+    inputs = iter(["1", "4"])
+    monkeypatch.setattr("builtins.input", simulate_inputs(inputs))
+    menu_terminal()
+    out, _ = capsys.readouterr()
+    assert "Carte des Liaisons avec Flot Effectif" in out
+
+def test_menu_option_3_retour(monkeypatch, capsys):
+    inputs = iter(["3", "3", "4"])  # entre menu généralisation, puis revient
+    monkeypatch.setattr("builtins.input", simulate_inputs(inputs))
+    menu_terminal()
+    out, _ = capsys.readouterr()
+    assert "MENU GÉNÉRALISATION" in out
+
+def test_menu_option_invalide(monkeypatch, capsys):
+    inputs = iter(["xyz", "4"])
+    monkeypatch.setattr("builtins.input", simulate_inputs(inputs))
+    menu_terminal()
+    out, _ = capsys.readouterr()
+    assert "Choix invalide" in out
+
+def test_generalisation_optimiser(monkeypatch, capsys):
+    inputs = iter(["1", "3"])
+    monkeypatch.setattr("builtins.input", simulate_inputs(inputs))
+    menu_generalisation()
+    out, _ = capsys.readouterr()
+    assert "Approvisionner" in out
+    assert "Résultat final" in out
+
+def test_generalisation_source_out(monkeypatch, capsys):
+    inputs = iter([
+        "2",     # Choix désactivation d’une source
+        "A", "E", # Liaison à modifier
+        "3"      # Retour
+    ])
+    monkeypatch.setattr("builtins.input", simulate_inputs(inputs))
+    menu_generalisation()
+    out, _ = capsys.readouterr()
+    assert "Source choisie aléatoirement" in out
+    assert "Nouvelle capacité" in out
