@@ -1,17 +1,10 @@
 import sys
 import os
-import builtins
-from scipy.sparse import csr_matrix
 from unittest.mock import patch
 from pyinstrument import Profiler
-from io import StringIO
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
+from data import ListeLiaisons, ListeNoeuds, optimiser_liaisons, optimiser_liaisons_pour_approvisionnement, liaison_existe, ReseauHydraulique, liaison, noeud
 
-import pytest 
-from data import ListeLiaison, ListeNoeuds, optimiser_liaisons, optimiser_liaisons_pour_approvisionnement, liaison_existe, ReseauHydraulique, liaison, noeud
-import builtins
-
-from affichage import afficherCarteEnoncer, afficherCarte
 from app import menu_terminal, menu_generalisation
 
 
@@ -21,8 +14,8 @@ profiler.start()
 # 👉 Ici tu mets la fonction lente
 optimiser_liaisons_pour_approvisionnement(
     noeuds=ListeNoeuds,
-    liaisons_actuelles=ListeLiaison,
-    liaisons_possibles=[(l.depart, l.arrivee) for l in ListeLiaison],
+    liaisons_actuelles=ListeLiaisons,
+    liaisons_possibles=[(l.depart, l.arrivee) for l in ListeLiaisons],
     objectif_flot=50
 )
 
@@ -31,8 +24,8 @@ print(profiler.output_text(unicode=True, color=True))
 
 
 def test_modification_liaison_ameliore_flot():
-    original = ListeLiaison[:]
-    modifiee = [l if l.depart != "A" or l.arrivee != "E" else liaison("A", "E", 15) for l in ListeLiaison]
+    original = ListeLiaisons[:]
+    modifiee = [l if l.depart != "A" or l.arrivee != "E" else liaison("A", "E", 15) for l in ListeLiaisons]
     
     flot_avant, _ = ReseauHydraulique(ListeNoeuds, original).calculerFlotMaximal()
     flot_apres, _ = ReseauHydraulique(ListeNoeuds, modifiee).calculerFlotMaximal()
@@ -76,13 +69,13 @@ def test_creation_noeud():
     assert n.capaciteMax == 10
 
 def test_liaison_existe():
-    assert liaison_existe("A","E", ListeLiaison) == True
-    assert liaison_existe("A", "H", ListeLiaison) == False
-    assert liaison_existe("E", "A", ListeLiaison) == False
+    assert liaison_existe("A","E", ListeLiaisons) == True
+    assert liaison_existe("A", "H", ListeLiaisons) == False
+    assert liaison_existe("E", "A", ListeLiaisons) == False
 
 
 def test_liaison_inexistante():
-    assert not liaison_existe("Z", "Q", ListeLiaison)
+    assert not liaison_existe("Z", "Q", ListeLiaisons)
 
 def test_optimiser_liaisons_priorise_meilleure_liaison():
     

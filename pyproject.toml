@@ -7,11 +7,13 @@ requires-python = ">=3.13"
 dependencies = [
     "coverage>=7.8.0",
     "matplotlib>=3.10.1",
+    "mypy>=1.15.0",
     "networkx>=3.4.2",
     "numpy>=2.2.5",
     "pyinstrument>=5.0.1",
     "pytest>=8.3.5",
     "pytest-cov>=6.1.1",
+    "ruff>=0.11.11",
     "scipy>=1.15.2",
 ]
 

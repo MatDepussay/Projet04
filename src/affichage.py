@@ -1,10 +1,10 @@
 import networkx as nx
 import matplotlib.pyplot as plt
-from data import ListeNoeuds, ListeLiaison
+from data import ListeNoeuds, ListeLiaisons
 
 def afficherCarte(result=None, index_noeuds=None, liaisons=None):
     if liaisons is None:
-        liaisons = ListeLiaison
+        liaisons = ListeLiaisons
 
     G = nx.DiGraph()
     G.add_nodes_from([n.nom for n in ListeNoeuds])
@@ -71,7 +71,7 @@ def afficherCarte(result=None, index_noeuds=None, liaisons=None):
 
 def afficherCarteEnoncer(result=None, index_noeuds=None, liaisons=None):
     if liaisons is None:
-        liaisons = ListeLiaison
+        liaisons = ListeLiaisons
 
     G = nx.DiGraph()
     G.add_nodes_from([n.nom for n in ListeNoeuds])

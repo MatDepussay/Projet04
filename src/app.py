@@ -1,13 +1,12 @@
 from affichage import afficherCarte, afficherCarteEnoncer
 from data import *
-from data import liaison as Liaison
 import copy
 import random
 import matplotlib.pyplot as plt 
 
 
 def menu_terminal():
-    liaisons_actuelles = copy.deepcopy(ListeLiaison)
+    liaisons_actuelles = copy.deepcopy(ListeLiaisons)
 
     while True:
         print("\n=== MENU ===")
@@ -89,11 +88,11 @@ def menu_generalisation():
             print(f"\n🎯 Objectif : Approvisionner {objectif} unités (100% des villes)")
             
             # Définir les liaisons modifiables : ici on autorise à modifier toutes les liaisons existantes
-            liaisons_modifiables = [(l.depart, l.arrivee) for l in ListeLiaison]
+            liaisons_modifiables = [(l.depart, l.arrivee) for l in ListeLiaisons]
 
             nouvelle_config, travaux = optimiser_liaisons_pour_approvisionnement(
                 noeuds=ListeNoeuds,
-                liaisons_actuelles=ListeLiaison,
+                liaisons_actuelles=ListeLiaisons,
                 liaisons_possibles=liaisons_modifiables,
                 objectif_flot=objectif
             )
@@ -124,8 +123,8 @@ def menu_generalisation():
                     break
 
             # Recalcul du flot maximal
-            result, index_noeuds = calculerFlotMaximal_temp(ListeNoeuds, ListeLiaison)
-            afficherCarte(result=result, index_noeuds=index_noeuds, liaisons=ListeLiaison)
+            result, index_noeuds = calculerFlotMaximal_temp(ListeNoeuds, ListeLiaisons)
+            afficherCarte(result=result, index_noeuds=index_noeuds, liaisons=ListeLiaisons)
             plt.pause(0.1)
 
             # === Sélection d’une liaison à mettre en travaux pendant que la carte est ouverte ===
@@ -134,13 +133,13 @@ def menu_generalisation():
                 u = input("Sommet de départ : ").strip().upper()
                 v = input("Sommet d’arrivée : ").strip().upper()
 
-                if not liaison_existe(u, v, ListeLiaison):
+                if not liaison_existe(u, v, ListeLiaisons):
                     print(f"❌ La liaison ({u} ➝ {v}) n’existe pas. Réessaie.")
                     continue
                 break
 
             # Mise en travaux de la liaison
-            for liaison in ListeLiaison:
+            for liaison in ListeLiaisons:
                 if liaison.depart == u and liaison.arrivee == v:
                     print(f"🔧 Mise en travaux de la liaison : {u} ➝ {v}")
                     print(f"   Capacité actuelle : {liaison.capacite}")
@@ -149,11 +148,11 @@ def menu_generalisation():
                     break
 
             # Recalcul du flot après travaux
-            reseau = ReseauHydraulique(ListeNoeuds, ListeLiaison)
+            reseau = ReseauHydraulique(ListeNoeuds, ListeLiaisons)
             result_modifie, index_noeuds_modifie = reseau.calculerFlotMaximal()
 
             # Affichage mis à jour
-            afficherCarte(result=result_modifie, index_noeuds=index_noeuds_modifie, liaisons=ListeLiaison)
+            afficherCarte(result=result_modifie, index_noeuds=index_noeuds_modifie, liaisons=ListeLiaisons)
             print(f"🚀 Nouveau flot maximal : {result_modifie.flow_value} u.")
             plt.ioff()
 

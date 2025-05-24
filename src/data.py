@@ -2,7 +2,6 @@ from typing import List, Tuple, Dict
 from numpy import array
 from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import maximum_flow
-from copy import deepcopy
 from dataclasses import dataclass
 
 @dataclass
@@ -60,6 +59,17 @@ class ReseauHydraulique:
         return f"--- Noeuds ---\n{noeuds_str}\n\n--- Liaisons ---\n{liaisons_str}"
 
     def calculerFlotMaximal(self):
+        '''
+            Elle calcule le flux qui circulent dans les liaisons ainsi que le flot que les villes reçoivent.
+            
+            >>> Retourne :
+                    Flot maximal total : 37 unités
+                    Détail des flux utilisés :
+                    A -> E : 7 unités --> Il y a 7k m3 d'eau qui circulent dans la liaison A-E
+                    super_source -> A : 7 -->La source a délivre 7K m3 dans le systeme
+                    K-> super_puits : 20 --> la ville reçoit 20K m3 du systeme
+                    ...
+        '''
 
         # Calcul du flot
         result = maximum_flow(self.matrice_sparse,
@@ -81,6 +91,17 @@ class ReseauHydraulique:
         return result, self.index_noeuds
     
 def liaison_existe(depart: str, arrivee: str, liaisons: List[liaison]) -> bool:
+    '''
+        Vérifie si une liaison existe entre deux nœuds.
+
+    Args:
+        depart (str): Le nom du nœud de départ.
+        arrivee (str): Le nom du nœud d'arrivée.
+        liaisons (List[liaison]): La liste des liaisons disponibles.
+
+    Returns:
+        bool: True si une liaison entre `depart` et `arrivee` existe, sinon False.
+    '''
     for l in liaisons:
         if (l.depart == depart and l.arrivee == arrivee):
             return True
@@ -90,12 +111,19 @@ def optimiser_liaisons(
     noeuds: List[noeud],
     liaisons_actuelles: List[liaison],
     liaisons_a_optimiser: List[Tuple[str, str]]
-) -> Tuple[List[liaison], List[Tuple[Tuple[str, str], int, int]]]:
+    ) -> Tuple[List[noeud], List[liaison], List[Tuple[Tuple[str, str], int, int]]]:
     
     """
-    Optimise les capacités des liaisons spécifiées pour maximiser le flot global.
-    Retourne la nouvelle config et une liste des travaux effectués :
-    [((depart, arrivee), capacité_choisie, flot_max_après_modification)]
+    Optimise l'ordre des travaux à effecter ainsi que les capacités des flots des liaisons choisies pour les travaux afin de maximiser le flot global.
+    
+    >>> Retourne l'ordre des travaux à effectuer :
+        Travaux #1 : Liaison A -> E
+        Travaux #2 : Liaison I -> L
+        
+        Retourne La nouvelle capacité de la liaison ainsi que son impact sur le flot maximal:
+        Capacité Choisie : 8 unités
+        Nouveau Flot Maxiaml : 38 unités
+        
     """
     meilleure_config = liaisons_actuelles[:]
     liaisons_restantes = liaisons_a_optimiser[:]
@@ -152,7 +180,7 @@ ListeNoeuds = [
     noeud("L", "ville", 15),
 ]
 
-ListeLiaison = [
+ListeLiaisons = [
     liaison("A", "E", 7),
     liaison("B", "F", 10),
     liaison("B", "G", 7),
@@ -172,7 +200,7 @@ ListeLiaison = [
 ]
 
 # Création du réseau global
-reseau = ReseauHydraulique(ListeNoeuds, ListeLiaison)
+reseau = ReseauHydraulique(ListeNoeuds, ListeLiaisons)
 
 # Pour compatibilité avec l’ancien code
 def calculerFlotMaximal_temp(noeuds: List[noeud], liaisons: List[liaison]):
