@@ -3,6 +3,25 @@ import matplotlib.pyplot as plt
 from data import ListeNoeuds, ListeLiaisons
 
 def afficherCarte(result=None, index_noeuds=None, liaisons=None):
+    """    
+    Affiche une carte du réseau hydraulique en utilisant NetworkX et Matplotlib.
+
+    Cette fonction trace les nœuds et les liaisons d’un graphe orienté représentant un réseau d’approvisionnement
+    en eau. Si un flot a été calculé, les flux effectifs sont annotés sur les arêtes ainsi que les apports
+    reçus par les villes et délivrés par les sources.
+
+
+    Notes
+ 
+    - Les nœuds de type **source** sont colorés en rouge clair avec leur contribution (u.).
+    - Les nœuds de type **ville** sont colorés en vert clair avec leur réception (u.).
+    - Les autres nœuds sont colorés en bleu ciel.
+    - Les arêtes affichent les flux effectifs suivis de leur capacité maximale sous forme `flux / capacité`.
+
+    Exemple
+   
+    >>> afficherCarte(result, index_noeuds, liaisons)
+    """
     if liaisons is None:
         liaisons = ListeLiaisons
 
@@ -70,6 +89,21 @@ def afficherCarte(result=None, index_noeuds=None, liaisons=None):
     plt.show()
 
 def afficherCarteEnoncer(result=None, index_noeuds=None, liaisons=None):
+    """
+        Affiche une carte du réseau hydraulique en utilisant NetworkX et Matplotlib.
+
+        Cette fonction trace les nœuds et les liaisons d’un graphe orienté représentant un réseau d’approvisionnement
+        en eau.
+
+    Notes
+        - Les nœuds de type **source** sont colorés en rouge clair avec leur contribution (u.).
+        - Les nœuds de type **ville** sont colorés en vert clair avec leur réception (u.).
+        - Les autres nœuds sont colorés en bleu ciel.
+        - Les arêtes affichent les flux effectifs suivis de leur capacité maximale sous forme `flux / capacité`.
+
+    Exemple
+        >>> afficherCarte(result, index_noeuds, liaisons)
+    """
     if liaisons is None:
         liaisons = ListeLiaisons
 

@@ -208,10 +208,20 @@ def optimiser_liaisons_pour_approvisionnement(
     objectif_flot: int = 50
 ) -> Tuple[List[liaison], List[Tuple[Tuple[str, str], int, int]]]:
     """
-    Optimise les liaisons pour atteindre exactement l'objectif de flot ( 50 unités)
-    avec le minimum de travaux (liaisons modifiées).
+    Optimise les liaisons à ajouter ou modifier dans un réseau hydraulique afin d'atteindre
+    un objectif de flot minimal tout en minimisant les travaux.
 
-    >>>>>> 
+    L'algorithme ajoute progressivement des liaisons parmi les options possibles, testant différentes
+    capacités, jusqu'à atteindre ou dépasser l'objectif de flot spécifié.
+
+
+    >>>
+    Tuple[List[liaison], List[Tuple[Tuple[str, str], int, int]]]
+        - La liste des liaisons après optimisation.
+        - La liste des travaux effectués sous la forme ((départ, arrivée), capacité, flot résultant).
+
+    >>> config_finale, travaux = optimiser_liaisons_pour_approvisionnement(noeuds, liaisons_init, options, 50)
+     
     """
     meilleure_config = liaisons_actuelles[:]
     liaisons_restantes = liaisons_possibles[:]
