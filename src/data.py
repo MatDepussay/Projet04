@@ -4,8 +4,10 @@ from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import maximum_flow
 from dataclasses import dataclass
 
-@dataclass
 class noeud:
+    def __init__(self, nom: str, type: str, capaciteMax: int = 0)-> None:
+        self.nom = nom
+        self.type = type
     nom: str
     type: str  # "source", "ville", "intermediaire"
     capaciteMax: int = 0
@@ -13,8 +15,12 @@ class noeud:
     def __str__(self):
         return f"Type : {self.type}\n Nom : {self.nom}\nCapacité Maximale : {self.capaciteMax}"
 
-@dataclass
+
 class liaison:
+    def __init__(self, depart: str, arrivee: str, capacite: int) -> None:
+        self.depart = depart
+        self.arrivee = arrivee
+        self.capacite = capacite
     depart: str
     arrivee: str
     capacite: int
