@@ -24,7 +24,7 @@ class liaison:
 class ReseauHydraulique:
     def __init__(self, noeuds: List[noeud], liaisons: List[liaison]):
         self.noeuds: Dict[str, noeud] = {n.nom: n for n in noeuds}
-        self.liaisons: List[liaison] = liaisons
+        self.liaisons : List(liaison)= liaisons
         
         # Préparer le mapping des noeuds + super-source et super-puits
         self.noms_noeuds = list(self.noeuds.keys()) + ["super_source", "super_puits"]
@@ -36,9 +36,9 @@ class ReseauHydraulique:
         self.matrice_np = array([[0] * self.n for _ in range(self.n)])
         
         # Ajout des liaisons
-        for liaison in self.liaisons:
-            i, j = self.index_noeuds[liaison.depart], self.index_noeuds[liaison.arrivee]
-            self.matrice_np[i][j] = liaison.capacite
+        for liaison_obj in self.liaisons:
+            i, j = self.index_noeuds[liaison_obj.depart], self.index_noeuds[liaison_obj.arrivee]
+            self.matrice_np[i][j] = liaison_obj.capacite
 
         # Connexions super_source -> sources
         for node in self.noeuds.values():
@@ -131,7 +131,6 @@ def optimiser_liaisons(
 
     reseau_temp = ReseauHydraulique(noeuds, meilleure_config)
     result_init, _ = reseau_temp.calculerFlotMaximal()
-    meilleur_flot = result_init.flow_value
 
     while liaisons_restantes:
         meilleur_gain = -1
