@@ -189,6 +189,8 @@ def optimiser_liaisons_pour_approvisionnement(
     """
     Optimise les liaisons pour atteindre exactement l'objectif de flot ( 50 unités)
     avec le minimum de travaux (liaisons modifiées).
+
+    >>>>>> 
     """
     meilleure_config = liaisons_actuelles[:]
     liaisons_restantes = liaisons_possibles[:]

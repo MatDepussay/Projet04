@@ -5,7 +5,7 @@ from scipy.sparse import csr_matrix
 from unittest.mock import patch
 from pyinstrument import Profiler
 from io import StringIO
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))
 
 import pytest 
 from data import ListeLiaison, ListeNoeuds, optimiser_liaisons, optimiser_liaisons_pour_approvisionnement, liaison_existe, ReseauHydraulique, liaison, noeud
