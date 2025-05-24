@@ -2,15 +2,12 @@ from typing import List, Tuple, Dict
 from numpy import array
 from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import maximum_flow
-from dataclasses import dataclass
 
 class noeud:
     def __init__(self, nom: str, type: str, capaciteMax: int = 0)-> None:
         self.nom = nom
-        self.type = type
-    nom: str
-    type: str  # "source", "ville", "intermediaire"
-    capaciteMax: int = 0
+        self.type = type # "source", "ville", "intermediaire"
+        self.capaciteMax = capaciteMax
 
     def __str__(self):
         return f"Type : {self.type}\n Nom : {self.nom}\nCapacité Maximale : {self.capaciteMax}"
@@ -21,16 +18,13 @@ class liaison:
         self.depart = depart
         self.arrivee = arrivee
         self.capacite = capacite
-    depart: str
-    arrivee: str
-    capacite: int
 
     def __str__(self):
         return f"Départ : {self.depart}\n Arrivée : {self.arrivee}\nCapacité : {self.capacite}"
 class ReseauHydraulique:
     def __init__(self, noeuds: List[noeud], liaisons: List[liaison]):
         self.noeuds: Dict[str, noeud] = {n.nom: n for n in noeuds}
-        self.liaisons : List(liaison)= liaisons
+        self.liaisons : List[liaison]= liaisons
         
         # Préparer le mapping des noeuds + super-source et super-puits
         self.noms_noeuds = list(self.noeuds.keys()) + ["super_source", "super_puits"]
@@ -129,7 +123,7 @@ def optimiser_liaisons(
         Retourne La nouvelle capacité de la liaison ainsi que son impact sur le flot maximal:
         Capacité Choisie : 8 unités
         Nouveau Flot Maxiaml : 38 unités
-        
+
     """
     meilleure_config = liaisons_actuelles[:]
     liaisons_restantes = liaisons_a_optimiser[:]
