@@ -200,11 +200,6 @@ ListeLiaisons = [
 # Création du réseau global
 reseau = ReseauHydraulique(ListeNoeuds, ListeLiaisons)
 
-# Pour compatibilité avec l’ancien code
-def calculerFlotMaximal_temp(noeuds: List[noeud], liaisons: List[liaison]):
-    reseau_temp = ReseauHydraulique(noeuds, liaisons)
-    return reseau_temp.calculerFlotMaximal()
-
 
 def optimiser_liaisons_pour_approvisionnement(
     noeuds : List[noeud],

@@ -62,7 +62,9 @@ def menu_terminal():
                 print(f"   🚀 Nouveau flot maximal : {flot} unités\n")
 
             # 💧 Affichage de la carte finale
-            result, index_noeuds = calculerFlotMaximal_temp(ListeNoeuds, config_finale)
+            reseau = ReseauHydraulique(ListeNoeuds, ListeLiaisons)
+            result, index_noeuds = reseau.calculerFlotMaximal()
+
             afficherCarte(result=result, index_noeuds=index_noeuds, liaisons=config_finale)
         
         elif choix == "3":
@@ -123,7 +125,9 @@ def menu_generalisation():
                     break
 
             # Recalcul du flot maximal
-            result, index_noeuds = calculerFlotMaximal_temp(ListeNoeuds, ListeLiaisons)
+            reseau = ReseauHydraulique(ListeNoeuds, ListeLiaisons)
+            result, index_noeuds = reseau.calculerFlotMaximal()
+
             afficherCarte(result=result, index_noeuds=index_noeuds, liaisons=ListeLiaisons)
             plt.pause(0.1)
 
