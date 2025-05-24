@@ -6,6 +6,22 @@ import matplotlib.pyplot as plt
 
 
 def menu_terminal():
+    """    Affiche un menu interactif dans le terminal pour visualiser et manipuler un réseau hydraulique.
+
+    Ce menu propose plusieurs fonctionnalités :
+    0 - Afficher la carte de l'énoncé sans flot maximal.
+    1 - Calculer et afficher la carte avec le flot maximal.
+    2 - Lancer une optimisation des travaux sur certaines liaisons :
+        - L'utilisateur sélectionne manuellement les liaisons à optimiser.
+        - Le programme optimise l’ordre des travaux pour maximiser le flot.
+        - Affiche les nouvelles capacités et le flot maximal à chaque étape.
+    3 - Accéder au sous-menu de généralisation.
+    4 - Quitter le programme.
+
+    La fonction exécute une boucle infinie jusqu’à ce que l’utilisateur choisisse de quitter.
+    Elle effectue des copies profondes des données pour éviter toute modification accidentelle.
+
+    Aucune valeur n'est retournée. Tous les résultats sont affichés directement dans le terminal."""
     liaisons_actuelles = copy.deepcopy(ListeLiaisons)
 
     while True:
@@ -77,10 +93,32 @@ def menu_terminal():
             print("❌ Choix invalide.")
         
 def menu_generalisation():
+    """
+    Affiche un menu terminal dédié à des scénarios de généralisation sur le réseau hydraulique.
+
+    Ce menu permet d'explorer et de tester deux cas plus complexes :
+    
+    1 - Optimiser dynamiquement les liaisons du réseau pour garantir un approvisionnement 
+        à 100 % des villes. Cela repose sur un recalcul global des capacités des liaisons existantes 
+        pour atteindre un objectif de flot précis (la somme des besoins des villes).
+    
+    2 - Simuler l'assèchement aléatoire d'une source :
+        - Choix aléatoire d'une source dont la capacité est mise à zéro.
+        - Affichage du nouveau flot maximal.
+        - L'utilisateur choisit ensuite une liaison à renforcer (+5 unités de capacité).
+        - Affichage mis à jour avec le nouveau flot après ces travaux.
+
+    3 - Revenir au menu précédent.
+
+    La fonction boucle jusqu'à ce que l'utilisateur choisisse de quitter ce sous-menu.
+
+    Aucune valeur n’est retournée ; les actions sont effectuées et les résultats affichés
+    directement dans le terminal et via des cartes graphiques.
+    """
     while True:
         print("\n=== MENU GÉNÉRALISATION ===")
         print("1. Optimiser les liaisons pour approvisionner 100% les villes")
-        print("2. Conserver le calcul actuel (flot maximal existant)")
+        print("2. Assèchement aléatoire d’une source")
         print("3. Retour")
 
         choix = input("Choix : ")
