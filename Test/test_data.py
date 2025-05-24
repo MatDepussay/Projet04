@@ -15,7 +15,7 @@ profiler.start()
 optimiser_liaisons_pour_approvisionnement(
     noeuds=ListeNoeuds,
     liaisons_actuelles=ListeLiaisons,
-    liaisons_possibles=[(l.depart, l.arrivee) for l in ListeLiaisons],
+    liaisons_possibles=[(liaison.depart, liaison.arrivee) for liaison in ListeLiaisons],
     objectif_flot=50
 )
 
@@ -25,7 +25,7 @@ print(profiler.output_text(unicode=True, color=True))
 
 def test_modification_liaison_ameliore_flot():
     original = ListeLiaisons[:]
-    modifiee = [l if l.depart != "A" or l.arrivee != "E" else liaison("A", "E", 15) for l in ListeLiaisons]
+    modifiee = [liaison if liaison.depart != "A" or liaison.arrivee != "E" else liaison("A", "E", 15) for liaison in ListeLiaisons]
     
     flot_avant, _ = ReseauHydraulique(ListeNoeuds, original).calculerFlotMaximal()
     flot_apres, _ = ReseauHydraulique(ListeNoeuds, modifiee).calculerFlotMaximal()
@@ -69,9 +69,9 @@ def test_creation_noeud():
     assert n.capaciteMax == 10
 
 def test_liaison_existe():
-    assert liaison_existe("A","E", ListeLiaisons) == True
-    assert liaison_existe("A", "H", ListeLiaisons) == False
-    assert liaison_existe("E", "A", ListeLiaisons) == False
+    assert liaison_existe("A","E", ListeLiaisons)
+    assert not liaison_existe("A", "H", ListeLiaisons)
+    assert not liaison_existe("E", "A", ListeLiaisons)
 
 
 def test_liaison_inexistante():

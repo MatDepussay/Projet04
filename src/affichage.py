@@ -9,8 +9,8 @@ def afficherCarte(result=None, index_noeuds=None, liaisons=None):
     G = nx.DiGraph()
     G.add_nodes_from([n.nom for n in ListeNoeuds])
 
-    for l in liaisons:
-        G.add_edge(l.depart, l.arrivee, weight=l.capacite)
+    for liaison in liaisons:
+        G.add_edge(liaison.depart, liaison.arrivee, weight=liaison.capacite)
 
     pos = nx.kamada_kawai_layout(G)
 
@@ -76,8 +76,8 @@ def afficherCarteEnoncer(result=None, index_noeuds=None, liaisons=None):
     G = nx.DiGraph()
     G.add_nodes_from([n.nom for n in ListeNoeuds])
 
-    for l in liaisons:
-        G.add_edge(l.depart, l.arrivee, weight=l.capacite)
+    for liaison in liaisons:
+        G.add_edge(liaison.depart, liaison.arrivee, weight=liaison.capacite)
 
     pos = nx.kamada_kawai_layout(G)
 

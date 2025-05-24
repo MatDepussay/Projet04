@@ -1,5 +1,5 @@
 from affichage import afficherCarte, afficherCarteEnoncer
-from data import *
+from data import ListeNoeuds, ListeLiaisons, ReseauHydraulique, optimiser_liaisons, optimiser_liaisons_pour_approvisionnement, liaison_existe, calculerFlotMaximal_temp
 import copy
 import random
 import matplotlib.pyplot as plt 
@@ -88,7 +88,7 @@ def menu_generalisation():
             print(f"\n🎯 Objectif : Approvisionner {objectif} unités (100% des villes)")
             
             # Définir les liaisons modifiables : ici on autorise à modifier toutes les liaisons existantes
-            liaisons_modifiables = [(l.depart, l.arrivee) for l in ListeLiaisons]
+            liaisons_modifiables = [(liaison.depart, liaison.arrivee) for liaison in ListeLiaisons]
 
             nouvelle_config, travaux = optimiser_liaisons_pour_approvisionnement(
                 noeuds=ListeNoeuds,

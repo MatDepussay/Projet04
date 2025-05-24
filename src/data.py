@@ -36,9 +36,9 @@ class ReseauHydraulique:
         self.matrice_np = array([[0] * self.n for _ in range(self.n)])
         
         # Ajout des liaisons
-        for l in self.liaisons:
-            i, j = self.index_noeuds[l.depart], self.index_noeuds[l.arrivee]
-            self.matrice_np[i][j] = l.capacite
+        for liaison in self.liaisons:
+            i, j = self.index_noeuds[liaison.depart], self.index_noeuds[liaison.arrivee]
+            self.matrice_np[i][j] = liaison.capacite
 
         # Connexions super_source -> sources
         for node in self.noeuds.values():
@@ -55,7 +55,7 @@ class ReseauHydraulique:
 
     def __str__(self):
         noeuds_str = "\n".join(str(n) for n in self.noeuds.values())
-        liaisons_str = "\n".join(str(l) for l in self.liaisons)
+        liaisons_str = "\n".join(str(liaison_obj) for liaison_obj in self.liaisons)
         return f"--- Noeuds ---\n{noeuds_str}\n\n--- Liaisons ---\n{liaisons_str}"
 
     def calculerFlotMaximal(self):
@@ -102,8 +102,8 @@ def liaison_existe(depart: str, arrivee: str, liaisons: List[liaison]) -> bool:
     Returns:
         bool: True si une liaison entre `depart` et `arrivee` existe, sinon False.
     '''
-    for l in liaisons:
-        if (l.depart == depart and l.arrivee == arrivee):
+    for liaison in liaisons:
+        if (liaison.depart == depart and liaison.arrivee == arrivee):
             return True
     return False
 
@@ -142,10 +142,9 @@ def optimiser_liaisons(
         for liaison_cible in liaisons_restantes:
             for cap_test in range(1, 21):
                 temp_temp_config = meilleure_config[:]
-                for i, l in enumerate(temp_temp_config):
-                    if (l.depart, l.arrivee) == liaison_cible:
-                        temp_temp_config[i] = liaison(l.depart, l.arrivee, cap_test)
-
+                for i, liaison_obj in enumerate(temp_temp_config):
+                    if (liaison_obj.depart, liaison_obj.arrivee) == liaison_cible:
+                        temp_temp_config[i] = liaison(liaison_obj.depart, liaison_obj.arrivee, cap_test)
                 reseau_temp = ReseauHydraulique(noeuds, temp_temp_config)
                 temp_result, _ = reseau_temp.calculerFlotMaximal()
 
@@ -239,8 +238,8 @@ def optimiser_liaisons_pour_approvisionnement(
         for liaison_cible in liaisons_restantes:
             # Cherche si la liaison existe déjà
             index_exist = None
-            for i, l in enumerate(meilleure_config):
-                if (l.depart, l.arrivee) == liaison_cible:
+            for i, liaison_obj in enumerate(meilleure_config):
+                if (liaison_obj.depart, liaison_obj.arrivee) == liaison_cible:
                     index_exist = i
                     break
 
