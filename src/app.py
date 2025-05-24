@@ -1,5 +1,5 @@
 from affichage import afficherCarte, afficherCarteEnoncer
-from data import ListeNoeuds, ListeLiaisons, ReseauHydraulique, optimiser_liaisons, optimiser_liaisons_pour_approvisionnement, liaison_existe, calculerFlotMaximal_temp
+from data import ListeNoeuds, ListeLiaisons, ReseauHydraulique, optimiser_liaisons, optimiser_liaisons_pour_approvisionnement, liaison_existe
 import copy
 import random
 import matplotlib.pyplot as plt 
