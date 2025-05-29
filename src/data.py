@@ -3,7 +3,7 @@ from numpy import array
 from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import maximum_flow
 
-class noeud:
+class Noeud:
     def __init__(self, nom: str, type: str, capaciteMax: int = 0)-> None:
         self.nom = nom
         self.type = type # "source", "ville", "intermediaire"
@@ -12,7 +12,7 @@ class noeud:
     def __str__(self):
         return f"Type : {self.type}\n Nom : {self.nom}\nCapacité Maximale : {self.capaciteMax}"
 
-class liaison:
+class Liaison:
     def __init__(self, depart: str, arrivee: str, capacite: int) -> None:
         self.depart = depart
         self.arrivee = arrivee
@@ -21,9 +21,9 @@ class liaison:
     def __str__(self):
         return f"Départ : {self.depart}\n Arrivée : {self.arrivee}\nCapacité : {self.capacite}"
 class ReseauHydraulique:
-    def __init__(self, noeuds: List[noeud], liaisons: List[liaison]):
-        self.noeuds: Dict[str, noeud] = {n.nom: n for n in noeuds}
-        self.liaisons : List[liaison]= liaisons
+    def __init__(self, noeuds: List[Noeud], liaisons: List[Liaison]):
+        self.noeuds: Dict[str, Noeud] = {n.nom: n for n in noeuds}
+        self.liaisons : List[Liaison]= liaisons
         
         # Préparer le mapping des noeuds + super-source et super-puits
         self.noms_noeuds = list(self.noeuds.keys()) + ["super_source", "super_puits"]
@@ -89,7 +89,7 @@ class ReseauHydraulique:
 
         return result, self.index_noeuds
     
-def liaison_existe(depart: str, arrivee: str, liaisons: List[liaison]) -> bool:
+def liaison_existe(depart: str, arrivee: str, liaisons: List[Liaison]) -> bool:
     '''
         Vérifie si une liaison existe entre deux nœuds.
 
@@ -107,10 +107,10 @@ def liaison_existe(depart: str, arrivee: str, liaisons: List[liaison]) -> bool:
     return False
 
 def optimiser_liaisons(
-    noeuds: List[noeud],
-    liaisons_actuelles: List[liaison],
+    noeuds: List[Noeud],
+    liaisons_actuelles: List[Liaison],
     liaisons_a_optimiser: List[Tuple[str, str]]
-    ) -> Tuple[List[noeud], List[liaison], List[Tuple[Tuple[str, str], int, int]]]:
+    ) -> Tuple[List[Noeud], List[Liaison], List[Tuple[Tuple[str, str], int, int]]]:
     
     """
     Optimise l'ordre des travaux à effecter ainsi que les capacités des flots des liaisons choisies pour les travaux afin de maximiser le flot global.
@@ -142,7 +142,7 @@ def optimiser_liaisons(
                 temp_temp_config = meilleure_config[:]
                 for i, liaison_obj in enumerate(temp_temp_config):
                     if (liaison_obj.depart, liaison_obj.arrivee) == liaison_cible:
-                        temp_temp_config[i] = liaison(liaison_obj.depart, liaison_obj.arrivee, cap_test)
+                        temp_temp_config[i] = Liaison(liaison_obj.depart, liaison_obj.arrivee, cap_test)
                 reseau_temp = ReseauHydraulique(noeuds, temp_temp_config)
                 temp_result, _ = reseau_temp.calculerFlotMaximal()
 
@@ -163,37 +163,37 @@ def optimiser_liaisons(
 
 # Définition des noeuds
 ListeNoeuds = [
-    noeud("A", "source", 15),
-    noeud("B", "source", 15),
-    noeud("C", "source", 15),
-    noeud("D", "source", 10),
-    noeud("E", "intermediaire"),
-    noeud("F", "intermediaire"),
-    noeud("G", "intermediaire"),
-    noeud("H", "intermediaire"),
-    noeud("I", "intermediaire"),
-    noeud("J", "ville", 15),
-    noeud("K", "ville", 20),
-    noeud("L", "ville", 15),
+    Noeud("A", "source", 15),
+    Noeud("B", "source", 15),
+    Noeud("C", "source", 15),
+    Noeud("D", "source", 10),
+    Noeud("E", "intermediaire"),
+    Noeud("F", "intermediaire"),
+    Noeud("G", "intermediaire"),
+    Noeud("H", "intermediaire"),
+    Noeud("I", "intermediaire"),
+    Noeud("J", "ville", 15),
+    Noeud("K", "ville", 20),
+    Noeud("L", "ville", 15),
 ]
 
 ListeLiaisons = [
-    liaison("A", "E", 7),
-    liaison("B", "F", 10),
-    liaison("B", "G", 7),
-    liaison("C", "A", 5),
-    liaison("C", "F", 5),
-    liaison("D", "G", 10),
-    liaison("E", "F", 5),
-    liaison("E", "H", 4),
-    liaison("E", "I", 15),
-    liaison("F", "G", 5),
-    liaison("F", "I", 15),
-    liaison("G", "I", 15),
-    liaison("H", "J", 7),
-    liaison("I", "K", 30),
-    liaison("I", "L", 4),
-    liaison("K", "J", 10),
+    Liaison("A", "E", 7),
+    Liaison("B", "F", 10),
+    Liaison("B", "G", 7),
+    Liaison("C", "A", 5),
+    Liaison("C", "F", 5),
+    Liaison("D", "G", 10),
+    Liaison("E", "F", 5),
+    Liaison("E", "H", 4),
+    Liaison("E", "I", 15),
+    Liaison("F", "G", 5),
+    Liaison("F", "I", 15),
+    Liaison("G", "I", 15),
+    Liaison("H", "J", 7),
+    Liaison("I", "K", 30),
+    Liaison("I", "L", 4),
+    Liaison("K", "J", 10),
 ]
 
 # Création du réseau global
@@ -201,11 +201,11 @@ reseau = ReseauHydraulique(ListeNoeuds, ListeLiaisons)
 
 
 def satisfaction(
-    noeuds : List[noeud],
-    liaisons_actuelles: List[liaison],
+    noeuds : List[Noeud],
+    liaisons_actuelles: List[Liaison],
     liaisons_possibles: List[Tuple[str, str]],
     objectif_flot: int = 50
-) -> Tuple[List[liaison], List[Tuple[Tuple[str, str], int, int]]]:
+) -> Tuple[List[Liaison], List[Tuple[Tuple[str, str], int, int]]]:
     """
     Optimise les liaisons à ajouter ou modifier dans un réseau hydraulique afin d'atteindre
     un objectif de flot minimal tout en minimisant les travaux.
@@ -247,9 +247,9 @@ def satisfaction(
             for cap_test in [5, 10, 15, 20, 25]:
                 if index_exist is not None:
                     old_liaison = meilleure_config[index_exist]
-                    meilleure_config[index_exist] = liaison(old_liaison.depart, old_liaison.arrivee, cap_test)
+                    meilleure_config[index_exist] = Liaison(old_liaison.depart, old_liaison.arrivee, cap_test)
                 else:
-                    meilleure_config.append(liaison(liaison_cible[0], liaison_cible[1], cap_test))
+                    meilleure_config.append(Liaison(liaison_cible[0], liaison_cible[1], cap_test))
 
                 reseau_temp = ReseauHydraulique(noeuds, meilleure_config)
                 temp_result, _ = reseau_temp.calculerFlotMaximal()
