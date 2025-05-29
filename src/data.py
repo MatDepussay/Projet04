@@ -201,7 +201,7 @@ ListeLiaisons = [
 reseau = ReseauHydraulique(ListeNoeuds, ListeLiaisons)
 
 
-def optimiser_liaisons_pour_approvisionnement(
+def satisfaction(
     noeuds : List[noeud],
     liaisons_actuelles: List[liaison],
     liaisons_possibles: List[Tuple[str, str]],

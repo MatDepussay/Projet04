@@ -1,5 +1,5 @@
 from affichage import afficherCarte, afficherCarteEnoncer
-from data import ListeNoeuds, ListeLiaisons, ReseauHydraulique, optimiser_liaisons, optimiser_liaisons_pour_approvisionnement, liaison_existe
+from data import ListeNoeuds, ListeLiaisons, ReseauHydraulique, optimiser_liaisons, satisfaction, liaison_existe
 import copy
 import random
 import matplotlib.pyplot as plt 
@@ -130,7 +130,7 @@ def menu_generalisation():
             # Définir les liaisons modifiables : ici on autorise à modifier toutes les liaisons existantes
             liaisons_modifiables = [(liaison.depart, liaison.arrivee) for liaison in ListeLiaisons]
 
-            nouvelle_config, travaux = optimiser_liaisons_pour_approvisionnement(
+            nouvelle_config, travaux = satisfaction(
                 noeuds=ListeNoeuds,
                 liaisons_actuelles=ListeLiaisons,
                 liaisons_possibles=liaisons_modifiables,
