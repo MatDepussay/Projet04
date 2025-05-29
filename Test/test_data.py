@@ -3,7 +3,7 @@ import os
 from unittest.mock import patch
 from pyinstrument import Profiler
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
-from data import ListeLiaisons, ListeNoeuds, optimiser_liaisons, satisfaction, liaison_existe, ReseauHydraulique, liaison, noeud
+from data import ListeLiaisons, ListeNoeuds, optimiser_liaisons, satisfaction, liaison_existe, ReseauHydraulique, Liaison, Noeud
 
 from app import menu_terminal, menu_generalisation
 
@@ -25,7 +25,7 @@ print(profiler.output_text(unicode=True, color=True))
 
 def test_modification_liaison_ameliore_flot():
     original = ListeLiaisons[:]
-    modifiee = [liaison if liaison.depart != "A" or liaison.arrivee != "E" else liaison("A", "E", 15) for liaison in ListeLiaisons]
+    modifiee = [liaison if liaison.depart != "A" or liaison.arrivee != "E" else Liaison("A", "E", 15) for liaison in ListeLiaisons]
     
     flot_avant, _ = ReseauHydraulique(ListeNoeuds, original).calculerFlotMaximal()
     flot_apres, _ = ReseauHydraulique(ListeNoeuds, modifiee).calculerFlotMaximal()
@@ -33,22 +33,22 @@ def test_modification_liaison_ameliore_flot():
     assert flot_apres.flow_value > flot_avant.flow_value
 
 def test_noeud_str():
-    noeuds = noeud("A", "source", 100)
+    noeuds = Noeud("A", "source", 100)
     attendu = "Type : source\n Nom : A\nCapacité Maximale : 100"
     assert str(noeuds) == attendu
 
 def test_liaison_str():
-    liaisons = liaison("A", "B", 50)
+    liaisons = Liaison("A", "B", 50)
     attendu = "Départ : A\n Arrivée : B\nCapacité : 50"
     assert str(liaisons) == attendu
 
 def test_reseau_hydraulique_str():
     noeuds = [
-        noeud("A", "source", 100),
-        noeud("B", "ville", 50)
+        Noeud("A", "source", 100),
+        Noeud("B", "ville", 50)
     ]
     liaisons = [
-        liaison("A", "B", 70)
+        Liaison("A", "B", 70)
     ]
     
     reseau = ReseauHydraulique(noeuds, liaisons)
@@ -63,7 +63,7 @@ def test_reseau_hydraulique_str():
     assert "Capacité : 70" in representation
 
 def test_creation_noeud():
-    n = noeud("A", "source", 10)
+    n = Noeud("A", "source", 10)
     assert n.nom == "A"
     assert n.type == "source"
     assert n.capaciteMax == 10
@@ -80,14 +80,14 @@ def test_liaison_inexistante():
 def test_optimiser_liaisons_priorise_meilleure_liaison():
     
     liste_noeuds = [
-        noeud("A", "source", 10),
-        noeud("B", "intermediaire"),
-        noeud("C", "ville", 10),
+        Noeud("A", "source", 10),
+        Noeud("B", "intermediaire"),
+        Noeud("C", "ville", 10),
     ]
 
     liste_liaisons = [
-        liaison("A", "B", 1),  
-        liaison("B", "C", 1),  
+        Liaison("A", "B", 1),  
+        Liaison("B", "C", 1),  
     ]
 
     liaisons_a_optimiser = [("A", "B"), ("B", "C")]
@@ -102,11 +102,11 @@ def test_optimiser_liaisons_priorise_meilleure_liaison():
 def test_optimisation_break_quand_aucune_amélioration():
     # Exemple de réseau très simple
     noeuds = [
-        noeud("A", "source", 5),
-        noeud("B", "ville", 5)
+        Noeud("A", "source", 5),
+        Noeud("B", "ville", 5)
     ]
     liaisons = [
-        liaison("A", "B", 5)  # Capacité déjà suffisante
+        Liaison("A", "B", 5)  # Capacité déjà suffisante
     ]
 
     # Liaisons qu’on autorise à "optimiser", mais il n’y a rien à améliorer

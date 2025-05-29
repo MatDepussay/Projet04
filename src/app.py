@@ -119,7 +119,7 @@ def menu_generalisation():
     """
     while True:
         print("\n=== MENU GÉNÉRALISATION ===")
-        print("1. Optimiser les liaisons pour approvisionner 100% les villes")
+        print("1. Optimiser les liaisons pour approvisionner 100% des villes")
         print("2. Assèchement aléatoire d’une source")
         print("3. Retour")
 
