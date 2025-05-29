@@ -12,7 +12,6 @@ class noeud:
     def __str__(self):
         return f"Type : {self.type}\n Nom : {self.nom}\nCapacité Maximale : {self.capaciteMax}"
 
-
 class liaison:
     def __init__(self, depart: str, arrivee: str, capacite: int) -> None:
         self.depart = depart
@@ -201,7 +200,7 @@ ListeLiaisons = [
 reseau = ReseauHydraulique(ListeNoeuds, ListeLiaisons)
 
 
-def optimiser_liaisons_pour_approvisionnement(
+def satisfaction(
     noeuds : List[noeud],
     liaisons_actuelles: List[liaison],
     liaisons_possibles: List[Tuple[str, str]],
@@ -212,8 +211,7 @@ def optimiser_liaisons_pour_approvisionnement(
     un objectif de flot minimal tout en minimisant les travaux.
 
     L'algorithme ajoute progressivement des liaisons parmi les options possibles, testant différentes
-    capacités, jusqu'à atteindre ou dépasser l'objectif de flot spécifié.
-
+    capacités, jusqu'à atteindre ou dépasser l'objectif de flot spécifié (satisfaire les besoins en eau de toutes les villes à 100%)
 
     >>>
     Tuple[List[liaison], List[Tuple[Tuple[str, str], int, int]]]
@@ -221,7 +219,6 @@ def optimiser_liaisons_pour_approvisionnement(
         - La liste des travaux effectués sous la forme ((départ, arrivée), capacité, flot résultant).
 
     >>> config_finale, travaux = optimiser_liaisons_pour_approvisionnement(noeuds, liaisons_init, options, 50)
-     
     """
     meilleure_config = liaisons_actuelles[:]
     liaisons_restantes = liaisons_possibles[:]

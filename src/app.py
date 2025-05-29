@@ -1,12 +1,13 @@
 from affichage import afficherCarte, afficherCarteEnoncer
-from data import ListeNoeuds, ListeLiaisons, ReseauHydraulique, optimiser_liaisons, optimiser_liaisons_pour_approvisionnement, liaison_existe, calculerFlotMaximal_temp
+from data import ListeNoeuds, ListeLiaisons, ReseauHydraulique, optimiser_liaisons, satisfaction, liaison_existe
 import copy
 import random
 import matplotlib.pyplot as plt 
 
 
 def menu_terminal():
-    """    Affiche un menu interactif dans le terminal pour visualiser et manipuler un réseau hydraulique.
+    """    
+    Affiche un menu interactif dans le terminal pour visualiser et manipuler un réseau hydraulique.
 
     Ce menu propose plusieurs fonctionnalités :
     0 - Afficher la carte de l'énoncé sans flot maximal.
@@ -21,7 +22,8 @@ def menu_terminal():
     La fonction exécute une boucle infinie jusqu’à ce que l’utilisateur choisisse de quitter.
     Elle effectue des copies profondes des données pour éviter toute modification accidentelle.
 
-    Aucune valeur n'est retournée. Tous les résultats sont affichés directement dans le terminal."""
+    Aucune valeur n'est retournée. Tous les résultats sont affichés directement dans le terminal.
+    """
     liaisons_actuelles = copy.deepcopy(ListeLiaisons)
 
     while True:
@@ -130,7 +132,7 @@ def menu_generalisation():
             # Définir les liaisons modifiables : ici on autorise à modifier toutes les liaisons existantes
             liaisons_modifiables = [(liaison.depart, liaison.arrivee) for liaison in ListeLiaisons]
 
-            nouvelle_config, travaux = optimiser_liaisons_pour_approvisionnement(
+            nouvelle_config, travaux = satisfaction(
                 noeuds=ListeNoeuds,
                 liaisons_actuelles=ListeLiaisons,
                 liaisons_possibles=liaisons_modifiables,

@@ -3,7 +3,7 @@ import os
 from unittest.mock import patch
 from pyinstrument import Profiler
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
-from data import ListeLiaisons, ListeNoeuds, optimiser_liaisons, optimiser_liaisons_pour_approvisionnement, liaison_existe, ReseauHydraulique, liaison, noeud
+from data import ListeLiaisons, ListeNoeuds, optimiser_liaisons, satisfaction, liaison_existe, ReseauHydraulique, liaison, noeud
 
 from app import menu_terminal, menu_generalisation
 
@@ -12,7 +12,7 @@ profiler = Profiler()
 profiler.start()
 
 # 👉 Ici tu mets la fonction lente
-optimiser_liaisons_pour_approvisionnement(
+satisfaction(
     noeuds=ListeNoeuds,
     liaisons_actuelles=ListeLiaisons,
     liaisons_possibles=[(liaison.depart, liaison.arrivee) for liaison in ListeLiaisons],
@@ -114,7 +114,7 @@ def test_optimisation_break_quand_aucune_amélioration():
 
     objectif = 5  # Objectif déjà atteint
 
-    nouvelle_config, travaux = optimiser_liaisons_pour_approvisionnement(
+    nouvelle_config, travaux = satisfaction(
         noeuds=noeuds,
         liaisons_actuelles=liaisons,
         liaisons_possibles=liaisons_possibles,
