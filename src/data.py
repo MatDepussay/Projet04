@@ -244,7 +244,7 @@ def satisfaction(
                     index_exist = i
                     break
 
-            for cap_test in [5, 10, 15, 20]:
+            for cap_test in [5, 10, 15, 20, 25]:
                 if index_exist is not None:
                     old_liaison = meilleure_config[index_exist]
                     meilleure_config[index_exist] = liaison(old_liaison.depart, old_liaison.arrivee, cap_test)

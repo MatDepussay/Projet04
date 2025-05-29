@@ -49,3 +49,7 @@ Les prévisions des demandes journalières maximales sont de
 4. Generalisation
    Dans un premier temps on cherche a approvisioner les villes a 100% de leurs demandent. 
    Selection aléatoire d'une source qui s'asseches comment la charge se repartie pour faire des travaux. 
+
+
+Question oral :
+- dans optimiser_liaison_pour_approvisionnement différence si on fait in range(1:21) et si on fait [5, 10, 15, 20]. On ne retrouve pas le meme résultat. 
