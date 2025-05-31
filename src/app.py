@@ -1,9 +1,52 @@
 from affichage import afficherCarte, afficherCarteEnoncer
-from data import ListeNoeuds, ListeLiaisons, ReseauHydraulique, optimiser_liaisons, satisfaction, liaison_existe
+from data import Liaison, Noeud, ListeLiaisons, ListeNoeuds, creer_liaison, creer_noeud, GestionReseau, ReseauHydraulique, optimiser_liaisons, satisfaction, liaison_existe
 import copy
 import random
 import matplotlib.pyplot as plt 
 
+reseau = GestionReseau()
+
+def menu_saisieReseau():
+    print("\n🔵 Sources :")
+    reseau.saisir_noeuds("source")
+    
+    print("\n🏙️ Villes :")
+    reseau.saisir_noeuds("ville")
+    
+    print("\n🔘 Intermédiaires (tape 'FIN' pour arrêter) :")
+    reseau.saisir_noeuds("intermediaire")
+    
+    print("\n🔗 Liaisons :")
+    reseau.saisir_liaisons()
+
+def menu_ajout_elements():
+    type_noeud_mapping = {
+        "1": "source",
+        "2": "ville",
+        "3": "intermediaire"
+    }
+
+    while True:
+        print("\n=== AJOUT D'ÉLÉMENTS ===")
+        print("1. Ajouter une source")
+        print("2. Ajouter une ville")
+        print("3. Ajouter un intermédiaire")
+        print("4. Ajouter une liaison")
+        print("5. Retour")
+
+        choix = input("Choix : ").strip()
+
+        if choix in {"1", "2", "3"}:
+            reseau.saisir_noeuds(type_noeud_mapping[choix])
+
+        elif choix == "4":
+            reseau.saisir_liaisons()
+
+        elif choix == "5":
+            break
+
+        else:
+            print("❌ Choix invalide.")
 
 def menu_terminal():
     """    
@@ -28,26 +71,29 @@ def menu_terminal():
 
     while True:
         print("\n=== MENU ===")
-        print("0. Afficher la carte de l'énoncer")
-        print("1. Afficher la carte Enoncer avec fluxmax")
-        print("2. Travaux")
-        print("3. Generalisation")
-        print("4. Quitter")
+        print("0. Ajouter un élément au réseau (source, ville, intermédiaire ou liaison)")
+        print("1. Afficher la carte de l'énoncer")
+        print("2. Afficher la carte Enoncer avec fluxmax")
+        print("3. Travaux")
+        print("4. Generalisation")
+        print("5. Quitter")
 
         choix = input("Choix : ")
-
+        
         if choix == "0":
+            menu_ajout_elements()
+
+        elif choix == "1":
             reseau = ReseauHydraulique(ListeNoeuds, liaisons_actuelles)
             result, index_noeuds = reseau.calculerFlotMaximal()
             afficherCarteEnoncer(result=result, index_noeuds=index_noeuds, liaisons=liaisons_actuelles)
 
-
-        if choix == "1":
+        elif choix == "2":
             reseau = ReseauHydraulique(ListeNoeuds, liaisons_actuelles)
             result, index_noeuds = reseau.calculerFlotMaximal()
             afficherCarte(result=result, index_noeuds=index_noeuds, liaisons=liaisons_actuelles)
 
-        elif choix == "2":
+        elif choix == "3":
             print("🛠 Sélectionne les liaisons à mettre en travaux (ordre optimisé automatiquement)")
             liaisons_a_optimiser = []
 
@@ -85,10 +131,10 @@ def menu_terminal():
 
             afficherCarte(result=result, index_noeuds=index_noeuds, liaisons=config_finale)
         
-        elif choix == "3":
+        elif choix == "4":
             menu_generalisation()
 
-        elif choix == "4":
+        elif choix == "5":
             print("Au revoir 👋")
             break
         else:
@@ -207,5 +253,6 @@ def menu_generalisation():
 
 
 if __name__ == "__main__":
+    menu_saisieReseau()
     menu_terminal()
 

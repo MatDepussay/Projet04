@@ -126,11 +126,11 @@ def test_optimisation_break_quand_aucune_amélioration():
 
 def test_menu_travaux(monkeypatch, capsys):
     inputs = iter([
-        "2",    
+        "3",    
         "A", "E",
         "I", "L",
         "n",    
-        "4"     
+        "5"     
     ])
     
     monkeypatch.setattr("builtins.input", lambda _: next(inputs)) #monkeypatch input pour simuler les entrées utilisateur
@@ -147,15 +147,15 @@ def simulate_inputs(inputs):
     """ Utilitaire pour simuler les inputs utilisateur """
     return lambda _: next(inputs)
 
-def test_menu_option_0(monkeypatch, capsys):
-    inputs = iter(["0", "4"])  # Affiche carte Enoncer, puis quitte
+def test_menu_option_1(monkeypatch, capsys):
+    inputs = iter(["1", "5"])  # Affiche carte Enoncer, puis quitte
     monkeypatch.setattr("builtins.input", simulate_inputs(inputs))
     menu_terminal()
     out, _ = capsys.readouterr()
     assert "Carte des Liaisons" in out or "Flot maximal" in out
 
-def test_menu_option_1(monkeypatch):
-    inputs = iter(["1", "4"])
+def test_menu_option_2(monkeypatch):
+    inputs = iter(["2", "5"])
     monkeypatch.setattr("builtins.input", simulate_inputs(inputs))
 
     with patch("app.afficherCarte") as mock_afficher:
@@ -163,22 +163,22 @@ def test_menu_option_1(monkeypatch):
         mock_afficher.assert_called()  # Vérifie que la fonction a été appelée
 
 
-def test_menu_option_3_retour(monkeypatch, capsys):
-    inputs = iter(["3", "3", "4"])  # entre menu généralisation, puis revient
+def test_menu_option_4_retour(monkeypatch, capsys):
+    inputs = iter(["4", "4", "5"])  # entre menu généralisation, puis revient
     monkeypatch.setattr("builtins.input", simulate_inputs(inputs))
     menu_terminal()
     out, _ = capsys.readouterr()
     assert "MENU GÉNÉRALISATION" in out
 
 def test_menu_option_invalide(monkeypatch, capsys):
-    inputs = iter(["xyz", "4"])
+    inputs = iter(["xyz", "5"])
     monkeypatch.setattr("builtins.input", simulate_inputs(inputs))
     menu_terminal()
     out, _ = capsys.readouterr()
     assert "Choix invalide" in out
 
 def test_generalisation_optimiser(monkeypatch, capsys):
-    inputs = iter(["1", "3"])
+    inputs = iter(["2", "4"])
     monkeypatch.setattr("builtins.input", simulate_inputs(inputs))
     menu_generalisation()
     out, _ = capsys.readouterr()
@@ -187,9 +187,9 @@ def test_generalisation_optimiser(monkeypatch, capsys):
 
 def test_generalisation_source_out(monkeypatch, capsys):
     inputs = iter([
-        "2",     # Choix désactivation d’une source
+        "3",     # Choix désactivation d’une source
         "A", "E", # Liaison à modifier
-        "3"      # Retour
+        "5"      # Retour
     ])
     monkeypatch.setattr("builtins.input", simulate_inputs(inputs))
     menu_generalisation()
