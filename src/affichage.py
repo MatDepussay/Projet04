@@ -1,6 +1,8 @@
 import networkx as nx
 import matplotlib.pyplot as plt
-from data import ListeNoeuds, ListeLiaisons
+from data import GestionReseau
+
+reseau = GestionReseau()
 
 def afficherCarte(result=None, index_noeuds=None, liaisons=None):
     """    
@@ -21,10 +23,10 @@ def afficherCarte(result=None, index_noeuds=None, liaisons=None):
         >>> afficherCarte(result, index_noeuds, liaisons)
     """
     if liaisons is None:
-        liaisons = ListeLiaisons
+        liaisons = reseau.ListeLiaisons
 
     G = nx.DiGraph()
-    G.add_nodes_from([n.nom for n in ListeNoeuds])
+    G.add_nodes_from([n.nom for n in reseau.ListeNoeuds])
 
     for liaison in liaisons:
         G.add_edge(liaison.depart, liaison.arrivee, weight=liaison.capacite)
@@ -35,14 +37,20 @@ def afficherCarte(result=None, index_noeuds=None, liaisons=None):
     labels = {}
     appro = {}
     sources = {}
+    
+    # 🔍 Récupération dynamique des villes et sources
+    villes = [n.nom for n in reseau.ListeNoeuds if n.type == "ville"]
+    sources_liste = [n.nom for n in reseau.ListeNoeuds if n.type == "source"]
 
     if result and index_noeuds:
-        for p in ['J', 'K', 'L']:
-            flux = result.flow[index_noeuds[p], index_noeuds['super_puits']]
-            appro[p] = flux
-        for s in ['A', 'B', 'C', 'D']:
-            flux = result.flow[index_noeuds['super_source'], index_noeuds[s]]
-            sources[s] = flux
+        for p in villes:
+            if p in index_noeuds:
+                flux = result.flow[index_noeuds[p], index_noeuds['super_puits']]
+                appro[p] = int(flux)
+        for s in sources_liste:
+            if s in index_noeuds:
+                flux = result.flow[index_noeuds['super_source'], index_noeuds[s]]
+                sources[s] = int(flux)
 
     for node in G.nodes:
         if node in appro:
@@ -66,7 +74,7 @@ def afficherCarte(result=None, index_noeuds=None, liaisons=None):
         cap = G[u][v]['weight']
         if result and index_noeuds:
             try:
-                flux = result.flow[index_noeuds[u], index_noeuds[v]]
+                flux = int(result.flow[index_noeuds[u], index_noeuds[v]])
                 edge_labels[(u, v)] = f"{int(flux)} / {cap}"
             except KeyError:
                 edge_labels[(u, v)] = f"0 / {cap}"
@@ -103,10 +111,10 @@ def afficherCarteEnoncer(result=None, index_noeuds=None, liaisons=None):
         >>> afficherCarte(result, index_noeuds, liaisons)
     """
     if liaisons is None:
-        liaisons = ListeLiaisons
+        liaisons = reseau.ListeLiaisons
 
     G = nx.DiGraph()
-    G.add_nodes_from([n.nom for n in ListeNoeuds])
+    G.add_nodes_from([n.nom for n in reseau.ListeNoeuds])
 
     for liaison in liaisons:
         G.add_edge(liaison.depart, liaison.arrivee, weight=liaison.capacite)
@@ -115,19 +123,25 @@ def afficherCarteEnoncer(result=None, index_noeuds=None, liaisons=None):
 
     node_colors = []
     labels = {}
-    infos_noeuds = {n.nom: n for n in ListeNoeuds}
+    infos_noeuds = {n.nom: n for n in reseau.ListeNoeuds}
 
     for node in G.nodes:
-        if node in ['A', 'B', 'C', 'D']:  # Sources
-            cap = infos_noeuds[node].capaciteMax
-            node_colors.append('lightcoral')
-            labels[node] = f"{node}\n({cap} u.)"
-        elif node in ['J', 'K', 'L']:  # Puits
-            cap = infos_noeuds[node].capaciteMax
-            node_colors.append('lightgreen')
-            labels[node] = f"{node}\n({cap} u.)"
-        else:  # Intermédiaires
-            node_colors.append('skyblue')
+        if node in infos_noeuds:
+            noeud = infos_noeuds[node]
+            cap = noeud.capaciteMax
+            if noeud.type == "source":
+                node_colors.append('lightcoral')
+                labels[node] = f"{node}\n({cap} u.)"
+            elif noeud.type == "ville" or noeud.type == "puits":
+                # tu peux ajouter "puits" si tu veux le distinguer des villes
+                node_colors.append('lightgreen')
+                labels[node] = f"{node}\n({cap} u.)"
+            else:  # intermediaire
+                node_colors.append('skyblue')
+                labels[node] = node
+        else:
+            # Noeud non reconnu dans infos_noeuds, couleur neutre
+            node_colors.append('grey')
             labels[node] = node
 
     plt.figure(figsize=(10, 7))

@@ -1,4 +1,4 @@
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Optional
 from numpy import array
 import json
 import os
@@ -22,9 +22,6 @@ class Liaison:
 
     def __str__(self):
         return f"Départ : {self.depart}\n Arrivée : {self.arrivee}\nCapacité : {self.capacite}"
-
-ListeNoeuds = []
-ListeLiaisons = []
 
 # Fonction de création
 def creer_noeud(nom : str, type_noeud : str, capacite: int=0, noms_existants: set = None) -> Noeud:
@@ -84,6 +81,25 @@ class GestionReseau:
     def __init__(self, ListeNoeuds: List[Noeud] = None, ListeLiaisons: List[Liaison] = None) -> None:
         self.ListeNoeuds: List[Noeud] = ListeNoeuds if ListeNoeuds is not None else []
         self.ListeLiaisons: List[Liaison] = ListeLiaisons if ListeLiaisons is not None else []
+        
+    def __str__(self):
+        res = "=== Gestion du Réseau ===\n"
+
+        res += "\n-- Noeuds --\n"
+        if self.ListeNoeuds:
+            for i, noeud in enumerate(self.ListeNoeuds, 1):
+                res += f"[Noeud {i}]\n{noeud}\n"
+        else:
+            res += "Aucun nœud enregistré.\n"
+
+        res += "\n-- Liaisons --\n"
+        if self.ListeLiaisons:
+            for i, liaison in enumerate(self.ListeLiaisons, 1):
+                res += f"[Liaison {i}]\n{liaison}\n"
+        else:
+            res += "Aucune liaison enregistrée.\n"
+
+        return res
         
     def saisir_noeuds(self, type_noeud: str) -> None:
         """
@@ -189,70 +205,45 @@ class GestionReseau:
 
 class ReseauHydraulique:
     def __init__(self, noeuds: List[Noeud], liaisons: List[Liaison]):
-        self.noeuds: Dict[str, Noeud] = {n.nom: n for n in noeuds}
-        self.liaisons : List[Liaison]= liaisons
+        self.noeuds = {n.nom: n for n in noeuds}
+        self.liaisons = liaisons
+        self.index_noeuds = {nom: i for i, nom in enumerate(self.noeuds.keys())}
+        self.index_noeuds.update({"super_source": len(self.index_noeuds), "super_puits": len(self.index_noeuds) + 1})
+        self.index_inverse = {v: k for k, v in self.index_noeuds.items()}
+        n = len(self.index_noeuds)
         
-        # Préparer le mapping des noeuds + super-source et super-puits
-        self.noms_noeuds = list(self.noeuds.keys()) + ["super_source", "super_puits"]
-        self.index_noeuds = {nom: i for i, nom in enumerate(self.noms_noeuds)}
-        self.index_inverse = {i: nom for nom, i in self.index_noeuds.items()}
-        self.n = len(self.noms_noeuds)
+        self.matrice_np = array([[0] * n for _ in range(n)])
 
-        # Initialiser matrice des capacités (numpy array pour modifier facilement)
-        self.matrice_np = array([[0] * self.n for _ in range(self.n)])
-        
-        # Ajout des liaisons
-        for liaison_obj in self.liaisons:
-            i, j = self.index_noeuds[liaison_obj.depart], self.index_noeuds[liaison_obj.arrivee]
-            self.matrice_np[i][j] = liaison_obj.capacite
+        for l in liaisons:
+            i, j = self.index_noeuds[l.depart], self.index_noeuds[l.arrivee]
+            self.matrice_np[i][j] = l.capacite
 
-        # Connexions super_source -> sources
         for node in self.noeuds.values():
+            idx = self.index_noeuds[node.nom]
             if node.type == "source":
-                self.matrice_np[self.index_noeuds["super_source"]][self.index_noeuds[node.nom]] = node.capaciteMax
+                self.matrice_np[self.index_noeuds["super_source"]][idx] = node.capaciteMax
+            elif node.type == "ville":
+                self.matrice_np[idx][self.index_noeuds["super_puits"]] = node.capaciteMax
 
-        # Connexions villes -> super_puits
-        for node in self.noeuds.values():
-            if node.type == "ville":
-                self.matrice_np[self.index_noeuds[node.nom]][self.index_noeuds["super_puits"]] = node.capaciteMax
-
-        # Conversion en matrice creuse
         self.matrice_sparse = csr_matrix(self.matrice_np)
 
     def __str__(self):
         noeuds_str = "\n".join(str(n) for n in self.noeuds.values())
-        liaisons_str = "\n".join(str(liaison_obj) for liaison_obj in self.liaisons)
+        liaisons_str = "\n".join(str(l) for l in self.liaisons)
         return f"--- Noeuds ---\n{noeuds_str}\n\n--- Liaisons ---\n{liaisons_str}"
 
     def calculerFlotMaximal(self):
-        '''
-            Elle calcule le flux qui circulent dans les liaisons ainsi que le flot que les villes reçoivent.
-            
-            >>> Retourne :
-                    Flot maximal total : 37 unités
-                    Détail des flux utilisés :
-                    A -> E : 7 unités --> Il y a 7k m3 d'eau qui circulent dans la liaison A-E
-                    super_source -> A : 7 -->La source a délivre 7K m3 dans le systeme
-                    K-> super_puits : 20 --> la ville reçoit 20K m3 du systeme
-                    ...
-        '''
+        result = maximum_flow(self.matrice_sparse, self.index_noeuds["super_source"], self.index_noeuds["super_puits"])
+        print(f"💧 Flot maximal total : {result.flow_value} unités\n➡️ Détail des flux utilisés :\n")
 
-        # Calcul du flot
-        result = maximum_flow(self.matrice_sparse,
-                              self.index_noeuds['super_source'],
-                              self.index_noeuds['super_puits'])
-
-        print(f"💧 Flot maximal total : {result.flow_value} unités\n")
-        print("➡️ Détail des flux utilisés :\n")
-
+        # result.flow est une matrice sparse contenant le flot passant par chaque arc
         flow_matrix = result.flow
-        for i in range(self.n):
-            for j in range(self.n):
-                flow = flow_matrix[i, j]
-                if flow > 0:
-                    u = self.index_inverse[i]
-                    v = self.index_inverse[j]
-                    print(f"{u} ➝ {v} : {flow} unités")
+
+        for i in range(len(self.matrice_np)):
+            for j in range(len(self.matrice_np)):
+                used_flow = flow_matrix[i][j]
+                if used_flow > 0:
+                    print(f"{self.index_inverse[i]} ➝ {self.index_inverse[j]} : {used_flow} unités")
 
         return result, self.index_noeuds
     
@@ -299,104 +290,116 @@ def optimiser_liaisons(
     result_init, _ = reseau_temp.calculerFlotMaximal()
 
     while liaisons_restantes:
-        meilleur_gain = -1
+        meilleur_gain = result_init.flow_value
         meilleure_liaison = None
         meilleure_config_temp = None
         meilleur_result_temp = None
 
         for liaison_cible in liaisons_restantes:
+            depart, arrivee = liaison_cible
             for cap_test in range(1, 21):
-                temp_temp_config = meilleure_config[:]
-                for i, liaison_obj in enumerate(temp_temp_config):
-                    if (liaison_obj.depart, liaison_obj.arrivee) == liaison_cible:
-                        temp_temp_config[i] = Liaison(liaison_obj.depart, liaison_obj.arrivee, cap_test)
-                reseau_temp = ReseauHydraulique(noeuds, temp_temp_config)
-                temp_result, _ = reseau_temp.calculerFlotMaximal()
+                config_temp = []
+                for liaison in meilleure_config:
+                    if (liaison.depart, liaison.arrivee) == (depart, arrivee):
+                        config_temp.append(Liaison(depart, arrivee, cap_test))
+                    else:
+                        config_temp.append(liaison)
 
-                if temp_result.flow_value > meilleur_gain:
-                    meilleur_result_temp = temp_result
-                    meilleur_gain = temp_result.flow_value
-                    meilleure_liaison = (liaison_cible, cap_test)
-                    meilleure_config_temp = temp_temp_config[:]
+                reseau_hydro = ReseauHydraulique(noeuds, config_temp)
+                result, _ = reseau_hydro.calculerFlotMaximal()
 
-        if meilleure_liaison:
-            meilleure_config = meilleure_config_temp[:]
-            travaux_effectues.append((meilleure_liaison[0], meilleure_liaison[1], meilleur_result_temp.flow_value))
-            liaisons_restantes.remove(meilleure_liaison[0])
-        else:
-            break
+                if result.flow_value > meilleur_gain:
+                    meilleur_gain = result.flow_value
+                    meilleure_liaison = (depart, arrivee)
+                    meilleure_config_temp = config_temp[:]
+                    meilleur_result_temp = result
+
+            if meilleure_liaison:
+                meilleure_config = meilleure_config_temp
+                travaux_effectues.append((meilleure_liaison, cap_test, meilleur_result_temp.flow_value))
+                liaisons_restantes.remove(meilleure_liaison)
+                result_init = meilleur_result_temp  # mise à jour du flot de référence
+            else:
+                break
+
+    # Affichage du résumé clair (Qualité UX)
+    print("\n📋 Résumé des travaux effectués :")
+    for i, (liaison, cap, flot) in enumerate(travaux_effectues, 1):
+        print(f"Travaux #{i} : {liaison[0]} -> {liaison[1]}, capacité {cap} ➝ flot atteint : {flot} unités")
 
     return meilleure_config, travaux_effectues
 
-# Définition des noeuds
-ListeNoeuds = [
-    Noeud("A", "source", 15),
-    Noeud("B", "source", 15),
-    Noeud("C", "source", 15),
-    Noeud("D", "source", 10),
-    Noeud("E", "intermediaire"),
-    Noeud("F", "intermediaire"),
-    Noeud("G", "intermediaire"),
-    Noeud("H", "intermediaire"),
-    Noeud("I", "intermediaire"),
-    Noeud("J", "ville", 15),
-    Noeud("K", "ville", 20),
-    Noeud("L", "ville", 15),
-]
-
-ListeLiaisons = [
-    Liaison("A", "E", 7),
-    Liaison("B", "F", 10),
-    Liaison("B", "G", 7),
-    Liaison("C", "A", 5),
-    Liaison("C", "F", 5),
-    Liaison("D", "G", 10),
-    Liaison("E", "F", 5),
-    Liaison("E", "H", 4),
-    Liaison("E", "I", 15),
-    Liaison("F", "G", 5),
-    Liaison("F", "I", 15),
-    Liaison("G", "I", 15),
-    Liaison("H", "J", 7),
-    Liaison("I", "K", 30),
-    Liaison("I", "L", 4),
-    Liaison("K", "J", 10),
-]
-
-# Création du réseau global
-reseau = ReseauHydraulique(ListeNoeuds, ListeLiaisons)
+def demander_cap_max(valeur_defaut=25, essais_max=3) -> int:
+    """
+    Demande à l'utilisateur la capacité maximale à tester pour chaque liaison.
+    Retourne un entier positif ou la valeur par défaut après plusieurs erreurs.
+    """
+    essais = 0
+    while essais < essais_max:
+        saisie = input(f"Entrez la capacité maximale à tester pour chaque liaison (défaut {valeur_defaut}) : ").strip()
+        if not saisie:
+            return valeur_defaut
+        try:
+            cap = int(saisie)
+            if cap > 0:
+                return cap
+            else:
+                print("⚠️ La capacité maximale doit être un entier positif.")
+        except ValueError:
+            print("⚠️ Entrée invalide, veuillez entrer un entier positif.")
+        essais += 1
+    print(f"Trop d'erreurs, utilisation de la valeur par défaut {valeur_defaut}.")
+    return valeur_defaut
 
 
 def satisfaction(
     noeuds : List[Noeud],
     liaisons_actuelles: List[Liaison],
     liaisons_possibles: List[Tuple[str, str]],
-    objectif_flot: int = 50
+    objectif_flot: Optional[int] = None
 ) -> Tuple[List[Liaison], List[Tuple[Tuple[str, str], int, int]]]:
     """
     Optimise les liaisons à ajouter ou modifier dans un réseau hydraulique afin d'atteindre
-    un objectif de flot minimal tout en minimisant les travaux.
+    un objectif de flot minimal (défini par l'utilisateur ou calculé automatiquement).
 
-    L'algorithme ajoute progressivement des liaisons parmi les options possibles, testant différentes
-    capacités, jusqu'à atteindre ou dépasser l'objectif de flot spécifié (satisfaire les besoins en eau de toutes les villes à 100%)
+    Si aucun objectif n'est fourni, la somme des capacités des villes est utilisée.
 
-    >>>
-    Tuple[List[liaison], List[Tuple[Tuple[str, str], int, int]]]
-        - La liste des liaisons après optimisation.
-        - La liste des travaux effectués sous la forme ((départ, arrivée), capacité, flot résultant).
-
-    >>> config_finale, travaux = optimiser_liaisons_pour_approvisionnement(noeuds, liaisons_init, options, 50)
+    Returns:
+        - La configuration finale des liaisons.
+        - La liste des travaux effectués : ((départ, arrivée), capacité, flot atteint).
     """
+    # 🧠 Calcul de l'objectif recommandé
+    objectif_calcule = sum(n.capacite for n in noeuds if getattr(n, "type", "").lower() == "ville")
+    
+    # 🎯 Proposition interactive à l'utilisateur
+    if objectif_flot is None:
+        print(f"\n🎯 Objectif recommandé pour approvisionner toutes les villes : {objectif_calcule} unités")
+        saisie = input("Entrez votre objectif de flot souhaité (ou appuyez sur Entrée pour utiliser l'objectif recommandé) : ").strip()
+        if saisie:
+            try:
+                objectif_flot = int(saisie)
+                if objectif_flot <= 0:
+                    print("⚠️ Objectif invalide. Utilisation de l'objectif recommandé.")
+                    objectif_flot = objectif_calcule
+            except ValueError:
+                print("⚠️ Entrée non valide. Utilisation de l'objectif recommandé.")
+                objectif_flot = objectif_calcule
+        else:
+            objectif_flot = objectif_calcule
+    
     meilleure_config = liaisons_actuelles[:]
     liaisons_restantes = liaisons_possibles[:]
     travaux_effectues = []
 
-    reseau = ReseauHydraulique(noeuds, liaisons_actuelles)
-    result_init, _ = reseau.calculerFlotMaximal()
+    reseau_initial = ReseauHydraulique(noeuds, meilleure_config)
+    result_init, _ = reseau_initial.calculerFlotMaximal()
     flot_actuel = result_init.flow_value
 
     if flot_actuel >= objectif_flot:
+        print(f"✅ Flot actuel ({flot_actuel}) déjà supérieur ou égal à l'objectif ({objectif_flot}).")
         return meilleure_config, travaux_effectues  # Déjà bon !
+
+    cap_max = demander_cap_max(25)
 
     while liaisons_restantes:
         meilleure_liaison = None
@@ -411,13 +414,14 @@ def satisfaction(
                     index_exist = i
                     break
 
-            for cap_test in [5, 10, 15, 20, 25]:
+            for cap_test in range(1, cap_max + 1):
+                config_test = meilleure_config[:]  # copie
                 if index_exist is not None:
-                    old_liaison = meilleure_config[index_exist]
-                    meilleure_config[index_exist] = Liaison(old_liaison.depart, old_liaison.arrivee, cap_test)
+                    old_liaison = config_test[index_exist]
+                    config_test[index_exist] = Liaison(old_liaison.depart, old_liaison.arrivee, cap_test)
                 else:
-                    meilleure_config.append(Liaison(liaison_cible[0], liaison_cible[1], cap_test))
-
+                    config_test.append(Liaison(liaison_cible[0], liaison_cible[1], cap_test))
+                
                 reseau_temp = ReseauHydraulique(noeuds, meilleure_config)
                 temp_result, _ = reseau_temp.calculerFlotMaximal()
 
@@ -452,11 +456,15 @@ def satisfaction(
                 break
         else:
             break  # Aucune amélioration possible
+    
+    print("\n📋 Résumé des travaux effectués :")
+    for i, (liaison, cap, flot) in enumerate(travaux_effectues, 1):
+        print(f"Travaux #{i} : {liaison[0]} -> {liaison[1]}, capacité {cap} ➝ flot atteint : {flot} unités")
 
     return meilleure_config, travaux_effectues
 
 
-def sauvegarder_reseau(reseau_nom, noeuds, liaisons, fichier='reseaux.json'):
+def sauvegarder_reseau(reseau_nom : str, noeuds : List[Noeud], liaisons : List[Liaison], fichier : str ='reseaux.json') -> None:
     """
     Sauvegarde un réseau hydraulique dans un fichier JSON sous le nom spécifié.
 
@@ -486,7 +494,7 @@ def sauvegarder_reseau(reseau_nom, noeuds, liaisons, fichier='reseaux.json'):
     with open(fichier, 'w') as f:
         json.dump(data, f, indent=4)
 
-def charger_reseaux(fichier='reseaux.json') -> Dict[str, Tuple[List[Noeud], List[Liaison]]]:
+def charger_reseaux(fichier : str ='reseaux.json') -> Dict[str, Tuple[List[Noeud], List[Liaison]]]:
     """
     Charge les réseaux hydrauliques sauvegardés depuis un fichier JSON.
 
@@ -524,7 +532,7 @@ def charger_reseaux(fichier='reseaux.json') -> Dict[str, Tuple[List[Noeud], List
 
     return reseaux
 
-def supprimer_reseaux(fichier='reseaux.json'):
+def supprimer_reseaux(fichier : str ='reseaux.json') -> None:
     """
     Supprime définitivement le fichier contenant les réseaux sauvegardés.
 

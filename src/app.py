@@ -1,5 +1,5 @@
 from affichage import afficherCarte, afficherCarteEnoncer
-from data import Liaison, Noeud, ListeLiaisons, ListeNoeuds, creer_liaison, creer_noeud, GestionReseau, ReseauHydraulique, optimiser_liaisons, satisfaction, liaison_existe
+from data import GestionReseau, ReseauHydraulique, optimiser_liaisons, satisfaction, liaison_existe
 import copy
 import random
 import matplotlib.pyplot as plt 
@@ -34,7 +34,7 @@ def menu_ajout_elements():
         print("4. Ajouter une liaison")
         print("5. Retour")
 
-        choix = input("Choix : ").strip()
+        choix = input("Choix : ").strip().upper()
 
         if choix in {"1", "2", "3"}:
             reseau.saisir_noeuds(type_noeud_mapping[choix])
@@ -67,7 +67,7 @@ def menu_terminal():
 
     Aucune valeur n'est retournée. Tous les résultats sont affichés directement dans le terminal.
     """
-    liaisons_actuelles = copy.deepcopy(ListeLiaisons)
+    liaisons_actuelles = copy.deepcopy(reseau.ListeLiaisons)
 
     while True:
         print("\n=== MENU ===")
@@ -84,13 +84,13 @@ def menu_terminal():
             menu_ajout_elements()
 
         elif choix == "1":
-            reseau = ReseauHydraulique(ListeNoeuds, liaisons_actuelles)
-            result, index_noeuds = reseau.calculerFlotMaximal()
+            reseau_hydro = ReseauHydraulique(reseau.ListeNoeuds, liaisons_actuelles)
+            result, index_noeuds = reseau_hydro.calculerFlotMaximal()
             afficherCarteEnoncer(result=result, index_noeuds=index_noeuds, liaisons=liaisons_actuelles)
 
         elif choix == "2":
-            reseau = ReseauHydraulique(ListeNoeuds, liaisons_actuelles)
-            result, index_noeuds = reseau.calculerFlotMaximal()
+            reseau_hydro = ReseauHydraulique(reseau.ListeNoeuds, liaisons_actuelles)
+            result, index_noeuds = reseau_hydro.calculerFlotMaximal()
             afficherCarte(result=result, index_noeuds=index_noeuds, liaisons=liaisons_actuelles)
 
         elif choix == "3":
@@ -113,11 +113,15 @@ def menu_terminal():
                 continuer = input("➕ Ajouter une autre liaison ? (o/n) : ").strip().lower()
                 if continuer != 'o':
                     break
+                
+                if not liaisons_a_optimiser:
+                    print("⚠️ Aucune liaison sélectionnée pour les travaux.")
+                    continue
 
             print("🔍 Optimisation de l’ordre des travaux...")
 
             # 👉 Appel de la fonction d'optimisation du fichier data
-            config_finale, travaux = optimiser_liaisons(ListeNoeuds, liaisons_actuelles, liaisons_a_optimiser)
+            config_finale, travaux = optimiser_liaisons(reseau.ListeNoeuds, liaisons_actuelles, liaisons_a_optimiser)
 
             for i, (liaison, cap, flot) in enumerate(travaux):
                 u, v = liaison
@@ -126,8 +130,8 @@ def menu_terminal():
                 print(f"   🚀 Nouveau flot maximal : {flot} unités\n")
 
             # 💧 Affichage de la carte finale
-            reseau = ReseauHydraulique(ListeNoeuds, ListeLiaisons)
-            result, index_noeuds = reseau.calculerFlotMaximal()
+            reseau_hydro = ReseauHydraulique(reseau.ListeNoeuds, reseau.ListeLiaisons)
+            result, index_noeuds = reseau_hydro.calculerFlotMaximal()
 
             afficherCarte(result=result, index_noeuds=index_noeuds, liaisons=config_finale)
         
@@ -172,15 +176,15 @@ def menu_generalisation():
         choix = input("Choix : ")
 
         if choix == "1":
-            objectif = sum(n.capaciteMax for n in ListeNoeuds if n.type == "ville")
+            objectif = sum(n.capaciteMax for n in reseau.ListeNoeuds if n.type == "ville")
             print(f"\n🎯 Objectif : Approvisionner {objectif} unités (100% des villes)")
             
             # Définir les liaisons modifiables : ici on autorise à modifier toutes les liaisons existantes
-            liaisons_modifiables = [(liaison.depart, liaison.arrivee) for liaison in ListeLiaisons]
+            liaisons_modifiables = [(liaison.depart, liaison.arrivee) for liaison in reseau.ListeLiaisons]
 
             nouvelle_config, travaux = satisfaction(
-                noeuds=ListeNoeuds,
-                liaisons_actuelles=ListeLiaisons,
+                noeuds=reseau.ListeNoeuds,
+                liaisons_actuelles=reseau.ListeLiaisons,
                 liaisons_possibles=liaisons_modifiables,
                 objectif_flot=objectif
             )
@@ -190,12 +194,12 @@ def menu_generalisation():
                 print(f"- Liaison {depart} ➝ {arrivee} ajustée à {cap} u. → Flot = {new_flot} u.")
 
             print("\n📈 Résultat final avec nouvelle configuration :\n")
-            reseau_opt = ReseauHydraulique(ListeNoeuds, nouvelle_config)
+            reseau_opt = ReseauHydraulique(reseau.ListeNoeuds, nouvelle_config)
             result, index_noeuds = reseau_opt.calculerFlotMaximal()  # Ce résultat est déjà correct
             afficherCarte(result=result, index_noeuds=index_noeuds, liaisons=nouvelle_config)
 
         elif choix == "2":
-            sources = [n for n in ListeNoeuds if n.type == "source"]
+            sources = [n for n in reseau.ListeNoeuds if n.type == "source"]
             if not sources:
                 print("❌ Aucune source trouvée.")
                 return
@@ -204,17 +208,17 @@ def menu_generalisation():
             print(f"🎲 Source choisie aléatoirement : {source_choisie.nom}")
 
             # 💥 Mise à jour de la capacité de la source à 0
-            for n in ListeNoeuds:
+            for n in reseau.ListeNoeuds:
                 if n.nom == source_choisie.nom:
                     print(f"💧 Capacité de la source {n.nom} mise à 0.")
                     n.capaciteMax = 0
                     break
 
             # Recalcul du flot maximal
-            reseau = ReseauHydraulique(ListeNoeuds, ListeLiaisons)
-            result, index_noeuds = reseau.calculerFlotMaximal()
+            reseau_hydro = ReseauHydraulique(reseau.ListeNoeuds, reseau.ListeLiaisons)
+            result, index_noeuds = reseau_hydro.calculerFlotMaximal()
 
-            afficherCarte(result=result, index_noeuds=index_noeuds, liaisons=ListeLiaisons)
+            afficherCarte(result=result, index_noeuds=index_noeuds, liaisons=reseau.ListeLiaisons)
             plt.pause(0.1)
 
             # === Sélection d’une liaison à mettre en travaux pendant que la carte est ouverte ===
@@ -223,13 +227,13 @@ def menu_generalisation():
                 u = input("Sommet de départ : ").strip().upper()
                 v = input("Sommet d’arrivée : ").strip().upper()
 
-                if not liaison_existe(u, v, ListeLiaisons):
+                if not liaison_existe(u, v, reseau.ListeLiaisons):
                     print(f"❌ La liaison ({u} ➝ {v}) n’existe pas. Réessaie.")
                     continue
                 break
 
             # Mise en travaux de la liaison
-            for liaison in ListeLiaisons:
+            for liaison in reseau.ListeLiaisons:
                 if liaison.depart == u and liaison.arrivee == v:
                     print(f"🔧 Mise en travaux de la liaison : {u} ➝ {v}")
                     print(f"   Capacité actuelle : {liaison.capacite}")
@@ -238,11 +242,11 @@ def menu_generalisation():
                     break
 
             # Recalcul du flot après travaux
-            reseau = ReseauHydraulique(ListeNoeuds, ListeLiaisons)
-            result_modifie, index_noeuds_modifie = reseau.calculerFlotMaximal()
+            reseau_hydro = ReseauHydraulique(reseau.ListeNoeuds, reseau.ListeLiaisons)
+            result_modifie, index_noeuds_modifie = reseau_hydro.calculerFlotMaximal()
 
             # Affichage mis à jour
-            afficherCarte(result=result_modifie, index_noeuds=index_noeuds_modifie, liaisons=ListeLiaisons)
+            afficherCarte(result=result_modifie, index_noeuds=index_noeuds_modifie, liaisons=reseau.ListeLiaisons)
             print(f"🚀 Nouveau flot maximal : {result_modifie.flow_value} u.")
             plt.ioff()
 
