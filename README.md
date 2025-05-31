@@ -53,3 +53,11 @@ Les prévisions des demandes journalières maximales sont de
 
 Question oral :
 - dans optimiser_liaison_pour_approvisionnement différence si on fait in range(1:21) et si on fait [5, 10, 15, 20]. On ne retrouve pas le meme résultat. 
+
+Retour du prof : 
+Saisie manuelle du réseau
+Sauvegarder le reseau
+Impact de l'assechement des villes plus généraliser
+appli avec streamlit
+Outil d'analyse du reseau
+Peu importe la ligne briser mais ville doivent etre allimenter a 100%

@@ -125,3 +125,4 @@ with tab4:
                 result, index_noeuds = reseau.calculerFlotMaximal()
                 afficherCarte(result=result, index_noeuds=index_noeuds, liaisons=ListeLiaisons)
                 st.success(f"Nouveau flot : {result.flow_value} unités")
+
