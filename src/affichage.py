@@ -63,12 +63,13 @@ def afficherCarte(result=None, index_noeuds=None, liaisons=None):
             node_colors.append('skyblue')
             labels[node] = node
 
-    plt.figure(figsize=(10, 7))
-    nx.draw_networkx_nodes(G, pos, node_color=node_colors, node_size=1000, edgecolors='black')
-    nx.draw_networkx_edges(G, pos, edge_color='gray', arrows=True, arrowstyle='-|>', arrowsize=20)
-    nx.draw_networkx_labels(G, pos, labels, font_size=12, font_weight='bold')
+    # ✅ NOUVEAU : créer la figure
+    fig, ax = plt.subplots(figsize=(10, 7))
 
-    # 👉 Création des étiquettes de flux sur les arêtes
+    nx.draw_networkx_nodes(G, pos, node_color=node_colors, node_size=1000, edgecolors='black', ax=ax)
+    nx.draw_networkx_edges(G, pos, edge_color='gray', arrows=True, arrowstyle='-|>', arrowsize=20, ax=ax)
+    nx.draw_networkx_labels(G, pos, labels, font_size=12, font_weight='bold', ax=ax)
+
     edge_labels = {}
     for u, v in G.edges:
         cap = G[u][v]['weight']
@@ -81,18 +82,19 @@ def afficherCarte(result=None, index_noeuds=None, liaisons=None):
         else:
             edge_labels[(u, v)] = f"{cap}"
 
-    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_color='red')
+    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_color='red', ax=ax)
 
     if result:
-        flot_maximal = result.flow_value
-        plt.gcf().text(0.95, 0.05, f"Flot maximal : {flot_maximal} u.",
-                    fontsize=12, color='darkred', ha='right', va='bottom',
-                    bbox=dict(facecolor='white', edgecolor='darkred', boxstyle='round,pad=0.3'))
+        ax.text(1.05, 0.05, f"Flot maximal : {result.flow_value} u.",
+                fontsize=12, color='darkred', transform=ax.transAxes,
+                bbox=dict(facecolor='white', edgecolor='darkred', boxstyle='round,pad=0.3'))
 
-    plt.title("Carte des Liaisons avec Flot Effectif sur les Arêtes")
-    plt.axis('off')
-    plt.tight_layout()
-    plt.show()
+    ax.set_title("Carte des Liaisons avec Flot Effectif sur les Arêtes")
+    ax.axis('off')
+    fig.tight_layout()
+
+    return fig  # ✅ essentiel pour st.pyplot(fig)
+
 
 def afficherCarteEnoncer(result=None, index_noeuds=None, liaisons=None):
     """
@@ -144,22 +146,24 @@ def afficherCarteEnoncer(result=None, index_noeuds=None, liaisons=None):
             node_colors.append('grey')
             labels[node] = node
 
-    plt.figure(figsize=(10, 7))
-    nx.draw_networkx_nodes(G, pos, node_color=node_colors, node_size=1000, edgecolors='black')
-    nx.draw_networkx_edges(G, pos, edge_color='gray', arrows=True, arrowstyle='-|>', arrowsize=20)
-    nx.draw_networkx_labels(G, pos, labels, font_size=12, font_weight='bold')
+    # ✅ Créer la figure et axes
+    fig, ax = plt.subplots(figsize=(10, 7))
 
-    # 👉 Afficher uniquement la capacité sur les arêtes
+    nx.draw_networkx_nodes(G, pos, node_color=node_colors, node_size=1000, edgecolors='black', ax=ax)
+    nx.draw_networkx_edges(G, pos, edge_color='gray', arrows=True, arrowstyle='-|>', arrowsize=20, ax=ax)
+    nx.draw_networkx_labels(G, pos, labels, font_size=12, font_weight='bold', ax=ax)
+
     edge_labels = {(u, v): f"{G[u][v]['weight']}" for u, v in G.edges}
-    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_color='red')
+    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_color='red', ax=ax)
 
     if result:
         flot_maximal = result.flow_value
-        plt.gcf().text(0.95, 0.05, f"Flot maximal : {flot_maximal} u.",
-                    fontsize=12, color='darkred', ha='right', va='bottom',
-                    bbox=dict(facecolor='white', edgecolor='darkred', boxstyle='round,pad=0.3'))
+        ax.text(1.05, 0.05, f"Flot maximal : {flot_maximal} u.",
+                fontsize=12, color='darkred', transform=ax.transAxes,
+                bbox=dict(facecolor='white', edgecolor='darkred', boxstyle='round,pad=0.3'))
 
-    plt.title("Carte des Liaisons (Capacités maximales)")
-    plt.axis('off')
-    plt.tight_layout()
-    plt.show()
+    ax.set_title("Carte des Liaisons (Capacités maximales)")
+    ax.axis('off')
+    fig.tight_layout()
+
+    return fig  # ✅ Essentiel pour st.pyplot(fig)
