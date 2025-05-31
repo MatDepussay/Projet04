@@ -90,9 +90,19 @@ def afficherCarte(result=None, index_noeuds=None, liaisons=None):
 
 def afficherCarteEnoncer(result=None, index_noeuds=None, liaisons=None):
     """
-    Affiche une carte du réseau hydraulique avec les capacités maximales sur les arêtes.
+        Affiche une carte du réseau hydraulique en utilisant NetworkX et Matplotlib.
 
-    Cette version retourne une figure Matplotlib au lieu d’utiliser plt.show(), pour compatibilité Streamlit.
+        Cette fonction trace les nœuds et les liaisons d’un graphe orienté représentant un réseau d’approvisionnement
+        en eau.
+
+    Notes
+        - Les nœuds de type **source** sont colorés en rouge clair avec leur contribution (u.).
+        - Les nœuds de type **ville** sont colorés en vert clair avec leur réception (u.).
+        - Les autres nœuds sont colorés en bleu ciel.
+        - Les arêtes affichent les flux effectifs suivis de leur capacité maximale sous forme `flux / capacité`.
+
+    Exemple
+        >>> afficherCarte(result, index_noeuds, liaisons)
     """
     if liaisons is None:
         liaisons = ListeLiaisons
