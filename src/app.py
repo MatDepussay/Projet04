@@ -6,6 +6,51 @@ import matplotlib.pyplot as plt
 
 reseau = GestionReseau()
 
+
+def menu_demarrage():
+    global reseau  # pour modifier l'objet utilisé ensuite dans le menu_terminal
+
+    while True:
+        print("\n=== DÉMARRAGE ===")
+        print("1. Saisir un nouveau réseau")
+        print("2. Charger un réseau existant")
+        print("3. Quitter")
+
+        choix = input("Choix : ").strip()
+
+        if choix == "1":
+            reseau = GestionReseau()
+            menu_saisieReseau()
+
+            # Sauvegarde optionnelle
+            save = input("💾 Souhaitez-vous sauvegarder ce réseau ? (o/n) : ").strip().lower()
+            if save == 'o':
+                nom_fichier = input("📁 Nom du fichier de sauvegarde (ex: reseau1.json) : ").strip()
+                reseau.sauvegarder_reseau(nom_fichier)
+            
+            menu_terminal()
+            break
+
+        elif choix == "2":
+            nom_fichier = input("📁 Entrez le nom du fichier à charger : ").strip()
+            reseau = GestionReseau()
+            try:
+                reseau.charger_reseau(nom_fichier)
+                print("✅ Réseau chargé avec succès.")
+                menu_terminal()
+                break
+            except FileNotFoundError:
+                print("❌ Fichier non trouvé. Réessaie.")
+
+        elif choix == "3":
+            print("👋 À bientôt !")
+            break
+        else:
+            print("⛔ Choix invalide. Réessaie.")
+
+
+
+
 def menu_saisieReseau():
     print("\n🔵 Sources :")
     reseau.saisir_noeuds("source")
@@ -253,6 +298,5 @@ def menu_generalisation():
 
 
 if __name__ == "__main__":
-    menu_saisieReseau()
-    menu_terminal()
+    menu_demarrage()
 

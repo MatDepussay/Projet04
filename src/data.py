@@ -186,6 +186,90 @@ class GestionReseau:
             cont = input("Ajouter une autre liaison ? (o/n) : ").strip().lower()
             if cont != 'o':
                 break
+    
+    def sauvegarder_reseau(self, reseau_nom, fichier='reseaux.json'):
+        """
+        Sauvegarde un réseau hydraulique dans un fichier JSON sous le nom spécifié.
+
+        Cette fonction stocke les informations des nœuds et des liaisons dans un fichier 
+        pour permettre une réutilisation ou une restauration ultérieure du réseau par l'utilisateur.
+
+        Args:
+            reseau_nom (str): Nom attribué au réseau à sauvegarder.
+            noeuds (List[Noeud]): Liste des objets Noeud à sauvegarder.
+            liaisons (List[Liaison]): Liste des objets Liaison à sauvegarder.
+            fichier (str): Nom du fichier JSON dans lequel sauvegarder les données (par défaut 'reseaux.json').
+
+        Exemple:
+            >>> sauvegarder_reseau("reseau_1", ListeNoeuds, ListeLiaisons)
+        """
+        data = {}
+        if os.path.exists(fichier):
+            with open(fichier, 'r') as f:
+                data = json.load(f)
+
+        data[reseau_nom] = {
+            "noeuds": [n.__dict__ for n in self.ListeNoeuds],
+            "liaisons": [l.__dict__ for l in self.ListeLiaisons]
+        }
+
+        with open(fichier, 'w') as f:
+            json.dump(data, f, indent=4)
+
+    def charger_reseau(self, fichier='reseaux.json') -> Dict[str, Tuple[List[Noeud], List[Liaison]]]:
+        """
+        Charge les réseaux hydrauliques sauvegardés depuis un fichier JSON.
+
+        Convertit les données JSON en objets `Noeud` et `Liaison` pour permettre leur réutilisation
+        dans l'application. Retourne un dictionnaire contenant les différents réseaux sauvegardés.
+
+        Args:
+            fichier (str): Nom du fichier JSON à lire (par défaut 'reseaux.json').
+
+        Returns:
+            Dict[str, Tuple[List[Noeud], List[Liaison]]]: 
+                Un dictionnaire avec pour clé le nom du réseau, et pour valeur un tuple contenant :
+                    - la liste des objets `Noeud`
+                    - la liste des objets `Liaison`
+
+        Exemple:
+            >>> reseaux = charger_reseaux()
+            >>> noeuds, liaisons = reseaux["reseau_1"]
+        """
+        if not os.path.exists(fichier):
+            return {}
+
+        with open(fichier, 'r') as f:
+            data = json.load(f)
+
+        reseaux = {}
+        for nom, contenu in data.items():
+            noeuds_data = contenu.get("noeuds", [])
+            liaisons_data = contenu.get("liaisons", [])
+
+            noeuds = [Noeud(n["nom"], n["type"], n.get("capaciteMax", 0)) for n in noeuds_data]
+            liaisons = [Liaison(l["depart"], l["arrivee"], l["capacite"]) for l in liaisons_data]
+
+            reseaux[nom] = (noeuds, liaisons)
+
+        return reseaux
+
+    def supprimer_reseaux(self, fichier='reseaux.json'):
+        """
+        Supprime définitivement le fichier contenant les réseaux sauvegardés.
+
+        Cette fonction permet à l'utilisateur de réinitialiser complètement
+        les données de tous les réseaux enregistrés.
+
+        Args:
+            fichier (str): Nom du fichier JSON à supprimer (par défaut 'reseaux.json').
+
+        Exemple:
+            >>> supprimer_reseaux()
+        """
+
+        if os.path.exists(fichier):
+            os.remove(fichier)
 
 class ReseauHydraulique:
     def __init__(self, noeuds: List[Noeud], liaisons: List[Liaison]):
@@ -455,87 +539,3 @@ def satisfaction(
 
     return meilleure_config, travaux_effectues
 
-
-def sauvegarder_reseau(reseau_nom, noeuds, liaisons, fichier='reseaux.json'):
-    """
-    Sauvegarde un réseau hydraulique dans un fichier JSON sous le nom spécifié.
-
-    Cette fonction stocke les informations des nœuds et des liaisons dans un fichier 
-    pour permettre une réutilisation ou une restauration ultérieure du réseau par l'utilisateur.
-
-    Args:
-        reseau_nom (str): Nom attribué au réseau à sauvegarder.
-        noeuds (List[Noeud]): Liste des objets Noeud à sauvegarder.
-        liaisons (List[Liaison]): Liste des objets Liaison à sauvegarder.
-        fichier (str): Nom du fichier JSON dans lequel sauvegarder les données (par défaut 'reseaux.json').
-
-    Exemple:
-        >>> sauvegarder_reseau("reseau_1", ListeNoeuds, ListeLiaisons)
-    """
-    data = {}
-    if os.path.exists(fichier):
-            with open(fichier, 'r') as f:
-                data = json.load(f)
-
-        
-    data[reseau_nom] = {
-        "noeuds": [n.__dict__ for n in noeuds],
-        "liaisons": [l.__dict__ for l in liaisons]
-    }
-
-    with open(fichier, 'w') as f:
-        json.dump(data, f, indent=4)
-
-def charger_reseaux(fichier='reseaux.json') -> Dict[str, Tuple[List[Noeud], List[Liaison]]]:
-    """
-    Charge les réseaux hydrauliques sauvegardés depuis un fichier JSON.
-
-    Convertit les données JSON en objets `Noeud` et `Liaison` pour permettre leur réutilisation
-    dans l'application. Retourne un dictionnaire contenant les différents réseaux sauvegardés.
-
-    Args:
-        fichier (str): Nom du fichier JSON à lire (par défaut 'reseaux.json').
-
-    Returns:
-        Dict[str, Tuple[List[Noeud], List[Liaison]]]: 
-            Un dictionnaire avec pour clé le nom du réseau, et pour valeur un tuple contenant :
-                - la liste des objets `Noeud`
-                - la liste des objets `Liaison`
-
-    Exemple:
-        >>> reseaux = charger_reseaux()
-        >>> noeuds, liaisons = reseaux["reseau_1"]
-    """
-    if not os.path.exists(fichier):
-        return {}
-
-    with open(fichier, 'r') as f:
-        data = json.load(f)
-
-    reseaux = {}
-    for nom, contenu in data.items():
-        noeuds_data = contenu.get("noeuds", [])
-        liaisons_data = contenu.get("liaisons", [])
-
-        noeuds = [Noeud(n["nom"], n["type"], n.get("capaciteMax", 0)) for n in noeuds_data]
-        liaisons = [Liaison(l["depart"], l["arrivee"], l["capacite"]) for l in liaisons_data]
-
-        reseaux[nom] = (noeuds, liaisons)
-
-    return reseaux
-
-def supprimer_reseaux(fichier='reseaux.json'):
-    """
-    Supprime définitivement le fichier contenant les réseaux sauvegardés.
-
-    Cette fonction permet à l'utilisateur de réinitialiser complètement
-    les données de tous les réseaux enregistrés.
-
-    Args:
-        fichier (str): Nom du fichier JSON à supprimer (par défaut 'reseaux.json').
-
-    Exemple:
-        >>> supprimer_reseaux()
-    """
-    if os.path.exists(fichier):
-        os.remove(fichier)

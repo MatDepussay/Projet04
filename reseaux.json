@@ -1,0 +1,23 @@
+{
+    "test": {
+        "noeuds": [
+            {
+                "nom": "A",
+                "type": "source",
+                "capaciteMax": 5
+            },
+            {
+                "nom": "B",
+                "type": "ville",
+                "capaciteMax": 5
+            }
+        ],
+        "liaisons": [
+            {
+                "depart": "A",
+                "arrivee": "B",
+                "capacite": 5
+            }
+        ]
+    }
+}
