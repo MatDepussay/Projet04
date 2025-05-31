@@ -22,6 +22,171 @@ class Liaison:
 
     def __str__(self):
         return f"Départ : {self.depart}\n Arrivée : {self.arrivee}\nCapacité : {self.capacite}"
+
+ListeNoeuds = []
+ListeLiaisons = []
+
+# Fonction de création
+def creer_noeud(nom : str, type_noeud : str, capacite: int=0, noms_existants: set = None) -> Noeud:
+    """
+    Crée un noeud après vérification que le nom n'existe pas déjà.
+
+    :param nom: Nom du noeud (str, majuscule recommandée)
+    :param type_noeud: Type du noeud ("source", "ville", "intermediaire")
+    :param capacite: Capacité maximale (int > 0 pour source/ville)
+    :param noms_existants: ensemble des noms déjà utilisés (set)
+    :return: instance de Noeud
+    :raises ValueError: si nom déjà utilisé ou type invalide ou capacité invalide
+    """
+    if noms_existants is not None and nom in noms_existants:
+        raise ValueError("❌ Ce nom est déjà utilisé. Choisis un autre nom.")
+
+    if type_noeud not in {"source", "ville", "intermediaire"}:
+        raise ValueError("❌ Type de noeud invalide. Choisis parmi 'source', 'ville', 'intermediaire'.")
+
+    if type_noeud == "intermediaire":
+        # Pas de capacité requise pour intermédiaire
+        return Noeud(nom, type_noeud)
+    else:
+        if capacite <= 0:
+            raise ValueError("❌ La capacité doit être un entier positif pour les sources et villes.")
+        return Noeud(nom, type_noeud, capacite)
+
+def creer_liaison(depart: str, arrivee: str, capacite: int, noms_noeuds: set, liaisons_existantes: list) -> Liaison:
+    """
+    Crée une liaison après vérification des contraintes.
+
+    :param depart: Nom du noeud de départ (str)
+    :param arrivee: Nom du noeud d'arrivée (str)
+    :param capacite: Capacité maximale de la liaison (int > 0)
+    :param noms_noeuds: ensemble des noms de noeuds existants (set)
+    :param liaisons_existantes: liste des liaisons existantes (pour vérifier doublon)
+    :return: instance de Liaison
+    :raises ValueError: si invalidité (liaison sur même noeud, noeuds inexistants, capacité non positive, doublon)
+    """
+    if depart == arrivee:
+        raise ValueError("❌ Une liaison ne peut pas relier un noeud à lui-même.")
+
+    if depart not in noms_noeuds or arrivee not in noms_noeuds:
+        raise ValueError("❌ Noeud de départ ou d’arrivée introuvable.")
+
+    if capacite <= 0:
+        raise ValueError("❌ La capacité de la liaison doit être un entier positif.")
+
+    # Vérifie doublon de liaison (même départ et arrivée)
+    for l in liaisons_existantes:
+        if l.depart == depart and l.arrivee == arrivee:
+            raise ValueError("❌ Cette liaison existe déjà.")
+
+    return Liaison(depart, arrivee, capacite)
+
+class GestionReseau:
+    def __init__(self, ListeNoeuds: List[Noeud] = None, ListeLiaisons: List[Liaison] = None) -> None:
+        self.ListeNoeuds: List[Noeud] = ListeNoeuds if ListeNoeuds is not None else []
+        self.ListeLiaisons: List[Liaison] = ListeLiaisons if ListeLiaisons is not None else []
+        
+    def saisir_noeuds(self, type_noeud: str) -> None:
+        """
+        Saisie interactive des noeuds (source, ville, intermédiaire).
+        Cette fonction demande à l'utilisateur de saisir des noeuds du type spécifié, 
+        vérifie les doublons avec la liste globale ListeNoeuds, 
+        crée les noeuds et les ajoute à ListeNoeuds.
+
+        :param type_noeud: str - Type du noeud à saisir. Doit être "source", "ville" ou "intermediaire".
+        :return: None (modifie directement la liste globale ListeNoeuds)
+        """
+        demande_capacite = (type_noeud != "intermediaire")
+        noms_existants = {n.nom for n in self.ListeNoeuds}
+
+        while True:
+            nom = input(f"Nom de la {type_noeud} : ").strip().upper()
+
+            # Pour le cas spécial si tu veux un signal de fin pour les intermédiaires
+            if type_noeud == "intermediaire" and nom == "FIN":
+                break
+
+            if nom in noms_existants:
+                print("❌ Ce nom est déjà utilisé. Choisis un autre nom.")
+                continue
+
+            capacite = 0
+            if demande_capacite:
+                try:
+                    capacite = int(input("Capacité maximale : "))
+                    if capacite <= 0:
+                        print("❌ La capacité doit être un entier positif.")
+                        continue
+                except ValueError:
+                    print("❌ Entrez un entier valide.")
+                    continue
+
+            try:
+                noeud = creer_noeud(nom, type_noeud, capacite, noms_existants)
+                self.ListeNoeuds.append(noeud)
+                noms_existants.add(nom)
+                print(f"✅ {type_noeud.capitalize()} ajoutée : {nom}")
+            except ValueError as e:
+                print(e)
+                continue
+
+            cont = input(f"Ajouter une autre {type_noeud} ? (o/n) : ").strip().lower()
+            if cont != 'o':
+                break
+
+    def saisir_liaisons(self) -> None:
+        """
+        Saisie interactive des liaisons entre noeuds.
+
+        Demande à l'utilisateur de saisir les noeuds de départ et d'arrivée ainsi que la capacité
+        pour chaque liaison. La fonction vérifie que :
+        - Les noeuds existent dans la liste globale ListeNoeuds,
+        - La liaison ne relie pas un noeud à lui-même,
+        - La liaison n'existe pas déjà dans la liste globale ListeLiaisons,
+        - La capacité est un entier positif.
+
+        Les liaisons valides sont créées via la fonction creer_liaison et ajoutées à ListeLiaisons.
+
+        :return: None (modifie directement la liste globale ListeLiaisons)
+        """
+        noms_existants = {n.nom for n in self.ListeNoeuds}
+        
+        while True:
+            depart = input("Départ de la liaison : ").strip().upper()
+            arrivee = input("Arrivée de la liaison : ").strip().upper()
+
+            if depart == arrivee:
+                print("❌ Une liaison ne peut pas relier un noeud à lui-même.")
+                continue
+
+            if depart not in noms_existants or arrivee not in noms_existants:
+                print("❌ Noeud de départ ou d’arrivée introuvable.")
+                continue
+
+            if any(l.depart == depart and l.arrivee == arrivee for l in self.ListeLiaisons):
+                print("❌ Cette liaison existe déjà.")
+                continue
+
+            try:
+                capacite = int(input("Capacité de la liaison : "))
+                if capacite <= 0:
+                    print("❌ La capacité doit être un entier positif.")
+                    continue
+            except ValueError:
+                print("❌ Entrez un entier valide.")
+                continue
+
+            try:
+                liaison = creer_liaison(depart, arrivee, capacite, noms_existants, self.ListeLiaisons)
+                self.ListeLiaisons.append(liaison)
+                print(f"✅ Liaison ajoutée : {depart} ➝ {arrivee}")
+            except ValueError as e:
+                print(e)
+                continue
+
+            cont = input("Ajouter une autre liaison ? (o/n) : ").strip().lower()
+            if cont != 'o':
+                break
+
 class ReseauHydraulique:
     def __init__(self, noeuds: List[Noeud], liaisons: List[Liaison]):
         self.noeuds: Dict[str, Noeud] = {n.nom: n for n in noeuds}
