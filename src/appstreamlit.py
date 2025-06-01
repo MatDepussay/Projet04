@@ -218,10 +218,10 @@ def menu_generalisation():
         if st.button("🔧 Lancer l'optimisation globale"):
             nouvelle_config, travaux = satisfaction(
                 noeuds=reseau.ListeNoeuds,
-                liaisons_actuelles=reseau.ListeLiaisons,
-                liaisons_possibles=liaisons_modifiables,
-                objectif_flot=objectif,
-                cap_max=capacite_maximale  # Ajoute ce paramètre
+                liaisons=reseau.ListeLiaisons,
+                objectif=objectif,
+                cap_max=capacite_maximale,   # transmis depuis le number_input
+                max_travaux=10                # ou un autre nombre si tu veux le rendre paramétrable
             )
             if not travaux:
                 st.warning("⚠️ Objectif non atteignable avec la configuration actuelle du réseau et les capacités testées.")
