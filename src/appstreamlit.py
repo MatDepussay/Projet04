@@ -153,16 +153,34 @@ def afficher_carte_enoncer():
 def afficher_carte_flot():
     st.header("💦 Carte avec flot maximal")
     st.info("Visualisez le flot maximal calculé sur votre réseau hydraulique.")
+    
+    reseau = st.session_state.get("reseau", None)
+    if not reseau:
+        st.warning("Aucun réseau n’a été chargé.")
+        return
+
     if not st.session_state.get("reseau_valide", False):
         st.warning("Veuillez valider le réseau avant d'afficher la carte.")
         return
+
     if not reseau.ListeNoeuds or not reseau.ListeLiaisons:
         st.warning("Veuillez d'abord saisir des noeuds et des liaisons.")
         return
-    reseau_hydro = ReseauHydraulique(reseau.ListeNoeuds, reseau.ListeLiaisons)
-    result, index_noeuds = reseau_hydro.calculerFlotMaximal()
-    fig = afficherCarte(result=result, index_noeuds=index_noeuds, noeuds=reseau.ListeNoeuds, liaisons=reseau.ListeLiaisons)
-    st.pyplot(fig)
+    
+    try:
+        reseau_hydro = ReseauHydraulique(reseau.ListeNoeuds, reseau.ListeLiaisons)
+        result, index_noeuds = reseau_hydro.calculerFlotMaximal()
+
+        fig = afficherCarte(
+            result=result,
+            index_noeuds=index_noeuds,
+            noeuds=reseau.ListeNoeuds,
+            liaisons=reseau.ListeLiaisons,
+            montrer_saturees=True
+        )
+        st.pyplot(fig)
+    except Exception as e:
+            st.error(f"Erreur lors du calcul ou de l'affichage de la carte : {e}")
 
 def menu_travaux():
     st.header("🛠️ Optimisation manuelle des travaux")

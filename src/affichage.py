@@ -1,6 +1,6 @@
 import networkx as nx
 import matplotlib.pyplot as plt
-from data import GestionReseau
+from data import ReseauHydraulique, GestionReseau
 
 def afficherCarte(result=None, index_noeuds=None, noeuds=None, liaisons=None, montrer_saturees=False):
     """    
@@ -26,14 +26,13 @@ def afficherCarte(result=None, index_noeuds=None, noeuds=None, liaisons=None, mo
     Exemple
         >>> afficherCarte(result, index_noeuds, noeuds, liaisons)
     """
-
     if noeuds is None or liaisons is None:
         raise ValueError("Il faut fournir les noeuds et liaisons")
 
     G = nx.DiGraph()
     G.add_nodes_from([n.nom for n in noeuds])
     infos_noeuds = {n.nom: n for n in noeuds}
-    
+        
     for liaison in liaisons:
         G.add_edge(liaison.depart, liaison.arrivee, weight=liaison.capacite)
 
@@ -42,8 +41,7 @@ def afficherCarte(result=None, index_noeuds=None, noeuds=None, liaisons=None, mo
     labels = {}
     appro = {}
     sources = {}
-    
-    # Récupérer flux sources et villes via les types
+
     if result and index_noeuds:
         for nom, noeud in infos_noeuds.items():
             if noeud.type == "ville":
@@ -53,7 +51,6 @@ def afficherCarte(result=None, index_noeuds=None, noeuds=None, liaisons=None, mo
                 flux = result.flow[index_noeuds['super_source'], index_noeuds[nom]]
                 sources[nom] = flux
 
-    # Construction des couleurs et labels
     for node in G.nodes:
         n = infos_noeuds.get(node)
         if node in appro:
@@ -68,13 +65,13 @@ def afficherCarte(result=None, index_noeuds=None, noeuds=None, liaisons=None, mo
         else:
             node_colors.append('gray')
             labels[node] = node
-    
-    # Mise en évidence des liaisons saturées
+
     edges_normal = []
     edges_saturees = []
 
     if montrer_saturees and result and index_noeuds:
-        reseau_temp = GestionReseau.construire_reseau(noeuds, liaisons)
+        # 🔧 Correction ici : on passe noeuds et liaisons à ReseauHydraulique
+        reseau_temp = ReseauHydraulique(noeuds, liaisons)
         saturations = reseau_temp.liaisons_saturees(result=result, index=index_noeuds)
         saturees_set = set((d, a) for d, a, _ in saturations)
     else:
@@ -106,12 +103,11 @@ def afficherCarte(result=None, index_noeuds=None, noeuds=None, liaisons=None, mo
 
     nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_color='red', ax=ax)
 
-    # Affichage du flot maximal
     if result:
         flot_maximal = result.flow_value
         fig.text(0.95, 0.05, f"Flot maximal : {flot_maximal} u.",
-                 fontsize=12, color='darkred', ha='right', va='bottom',
-                 bbox=dict(facecolor='white', edgecolor='darkred', boxstyle='round,pad=0.3'))
+                fontsize=12, color='darkred', ha='right', va='bottom',
+                bbox=dict(facecolor='white', edgecolor='darkred', boxstyle='round,pad=0.3'))
 
     ax.set_title("Carte des Liaisons avec Flot Effectif sur les Arêtes" + (" (liaisons saturées en rouge)" if montrer_saturees else ""))
     ax.axis('off')

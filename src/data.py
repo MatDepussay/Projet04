@@ -365,12 +365,18 @@ class ReseauHydraulique:
 
         return result, self.index_noeuds
     
-    def liaisons_saturees(self):
-        result = maximum_flow(self.matrice_sparse, 
-                              self.index_noeuds["super_source"], 
-                              self.index_noeuds["super_puits"])
+    def liaisons_saturees(self, result, index):
+        """
+        Retourne la liste des liaisons saturées (celles dont le flux utilisé == capacité).
+        
+        Args:
+            result: Résultat de maximum_flow (contenant result.flow)
+            index: Dictionnaire {nom_noeud: index_matrice}
+            
+        Returns:
+            List de tuples (nom_depart, nom_arrivee, capacite)
+        """
         flow_matrix = result.flow
-
         liaisons_saturees = []
 
         for liaison in self.liaisons:
@@ -643,14 +649,3 @@ def satisfaction_villes(
         essais += 1
 
     return config, travaux
-
-def liaisons_saturees_2(result, index_noeuds, liaisons):
-    """Retourne la liste des (depart, arrivee) saturées dans le flot maximal."""
-    saturees = []
-    flow_matrix = result.flow
-    for liaison in liaisons:
-        i = index_noeuds[liaison.depart]
-        j = index_noeuds[liaison.arrivee]
-        if flow_matrix[i, j] >= liaison.capacite and liaison.capacite > 0:
-            saturees.append((liaison.depart, liaison.arrivee))
-    return saturees
