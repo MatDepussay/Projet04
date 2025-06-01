@@ -1,9 +1,16 @@
 import sys
 import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
-from app import Noeud, Liaison
+import matplotlib.pyplot as plt
+import copy
 
-# Définition des noeuds
+# 📁 Ajout du chemin vers le dossier 'src' pour importer les modules du projet
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
+
+from data import Noeud, Liaison, GestionReseau ,ReseauHydraulique, optimiser_liaisons, satisfaction, liaison_existe
+from affichage import afficherCarte, afficherCarteEnoncer
+
+# === Données ===
+
 ListeNoeuds = [
     Noeud("A", "source", 15),
     Noeud("B", "source", 15),
@@ -37,3 +44,67 @@ ListeLiaisons = [
     Liaison("I", "L", 4),
     Liaison("K", "J", 10),
 ]
+
+# === Création du réseau hydraulique ===
+
+reseau_demo = ReseauHydraulique(ListeNoeuds, ListeLiaisons)
+
+# === Calcul du flot maximal initial ===
+
+result, index_noeuds = reseau_demo.calculerFlotMaximal()
+
+print(f"Flot maximal initial : {result.flow_value} unités")
+afficherCarte(result=result, index_noeuds=index_noeuds, noeuds=ListeNoeuds, liaisons=ListeLiaisons)
+
+plt.pause(1)
+
+# === Exemple d’optimisation : on optimise les liaisons B->F et E->I ===
+
+liaisons_a_optimiser = [("A", "E"), ("I", "L")]
+
+print("\n--- Optimisation des liaisons B->F et E->I ---")
+
+# Attention : faire une copie des liaisons car optimiser_liaisons modifie potentiellement
+liaisons_copie = copy.deepcopy(ListeLiaisons)
+
+config_finale, travaux = optimiser_liaisons(ListeNoeuds, liaisons_copie, liaisons_a_optimiser)
+
+for i, (liaison, capacite, flot) in enumerate(travaux):
+    u, v = liaison
+    print(f"Travaux #{i+1}: Liaison {u} -> {v}, capacité choisie : {capacite}, nouveau flot maximal : {flot}")
+
+# Affichage après optimisation
+reseau_opt = ReseauHydraulique(ListeNoeuds, config_finale)
+result_opt, index_noeuds_opt = reseau_opt.calculerFlotMaximal()
+
+print(f"Flot maximal après optimisation : {result_opt.flow_value} unités")
+afficherCarte(result=result_opt, index_noeuds=index_noeuds_opt, noeuds=ListeNoeuds, liaisons=config_finale)
+
+plt.pause(1)
+
+# === Satisfaction : approvisionnement 100% des villes ===
+
+objectif = sum(n.capaciteMax for n in ListeNoeuds if n.type == "ville")
+print(f"\n--- Satisfaction : Approvisionner {objectif} unités (100% des villes) ---")
+
+# On considère toutes les liaisons comme modifiables pour la satisfaction
+liaisons_modifiables = [(l.depart, l.arrivee) for l in ListeLiaisons]
+
+nouvelle_config, travaux_satisfaction = satisfaction(
+    noeuds=ListeNoeuds,
+    liaisons_actuelles=ListeLiaisons,
+    liaisons_possibles=liaisons_modifiables,
+    objectif_flot=objectif
+)
+
+print("Travaux réalisés pour la satisfaction :")
+for (u,v), cap, flot in travaux_satisfaction:
+    print(f"Liaison {u} -> {v} ajustée à {cap} unités, flot = {flot}")
+
+reseau_satis = ReseauHydraulique(ListeNoeuds, nouvelle_config)
+result_satis, index_noeuds_satis = reseau_satis.calculerFlotMaximal()
+
+print(f"Flot maximal après satisfaction : {result_satis.flow_value} unités")
+afficherCarte(result=result_satis, index_noeuds=index_noeuds_satis, noeuds=ListeNoeuds, liaisons=nouvelle_config)
+
+plt.show()

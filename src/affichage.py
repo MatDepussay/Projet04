@@ -2,9 +2,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from data import GestionReseau
 
-reseau = GestionReseau()
-
-def afficherCarte(result=None, index_noeuds=None, liaisons=None):
+def afficherCarte(result=None, index_noeuds=None, noeuds=None, liaisons=None):
     """    
     Affiche une carte du réseau hydraulique en utilisant NetworkX et Matplotlib.
 
@@ -20,45 +18,44 @@ def afficherCarte(result=None, index_noeuds=None, liaisons=None):
         - Les arêtes affichent les flux effectifs suivis de leur capacité maximale sous forme `flux / capacité`.
 
     Exemple
-        >>> afficherCarte(result, index_noeuds, liaisons)
+        >>> afficherCarte(result, index_noeuds, noeuds, liaisons)
     """
-    if liaisons is None:
-        liaisons = reseau.ListeLiaisons
+    if noeuds is None:
+        reseau = GestionReseau()
+        noeuds = reseau.ListeNoeuds
+        if liaisons is None:
+            liaisons = reseau.ListeLiaisons
+    else:
+        if liaisons is None:
+            raise ValueError("Il faut passer aussi les liaisons si on passe les noeuds")
 
     G = nx.DiGraph()
-    G.add_nodes_from([n.nom for n in reseau.ListeNoeuds])
+    G.add_nodes_from([n.nom for n in noeuds])
 
     for liaison in liaisons:
         G.add_edge(liaison.depart, liaison.arrivee, weight=liaison.capacite)
 
     pos = nx.kamada_kawai_layout(G)
 
+    infos_noeuds = {n.nom: n for n in noeuds}
     node_colors = []
     labels = {}
-    appro = {}
-    sources = {}
-    
-    # 🔍 Récupération dynamique des villes et sources
-    villes = [n.nom for n in reseau.ListeNoeuds if n.type == "ville"]
-    sources_liste = [n.nom for n in reseau.ListeNoeuds if n.type == "source"]
-
-    if result and index_noeuds:
-        for p in villes:
-            if p in index_noeuds:
-                flux = result.flow[index_noeuds[p], index_noeuds['super_puits']]
-                appro[p] = int(flux)
-        for s in sources_liste:
-            if s in index_noeuds:
-                flux = result.flow[index_noeuds['super_source'], index_noeuds[s]]
-                sources[s] = int(flux)
 
     for node in G.nodes:
-        if node in appro:
-            node_colors.append('lightgreen')
-            labels[node] = f"{node}\n({appro[node]} u.)"
-        elif node in sources:
+        noeud = infos_noeuds.get(node)
+        if noeud is None:
+            node_colors.append('grey')
+            labels[node] = node
+            continue
+
+        cap = noeud.capaciteMax if hasattr(noeud, 'capaciteMax') else '?'
+
+        if noeud.type == "source":
             node_colors.append('lightcoral')
-            labels[node] = f"{node}\n({sources[node]} u.)"
+            labels[node] = f"{node}\n({cap} u.)"
+        elif noeud.type == "ville":
+            node_colors.append('lightgreen')
+            labels[node] = f"{node}\n({cap} u.)"
         else:
             node_colors.append('skyblue')
             labels[node] = node
@@ -96,7 +93,7 @@ def afficherCarte(result=None, index_noeuds=None, liaisons=None):
     return fig  # ✅ essentiel pour st.pyplot(fig)
 
 
-def afficherCarteEnoncer(result=None, index_noeuds=None, liaisons=None):
+def afficherCarteEnoncer(result=None, index_noeuds=None, noeuds=None, liaisons=None):
     """
         Affiche une carte du réseau hydraulique en utilisant NetworkX et Matplotlib.
 
@@ -110,13 +107,13 @@ def afficherCarteEnoncer(result=None, index_noeuds=None, liaisons=None):
         - Les arêtes affichent les flux effectifs suivis de leur capacité maximale sous forme `flux / capacité`.
 
     Exemple
-        >>> afficherCarte(result, index_noeuds, liaisons)
+        >>> afficherCarte(result, index_noeuds, noeuds, liaisons)
     """
-    if liaisons is None:
-        liaisons = reseau.ListeLiaisons
+    if noeuds is None or liaisons is None:
+        raise ValueError("Il faut fournir les listes 'noeuds' et 'liaisons'")
 
     G = nx.DiGraph()
-    G.add_nodes_from([n.nom for n in reseau.ListeNoeuds])
+    G.add_nodes_from([n.nom for n in noeuds])
 
     for liaison in liaisons:
         G.add_edge(liaison.depart, liaison.arrivee, weight=liaison.capacite)
@@ -125,28 +122,28 @@ def afficherCarteEnoncer(result=None, index_noeuds=None, liaisons=None):
 
     node_colors = []
     labels = {}
-    infos_noeuds = {n.nom: n for n in reseau.ListeNoeuds}
+    infos_noeuds = {n.nom: n for n in noeuds}
 
     for node in G.nodes:
-        if node in infos_noeuds:
-            noeud = infos_noeuds[node]
-            cap = noeud.capaciteMax
-            if noeud.type == "source":
-                node_colors.append('lightcoral')
-                labels[node] = f"{node}\n({cap} u.)"
-            elif noeud.type == "ville" or noeud.type == "puits":
-                # tu peux ajouter "puits" si tu veux le distinguer des villes
-                node_colors.append('lightgreen')
-                labels[node] = f"{node}\n({cap} u.)"
-            else:  # intermediaire
-                node_colors.append('skyblue')
-                labels[node] = node
-        else:
-            # Noeud non reconnu dans infos_noeuds, couleur neutre
+        noeud = infos_noeuds.get(node)
+        if noeud is None:
+            # Noeud non reconnu, gris neutre
             node_colors.append('grey')
             labels[node] = node
+            continue
 
-    # ✅ Créer la figure et axes
+        cap = getattr(noeud, 'capaciteMax', '?')
+
+        if noeud.type == "source":
+            node_colors.append('lightcoral')  # rouge clair
+            labels[node] = f"{node}\n({cap} u.)"
+        elif noeud.type == "ville" or noeud.type == "puits":
+            node_colors.append('lightgreen')  # vert clair
+            labels[node] = f"{node}\n({cap} u.)"
+        else:
+            node_colors.append('skyblue')  # bleu ciel
+            labels[node] = node
+
     fig, ax = plt.subplots(figsize=(10, 7))
 
     nx.draw_networkx_nodes(G, pos, node_color=node_colors, node_size=1000, edgecolors='black', ax=ax)
@@ -166,4 +163,4 @@ def afficherCarteEnoncer(result=None, index_noeuds=None, liaisons=None):
     ax.axis('off')
     fig.tight_layout()
 
-    return fig  # ✅ Essentiel pour st.pyplot(fig)
+    return fig

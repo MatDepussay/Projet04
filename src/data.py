@@ -1,5 +1,6 @@
 from typing import List, Tuple, Dict, Optional
 from numpy import array
+import copy
 import json
 import os
 from scipy.sparse import csr_matrix
@@ -230,7 +231,7 @@ class GestionReseau:
         }
 
         with open(fichier, 'w') as f:
-            json.dump(data, f, indent=4)
+            json.dump(data, f, indent=4, sort_keys=True)
 
     def charger_reseau(self, fichier='reseaux.json') -> Dict[str, Tuple[List[Noeud], List[Liaison]]]:
         """
@@ -310,6 +311,8 @@ class ReseauHydraulique:
                 self.matrice_np[idx][self.index_noeuds["super_puits"]] = node.capaciteMax
 
         self.matrice_sparse = csr_matrix(self.matrice_np)
+        print("Construction matrice (np) :")
+        print(self.matrice_np)
 
     def __str__(self):
         noeuds_str = "\n".join(str(n) for n in self.noeuds.values())
@@ -317,17 +320,24 @@ class ReseauHydraulique:
         return f"--- Noeuds ---\n{noeuds_str}\n\n--- Liaisons ---\n{liaisons_str}"
 
     def calculerFlotMaximal(self):
-        result = maximum_flow(self.matrice_sparse, self.index_noeuds["super_source"], self.index_noeuds["super_puits"])
+        result = maximum_flow(self.matrice_sparse, 
+                              self.index_noeuds["super_source"], 
+                              self.index_noeuds["super_puits"])
         print(f"💧 Flot maximal total : {result.flow_value} unités\n➡️ Détail des flux utilisés :\n")
 
         # result.flow est une matrice sparse contenant le flot passant par chaque arc
         flow_matrix = result.flow
 
-        for i in range(len(self.matrice_np)):
-            for j in range(len(self.matrice_np)):
-                used_flow = flow_matrix[i][j]
-                if used_flow > 0:
-                    print(f"{self.index_inverse[i]} ➝ {self.index_inverse[j]} : {used_flow} unités")
+        for i in range(flow_matrix.shape[0]):
+            for j in range(flow_matrix.shape[1]):
+                try:
+                    used_flow = flow_matrix[i, j]
+                    if used_flow > 0:
+                        nom_i = self.index_inverse.get(i, f"[inconnu:{i}]")
+                        nom_j = self.index_inverse.get(j, f"[inconnu:{j}]")
+                        print(f"{nom_i} ➝ {nom_j} : {used_flow} unités")
+                except Exception as e:
+                    print(f"(Erreur lors de la lecture du flux de {i} à {j}) : {e}")
 
         return result, self.index_noeuds
     
@@ -361,10 +371,9 @@ def optimiser_liaisons(
         Travaux #1 : Liaison A -> E
         Travaux #2 : Liaison I -> L
         
-        Retourne La nouvelle capacité de la liaison ainsi que son impact sur le flot maximal:
-        Capacité Choisie : 8 unités
-        Nouveau Flot Maxiaml : 38 unités
-
+        Retourne :
+            - La nouvelle configuration optimisée des liaisons.
+            - La liste des travaux effectués sous forme : ((départ, arrivée), capacité choisie, flot atteint)
     """
     meilleure_config = liaisons_actuelles[:]
     liaisons_restantes = liaisons_a_optimiser[:]
@@ -378,32 +387,46 @@ def optimiser_liaisons(
         meilleure_liaison = None
         meilleure_config_temp = None
         meilleur_result_temp = None
+        meilleure_capacite = 0
 
         for liaison_cible in liaisons_restantes:
             depart, arrivee = liaison_cible
-            for cap_test in range(1, 21):
+            
+            for cap_test in [5, 10, 15, 20]:
                 config_temp = []
+                liaison_trouvee = False
+                
                 for liaison in meilleure_config:
                     if (liaison.depart, liaison.arrivee) == (depart, arrivee):
                         config_temp.append(Liaison(depart, arrivee, cap_test))
+                        liaison_trouvee = True
                     else:
                         config_temp.append(liaison)
+                
+                if not liaison_trouvee:
+                    config_temp.append(Liaison(depart, arrivee, cap_test))
 
                 reseau_hydro = ReseauHydraulique(noeuds, config_temp)
-                result, _ = reseau_hydro.calculerFlotMaximal()
+                try:
+                    result, _ = reseau_hydro.calculerFlotMaximal()
+                except Exception as e:
+                    print(f"Erreur lors du calcul pour {depart}->{arrivee} cap={cap_test} : {e}")
+                    continue
 
                 if result.flow_value > meilleur_gain:
                     meilleur_gain = result.flow_value
                     meilleure_liaison = (depart, arrivee)
+                    meilleure_capacite = cap_test
                     meilleure_config_temp = config_temp[:]
                     meilleur_result_temp = result
 
             if meilleure_liaison:
                 meilleure_config = meilleure_config_temp
-                travaux_effectues.append((meilleure_liaison, cap_test, meilleur_result_temp.flow_value))
+                travaux_effectues.append((meilleure_liaison, meilleure_capacite, meilleur_result_temp.flow_value))
                 liaisons_restantes.remove(meilleure_liaison)
                 result_init = meilleur_result_temp  # mise à jour du flot de référence
             else:
+                print("🚫 Aucun gain supplémentaire possible. Arrêt de l’optimisation.")
                 break
 
     # Affichage du résumé clair (Qualité UX)
@@ -453,7 +476,7 @@ def satisfaction(
         - La liste des travaux effectués : ((départ, arrivée), capacité, flot atteint).
     """
     # 🧠 Calcul de l'objectif recommandé
-    objectif_calcule = sum(n.capacite for n in noeuds if getattr(n, "type", "").lower() == "ville")
+    objectif_calcule = sum(n.capaciteMax for n in noeuds if getattr(n, "type", "").lower() == "ville")
     
     # 🎯 Proposition interactive à l'utilisateur
     if objectif_flot is None:
@@ -485,8 +508,10 @@ def satisfaction(
 
     cap_max = demander_cap_max(25)
 
-    while liaisons_restantes:
+    while liaisons_restantes and flot_actuel < objectif_flot:
+        meilleur_gain = flot_actuel
         meilleure_liaison = None
+        meilleur_cap = None
         meilleure_config_temp = None
         meilleur_result_temp = None
 
@@ -499,48 +524,45 @@ def satisfaction(
                     break
 
             for cap_test in range(1, cap_max + 1):
-                config_test = meilleure_config[:]  # copie
-                if index_exist is not None:
-                    old_liaison = config_test[index_exist]
-                    config_test[index_exist] = Liaison(old_liaison.depart, old_liaison.arrivee, cap_test)
-                else:
-                    config_test.append(Liaison(liaison_cible[0], liaison_cible[1], cap_test))
+                # Créer une copie propre de la config
+                config_test = copy.deepcopy(meilleure_config)  # copie
                 
-                reseau_temp = ReseauHydraulique(noeuds, meilleure_config)
-                temp_result, _ = reseau_temp.calculerFlotMaximal()
-
-                if temp_result.flow_value > flot_actuel:
-                    meilleure_liaison = (liaison_cible, cap_test)
-                    meilleure_config_temp = meilleure_config[:]
-                    meilleur_result_temp = temp_result
-                    if temp_result.flow_value >= objectif_flot:
-                        # restaurer avant break
-                        if index_exist is not None:
-                            meilleure_config[index_exist] = old_liaison
-                        else:
-                            meilleure_config.pop()
-                        break
-
-                # restaurer
                 if index_exist is not None:
-                    meilleure_config[index_exist] = old_liaison
+                    # Modifier la liaison existante avec la nouvelle capacité
+                    config_test[index_exist] = Liaison(liaison_cible[0], liaison_cible[1], cap_test)
                 else:
-                    meilleure_config.pop()
+                    # Ajouter la nouvelle liaison
+                    config_test.append(Liaison(liaison_cible[0], liaison_cible[1], cap_test))
+                print(f"Test capacité {cap_test} pour liaison {liaison_cible}")  # <-- Ajouté
+                
+                reseau_temp = ReseauHydraulique(noeuds, config_test)
+                temp_result, _ = reseau_temp.calculerFlotMaximal()
+                
+                print(f"Flot calculé avec capacité {cap_test} : {temp_result.flow_value}")  # <-- Ajouté
 
-            if meilleur_result_temp and meilleur_result_temp.flow_value >= objectif_flot:
-                break
+                if temp_result.flow_value > meilleur_gain:
+                    meilleur_gain = temp_result.flow_value
+                    meilleure_liaison = liaison_cible
+                    meilleur_cap = cap_test
+                    meilleure_config_temp = config_test
+                    meilleur_result_temp = temp_result
+                    
+                    if meilleur_gain >= objectif_flot:
+                        break  # Stoppe la boucle cap_test
 
-        if meilleure_liaison:
-            meilleure_config = meilleure_config_temp[:]
-            travaux_effectues.append((meilleure_liaison[0], meilleure_liaison[1], meilleur_result_temp.flow_value))
-            flot_actuel = meilleur_result_temp.flow_value
-            liaisons_restantes.remove(meilleure_liaison[0])
+            if meilleur_gain >= objectif_flot:
+                break  # Stoppe la boucle liaison_cible
 
-            if flot_actuel >= objectif_flot:
-                break
-        else:
-            break  # Aucune amélioration possible
-    
+        if meilleure_liaison is None:
+            print("⚠️ Aucune amélioration possible, objectif non atteint.")
+            break
+
+        # Appliquer la meilleure amélioration trouvée
+        meilleure_config = meilleure_config_temp
+        travaux_effectues.append((meilleure_liaison, meilleur_cap, meilleur_result_temp.flow_value))
+        flot_actuel = meilleur_result_temp.flow_value
+        liaisons_restantes.remove(meilleure_liaison)
+
     print("\n📋 Résumé des travaux effectués :")
     for i, (liaison, cap, flot) in enumerate(travaux_effectues, 1):
         print(f"Travaux #{i} : {liaison[0]} -> {liaison[1]}, capacité {cap} ➝ flot atteint : {flot} unités")

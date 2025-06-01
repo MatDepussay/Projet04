@@ -20,7 +20,7 @@ def menu_demarrage():
 
         if choix == "1":
             reseau = GestionReseau()
-            menu_saisieReseau()
+            menu_saisie_reseau()
 
             # Sauvegarde optionnelle
             save = input("💾 Souhaitez-vous sauvegarder ce réseau ? (o/n) : ").strip().lower()
@@ -34,6 +34,10 @@ def menu_demarrage():
         elif choix == "2":
             nom_fichier = input("📁 Entrez le nom du fichier à charger : ").strip()
             reseau = GestionReseau()
+            
+            if not nom_fichier:
+                print("❌ Nom de fichier invalide.")
+                continue
             try:
                 reseau.charger_reseau(nom_fichier)
                 print("✅ Réseau chargé avec succès.")
@@ -49,9 +53,7 @@ def menu_demarrage():
             print("⛔ Choix invalide. Réessaie.")
 
 
-
-
-def menu_saisieReseau():
+def menu_saisie_reseau():
     print("\n🔵 Sources :")
     reseau.saisir_noeuds("source")
     
@@ -79,7 +81,7 @@ def menu_ajout_elements():
         print("4. Ajouter une liaison")
         print("5. Retour")
 
-        choix = input("Choix : ").strip().upper()
+        choix = input("Choix : ").strip()
 
         if choix in {"1", "2", "3"}:
             reseau.saisir_noeuds(type_noeud_mapping[choix])
@@ -117,8 +119,8 @@ def menu_terminal():
     while True:
         print("\n=== MENU ===")
         print("0. Ajouter un élément au réseau (source, ville, intermédiaire ou liaison)")
-        print("1. Afficher la carte de l'énoncer")
-        print("2. Afficher la carte Enoncer avec fluxmax")
+        print("1. Afficher la carte de l'énoncé")
+        print("2. Afficher la carte de l'énoncé avec flot maximal")
         print("3. Travaux")
         print("4. Generalisation")
         print("5. Quitter")
@@ -158,11 +160,11 @@ def menu_terminal():
                 continuer = input("➕ Ajouter une autre liaison ? (o/n) : ").strip().lower()
                 if continuer != 'o':
                     break
-                
-                if not liaisons_a_optimiser:
-                    print("⚠️ Aucune liaison sélectionnée pour les travaux.")
-                    continue
 
+            if not liaisons_a_optimiser:
+                    print("Aucune liaison sélectionnée pour les travaux.")
+                    continue
+            
             print("🔍 Optimisation de l’ordre des travaux...")
 
             # 👉 Appel de la fonction d'optimisation du fichier data
@@ -212,6 +214,7 @@ def menu_generalisation():
     Aucune valeur n’est retournée ; les actions sont effectuées et les résultats affichés
     directement dans le terminal et via des cartes graphiques.
     """
+    liaisons_actuelles = copy.deepcopy(reseau.ListeLiaisons)
     while True:
         print("\n=== MENU GÉNÉRALISATION ===")
         print("1. Optimiser les liaisons pour approvisionner 100% des villes")

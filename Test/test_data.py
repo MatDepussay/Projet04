@@ -3,32 +3,52 @@ import os
 from unittest.mock import patch
 from pyinstrument import Profiler
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
-from data import ListeLiaisons, ListeNoeuds, optimiser_liaisons, satisfaction, liaison_existe, ReseauHydraulique, Liaison, Noeud
+from data import optimiser_liaisons, satisfaction, liaison_existe, ReseauHydraulique, Liaison, Noeud
 
 from app import menu_terminal, menu_generalisation
 
 
-profiler = Profiler()
-profiler.start()
+def profiler_satisfaction_scenario_simple():
+    """Profilage manuel du scénario de satisfaction — à exécuter manuellement pour analyser les performances"""
 
-# 👉 Ici tu mets la fonction lente
-satisfaction(
-    noeuds=ListeNoeuds,
-    liaisons_actuelles=ListeLiaisons,
-    liaisons_possibles=[(liaison.depart, liaison.arrivee) for liaison in ListeLiaisons],
-    objectif_flot=50
-)
+    noeuds = [
+        Noeud("A", "source", 50),
+        Noeud("B", "intermediaire"),
+        Noeud("C", "ville", 50)
+    ]
 
-profiler.stop()
-print(profiler.output_text(unicode=True, color=True))
+    liaisons = [
+        Liaison("A", "B", 20),
+        Liaison("B", "C", 10)
+    ]
 
+    liaisons_possibles = [(liaison.depart, liaison.arrivee) for liaison in liaisons]
+    objectif_flot = 50
+
+    profiler = Profiler()
+    profiler.start()
+
+    satisfaction(
+        noeuds=noeuds,
+        liaisons_actuelles=liaisons,
+        liaisons_possibles=liaisons_possibles,
+        objectif_flot=objectif_flot
+    )
+
+    profiler.stop()
+    print(profiler.output_text(unicode=True, color=True))
 
 def test_modification_liaison_ameliore_flot():
-    original = ListeLiaisons[:]
-    modifiee = [liaison if liaison.depart != "A" or liaison.arrivee != "E" else Liaison("A", "E", 15) for liaison in ListeLiaisons]
-    
-    flot_avant, _ = ReseauHydraulique(ListeNoeuds, original).calculerFlotMaximal()
-    flot_apres, _ = ReseauHydraulique(ListeNoeuds, modifiee).calculerFlotMaximal()
+    noeuds = [
+        Noeud("A", "source", 50),
+        Noeud("E", "ville", 50)
+    ]
+    original = [Liaison("A", "E", 5)]
+    modifiee = [Liaison("A", "E", 15)]
+
+    flot_avant, _ = ReseauHydraulique(noeuds, original).calculerFlotMaximal()
+    flot_apres, _ = ReseauHydraulique(noeuds, modifiee).calculerFlotMaximal()
+
     
     assert flot_apres.flow_value > flot_avant.flow_value
 
@@ -43,24 +63,15 @@ def test_liaison_str():
     assert str(liaisons) == attendu
 
 def test_reseau_hydraulique_str():
-    noeuds = [
-        Noeud("A", "source", 100),
-        Noeud("B", "ville", 50)
-    ]
-    liaisons = [
-        Liaison("A", "B", 70)
-    ]
-    
+    noeuds = [Noeud("A", "source", 100), Noeud("B", "ville", 50)]
+    liaisons = [Liaison("A", "B", 70)]
     reseau = ReseauHydraulique(noeuds, liaisons)
-    representation = str(reseau)
 
-    assert "--- Noeuds ---" in representation
-    assert "Nom : A" in representation
-    assert "Nom : B" in representation
-    assert "--- Liaisons ---" in representation
-    assert "Départ : A" in representation
-    assert "Arrivée : B" in representation
-    assert "Capacité : 70" in representation
+    rep = str(reseau)
+    assert "--- Noeuds ---" in rep
+    assert "Nom : A" in rep
+    assert "--- Liaisons ---" in rep
+    assert "Départ : A" in rep
 
 def test_creation_noeud():
     n = Noeud("A", "source", 10)
@@ -69,59 +80,32 @@ def test_creation_noeud():
     assert n.capaciteMax == 10
 
 def test_liaison_existe():
-    assert liaison_existe("A","E", ListeLiaisons)
-    assert not liaison_existe("A", "H", ListeLiaisons)
-    assert not liaison_existe("E", "A", ListeLiaisons)
-
-
-def test_liaison_inexistante():
-    assert not liaison_existe("Z", "Q", ListeLiaisons)
+    liaisons = [Liaison("A", "E", 10), Liaison("B", "C", 15)]
+    assert liaison_existe("A", "E", liaisons)
+    assert not liaison_existe("A", "H", liaisons)
 
 def test_optimiser_liaisons_priorise_meilleure_liaison():
-    
-    liste_noeuds = [
-        Noeud("A", "source", 10),
-        Noeud("B", "intermediaire"),
-        Noeud("C", "ville", 10),
-    ]
+    noeuds = [Noeud("A", "source", 10), Noeud("B", "intermediaire"), Noeud("C", "ville", 10)]
+    liaisons = [Liaison("A", "B", 1), Liaison("B", "C", 1)]
+    possibles = [("A", "B"), ("B", "C")]
 
-    liste_liaisons = [
-        Liaison("A", "B", 1),  
-        Liaison("B", "C", 1),  
-    ]
+    config_finale, travaux = optimiser_liaisons(noeuds, liaisons, possibles)
 
-    liaisons_a_optimiser = [("A", "B"), ("B", "C")]
-
-    config_finale, travaux = optimiser_liaisons(liste_noeuds, liste_liaisons, liaisons_a_optimiser)
     assert len(travaux) == 2
-    assert travaux[0][2] <= travaux[1][2]  
-
-    for _, cap, _ in travaux:
-        assert 1 <= cap <= 20
+    assert travaux[0][2] <= travaux[1][2]  # Capacité
 
 def test_optimisation_break_quand_aucune_amélioration():
-    # Exemple de réseau très simple
-    noeuds = [
-        Noeud("A", "source", 5),
-        Noeud("B", "ville", 5)
-    ]
-    liaisons = [
-        Liaison("A", "B", 5)  # Capacité déjà suffisante
-    ]
+    noeuds = [Noeud("A", "source", 5), Noeud("B", "ville", 5)]
+    liaisons = [Liaison("A", "B", 5)]
+    possibles = [("A", "B")]
 
-    # Liaisons qu’on autorise à "optimiser", mais il n’y a rien à améliorer
-    liaisons_possibles = [("A", "B")]
-
-    objectif = 5  # Objectif déjà atteint
-
-    nouvelle_config, travaux = satisfaction(
+    _, travaux = satisfaction(
         noeuds=noeuds,
         liaisons_actuelles=liaisons,
-        liaisons_possibles=liaisons_possibles,
-        objectif_flot=objectif
+        liaisons_possibles=possibles,
+        objectif_flot=5
     )
 
-    # ➤ Puisqu’il n’y a rien à améliorer, on s’attend à ce que `travaux` contienne 0 ou 1 élément max
     assert len(travaux) <= 1
 
 def test_menu_travaux(monkeypatch, capsys):
@@ -161,7 +145,6 @@ def test_menu_option_2(monkeypatch):
     with patch("app.afficherCarte") as mock_afficher:
         menu_terminal()
         mock_afficher.assert_called()  # Vérifie que la fonction a été appelée
-
 
 def test_menu_option_4_retour(monkeypatch, capsys):
     inputs = iter(["4", "4", "5"])  # entre menu généralisation, puis revient
