@@ -133,12 +133,12 @@ def menu_terminal():
         elif choix == "1":
             reseau_hydro = ReseauHydraulique(reseau.ListeNoeuds, liaisons_actuelles)
             result, index_noeuds = reseau_hydro.calculerFlotMaximal()
-            afficherCarteEnoncer(result=result, index_noeuds=index_noeuds, liaisons=liaisons_actuelles)
+            afficherCarteEnoncer(result=result, index_noeuds=index_noeuds, noeuds=reseau.ListeNoeuds, liaisons=liaisons_actuelles)
 
         elif choix == "2":
             reseau_hydro = ReseauHydraulique(reseau.ListeNoeuds, liaisons_actuelles)
             result, index_noeuds = reseau_hydro.calculerFlotMaximal()
-            afficherCarte(result=result, index_noeuds=index_noeuds, liaisons=liaisons_actuelles)
+            afficherCarte(result=result, index_noeuds=index_noeuds, noeuds=reseau.ListeNoeuds, liaisons=liaisons_actuelles)
 
         elif choix == "3":
             print("🛠 Sélectionne les liaisons à mettre en travaux (ordre optimisé automatiquement)")
@@ -180,7 +180,7 @@ def menu_terminal():
             reseau_hydro = ReseauHydraulique(reseau.ListeNoeuds, reseau.ListeLiaisons)
             result, index_noeuds = reseau_hydro.calculerFlotMaximal()
 
-            afficherCarte(result=result, index_noeuds=index_noeuds, liaisons=config_finale)
+            afficherCarte(result=result, index_noeuds=index_noeuds, noeuds=reseau.ListeNoeuds, liaisons=config_finale)
         
         elif choix == "4":
             menu_generalisation()
@@ -244,7 +244,7 @@ def menu_generalisation():
             print("\n📈 Résultat final avec nouvelle configuration :\n")
             reseau_opt = ReseauHydraulique(reseau.ListeNoeuds, nouvelle_config)
             result, index_noeuds = reseau_opt.calculerFlotMaximal()  # Ce résultat est déjà correct
-            afficherCarte(result=result, index_noeuds=index_noeuds, liaisons=nouvelle_config)
+            afficherCarte(result=result, index_noeuds=index_noeuds, noeuds=reseau.ListeNoeuds, liaisons=nouvelle_config)
 
         elif choix == "2":
             sources = [n for n in reseau.ListeNoeuds if n.type == "source"]
@@ -266,7 +266,7 @@ def menu_generalisation():
             reseau_hydro = ReseauHydraulique(reseau.ListeNoeuds, reseau.ListeLiaisons)
             result, index_noeuds = reseau_hydro.calculerFlotMaximal()
 
-            afficherCarte(result=result, index_noeuds=index_noeuds, liaisons=reseau.ListeLiaisons)
+            afficherCarte(result=result, index_noeuds=index_noeuds, noeuds=reseau.ListeNoeuds, liaisons=reseau.ListeLiaisons)
             plt.pause(0.1)
 
             # === Sélection d’une liaison à mettre en travaux pendant que la carte est ouverte ===
@@ -294,7 +294,7 @@ def menu_generalisation():
             result_modifie, index_noeuds_modifie = reseau_hydro.calculerFlotMaximal()
 
             # Affichage mis à jour
-            afficherCarte(result=result_modifie, index_noeuds=index_noeuds_modifie, liaisons=reseau.ListeLiaisons)
+            afficherCarte(result=result_modifie, index_noeuds=index_noeuds_modifie, noeuds=reseau.ListeNoeuds, liaisons=reseau.ListeLiaisons)
             print(f"🚀 Nouveau flot maximal : {result_modifie.flow_value} u.")
             plt.ioff()
 

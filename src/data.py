@@ -11,18 +11,41 @@ class Noeud:
         self.nom = nom
         self.type = type # "source", "ville", "intermediaire"
         self.capaciteMax = capaciteMax
-
+    
     def __str__(self):
-        return f"Type : {self.type}\n Nom : {self.nom}\nCapacité Maximale : {self.capaciteMax}"
+        return f"Nom : {self.nom}, Type : {self.type}, Capacite max : {self.capaciteMax}"
+
+
+    def to_dict(self):
+        return {
+            "nom": self.nom,
+            "type": self.type,
+            "capaciteMax": self.capaciteMax
+        }
+        
+    @staticmethod
+    def from_dict(data):
+        return Noeud(data["nom"], data["type"], data.get("capaciteMax", 0))
 
 class Liaison:
     def __init__(self, depart: str, arrivee: str, capacite: int) -> None:
         self.depart = depart
         self.arrivee = arrivee
         self.capacite = capacite
-
+    
     def __str__(self):
-        return f"Départ : {self.depart}\n Arrivée : {self.arrivee}\nCapacité : {self.capacite}"
+        return f"Départ : {self.depart}, Arrivée : {self.arrivee}, Capacite : {self.capacite}"
+
+    def to_dict(self):
+        return {
+            "depart": self.depart,
+            "arrivee": self.arrivee,
+            "capacite": self.capacite
+        }
+    
+    @staticmethod
+    def from_dict(data):
+        return Liaison(data["depart"], data["arrivee"], data["capacite"])
 
 # Fonction de création
 def creer_noeud(nom : str, type_noeud : str, capacite: int=0, noms_existants: set = None) -> Noeud:
@@ -179,10 +202,6 @@ class GestionReseau:
                 print("❌ Noeud de départ ou d’arrivée introuvable.")
                 continue
 
-            if any(l.depart == depart and l.arrivee == arrivee for l in self.ListeLiaisons):
-                print("❌ Cette liaison existe déjà.")
-                continue
-
             try:
                 capacite = int(input("Capacité de la liaison : "))
                 if capacite <= 0:
@@ -204,7 +223,7 @@ class GestionReseau:
             if cont != 'o':
                 break
     
-    def sauvegarder_reseau(self, reseau_nom, fichier='reseaux.json'):
+    def sauvegarder_reseau(noeuds : List[Noeud], liaisons : List[Liaison], fichier : str, reseau_nom : str) -> None:
         """
         Sauvegarde un réseau hydraulique dans un fichier JSON sous le nom spécifié.
 
@@ -222,18 +241,18 @@ class GestionReseau:
         """
         data = {}
         if os.path.exists(fichier):
-            with open(fichier, 'r') as f:
-                data = json.load(f)
+                with open(fichier, 'r') as f:
+                    data = json.load(f)
 
         data[reseau_nom] = {
-            "noeuds": [n.__dict__ for n in self.ListeNoeuds],
-            "liaisons": [l.__dict__ for l in self.ListeLiaisons]
+            "noeuds": [n.to_dict() for n in noeuds],
+            "liaisons": [l.to_dict() for l in liaisons]
         }
 
         with open(fichier, 'w') as f:
-            json.dump(data, f, indent=4, sort_keys=True)
+            json.dump(data, f, indent=4)
 
-    def charger_reseau(self, fichier='reseaux.json') -> Dict[str, Tuple[List[Noeud], List[Liaison]]]:
+    def charger_reseaux(fichier : str, reseau_nom: str) -> Tuple[List[Noeud], List[Liaison]]:
         """
         Charge les réseaux hydrauliques sauvegardés depuis un fichier JSON.
 
@@ -254,24 +273,23 @@ class GestionReseau:
             >>> noeuds, liaisons = reseaux["reseau_1"]
         """
         if not os.path.exists(fichier):
-            return {}
+            raise FileNotFoundError(f"Fichier {fichier} non trouvé.")
 
         with open(fichier, 'r') as f:
             data = json.load(f)
 
-        reseaux = {}
-        for nom, contenu in data.items():
-            noeuds_data = contenu.get("noeuds", [])
-            liaisons_data = contenu.get("liaisons", [])
+        if reseau_nom not in data:
+            raise ValueError(f"Réseau {reseau_nom} introuvable dans le fichier.")
 
-            noeuds = [Noeud(n["nom"], n["type"], n.get("capaciteMax", 0)) for n in noeuds_data]
-            liaisons = [Liaison(l["depart"], l["arrivee"], l["capacite"]) for l in liaisons_data]
+        noeuds_data = data[reseau_nom]["noeuds"]
+        liaisons_data = data[reseau_nom]["liaisons"]
 
-            reseaux[nom] = (noeuds, liaisons)
+        noeuds = [Noeud.from_dict(nd) for nd in noeuds_data]
+        liaisons = [Liaison.from_dict(ld) for ld in liaisons_data]
 
-        return reseaux
+        return noeuds, liaisons
 
-    def supprimer_reseaux(self, fichier='reseaux.json'):
+    def supprimer_reseaux(fichier : str ='reseaux.json') -> None:
         """
         Supprime définitivement le fichier contenant les réseaux sauvegardés.
 
@@ -284,7 +302,6 @@ class GestionReseau:
         Exemple:
             >>> supprimer_reseaux()
         """
-
         if os.path.exists(fichier):
             os.remove(fichier)
 
@@ -568,88 +585,3 @@ def satisfaction(
         print(f"Travaux #{i} : {liaison[0]} -> {liaison[1]}, capacité {cap} ➝ flot atteint : {flot} unités")
 
     return meilleure_config, travaux_effectues
-
-
-def sauvegarder_reseau(reseau_nom : str, noeuds : List[Noeud], liaisons : List[Liaison], fichier : str ='reseaux.json') -> None:
-    """
-    Sauvegarde un réseau hydraulique dans un fichier JSON sous le nom spécifié.
-
-    Cette fonction stocke les informations des nœuds et des liaisons dans un fichier 
-    pour permettre une réutilisation ou une restauration ultérieure du réseau par l'utilisateur.
-
-    Args:
-        reseau_nom (str): Nom attribué au réseau à sauvegarder.
-        noeuds (List[Noeud]): Liste des objets Noeud à sauvegarder.
-        liaisons (List[Liaison]): Liste des objets Liaison à sauvegarder.
-        fichier (str): Nom du fichier JSON dans lequel sauvegarder les données (par défaut 'reseaux.json').
-
-    Exemple:
-        >>> sauvegarder_reseau("reseau_1", ListeNoeuds, ListeLiaisons)
-    """
-    data = {}
-    if os.path.exists(fichier):
-            with open(fichier, 'r') as f:
-                data = json.load(f)
-
-        
-    data[reseau_nom] = {
-        "noeuds": [n.__dict__ for n in noeuds],
-        "liaisons": [l.__dict__ for l in liaisons]
-    }
-
-    with open(fichier, 'w') as f:
-        json.dump(data, f, indent=4)
-
-def charger_reseaux(fichier : str ='reseaux.json') -> Dict[str, Tuple[List[Noeud], List[Liaison]]]:
-    """
-    Charge les réseaux hydrauliques sauvegardés depuis un fichier JSON.
-
-    Convertit les données JSON en objets `Noeud` et `Liaison` pour permettre leur réutilisation
-    dans l'application. Retourne un dictionnaire contenant les différents réseaux sauvegardés.
-
-    Args:
-        fichier (str): Nom du fichier JSON à lire (par défaut 'reseaux.json').
-
-    Returns:
-        Dict[str, Tuple[List[Noeud], List[Liaison]]]: 
-            Un dictionnaire avec pour clé le nom du réseau, et pour valeur un tuple contenant :
-                - la liste des objets `Noeud`
-                - la liste des objets `Liaison`
-
-    Exemple:
-        >>> reseaux = charger_reseaux()
-        >>> noeuds, liaisons = reseaux["reseau_1"]
-    """
-    if not os.path.exists(fichier):
-        return {}
-
-    with open(fichier, 'r') as f:
-        data = json.load(f)
-
-    reseaux = {}
-    for nom, contenu in data.items():
-        noeuds_data = contenu.get("noeuds", [])
-        liaisons_data = contenu.get("liaisons", [])
-
-        noeuds = [Noeud(n["nom"], n["type"], n.get("capaciteMax", 0)) for n in noeuds_data]
-        liaisons = [Liaison(l["depart"], l["arrivee"], l["capacite"]) for l in liaisons_data]
-
-        reseaux[nom] = (noeuds, liaisons)
-
-    return reseaux
-
-def supprimer_reseaux(fichier : str ='reseaux.json') -> None:
-    """
-    Supprime définitivement le fichier contenant les réseaux sauvegardés.
-
-    Cette fonction permet à l'utilisateur de réinitialiser complètement
-    les données de tous les réseaux enregistrés.
-
-    Args:
-        fichier (str): Nom du fichier JSON à supprimer (par défaut 'reseaux.json').
-
-    Exemple:
-        >>> supprimer_reseaux()
-    """
-    if os.path.exists(fichier):
-        os.remove(fichier)
