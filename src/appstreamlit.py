@@ -6,6 +6,8 @@ from data import (
 from affichage import afficherCarte, afficherCarteEnoncer
 import matplotlib.pyplot as plt
 
+
+
 st.set_page_config(page_title="Réseau Hydraulique", layout="wide", page_icon="🚰")
 
 # Bandeau d'accueil
@@ -202,23 +204,35 @@ def menu_generalisation():
         "Assèchement aléatoire d'une source"
     ])
     if choix == "Optimiser pour approvisionner 100% des villes":
-        objectif = sum(n.capaciteMax for n in reseau.ListeNoeuds if n.type == "ville")
-        st.write(f"🎯 Objectif : {objectif} unités (100% des villes)")
+        objectif_defaut = sum(n.capaciteMax for n in reseau.ListeNoeuds if n.type == "ville")
+        st.write(f"🎯 Objectif : {objectif_defaut} unités (100% des villes)")
+        objectif = st.number_input(
+            "Saisissez l'objectif de flot à atteindre (en unités) :",
+            min_value=1,
+            max_value=objectif_defaut,
+            value=objectif_defaut,
+            step=1
+        )
         liaisons_modifiables = [(l.depart, l.arrivee) for l in reseau.ListeLiaisons]
+        capacite_maximale = st.number_input("Capacité maximale des liaisons (par défaut 10)", min_value=1, value=10, step=1)
         if st.button("🔧 Lancer l'optimisation globale"):
             nouvelle_config, travaux = satisfaction(
                 noeuds=reseau.ListeNoeuds,
                 liaisons_actuelles=reseau.ListeLiaisons,
                 liaisons_possibles=liaisons_modifiables,
-                objectif_flot=objectif
+                objectif_flot=objectif,
+                cap_max=capacite_maximale  # Ajoute ce paramètre
             )
-            st.success("Optimisation globale terminée.")
-            for (depart, arrivee), cap, new_flot in travaux:
-                st.write(f"Liaison {depart} ➝ {arrivee} ajustée à {cap} u. → Flot = {new_flot} u.")
-            reseau_opt = ReseauHydraulique(reseau.ListeNoeuds, nouvelle_config)
-            result, index_noeuds = reseau_opt.calculerFlotMaximal()
-            fig = afficherCarte(result=result, index_noeuds=index_noeuds, noeuds=reseau.ListeNoeuds, liaisons=nouvelle_config)
-            st.pyplot(fig)
+            if not travaux:
+                st.warning("⚠️ Objectif non atteignable avec la configuration actuelle du réseau et les capacités testées.")
+            else:
+                st.success("Optimisation globale terminée.")
+                for (depart, arrivee), cap, new_flot in travaux:
+                    st.write(f"Liaison {depart} ➝ {arrivee} ajustée à {cap} u. → Flot = {new_flot} u.")
+                reseau_opt = ReseauHydraulique(reseau.ListeNoeuds, nouvelle_config)
+                result, index_noeuds = reseau_opt.calculerFlotMaximal()
+                fig = afficherCarte(result=result, index_noeuds=index_noeuds, noeuds=reseau.ListeNoeuds, liaisons=nouvelle_config)
+                st.pyplot(fig)
     else:
         import random
         sources = [n for n in reseau.ListeNoeuds if n.type == "source"]
