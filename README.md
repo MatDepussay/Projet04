@@ -61,3 +61,8 @@ Impact de l'assechement des villes plus généraliser
 appli avec streamlit
 Outil d'analyse du reseau
 Peu importe la ligne briser mais ville doivent etre allimenter a 100%
+
+Commande : 
+uv run streamlit run src/appstreamlit.py
+uv run ruff check 
+.
