@@ -20,14 +20,9 @@ def afficherCarte(result=None, index_noeuds=None, noeuds=None, liaisons=None):
     Exemple
         >>> afficherCarte(result, index_noeuds, noeuds, liaisons)
     """
-    if noeuds is None:
-        reseau = GestionReseau()
-        noeuds = reseau.ListeNoeuds
-        if liaisons is None:
-            liaisons = reseau.ListeLiaisons
-    else:
-        if liaisons is None:
-            raise ValueError("Il faut passer aussi les liaisons si on passe les noeuds")
+
+    if noeuds is None or liaisons is None:
+        raise ValueError("Il faut fournir les noeuds et liaisons")
 
     G = nx.DiGraph()
     G.add_nodes_from([n.nom for n in noeuds])
@@ -37,32 +32,31 @@ def afficherCarte(result=None, index_noeuds=None, noeuds=None, liaisons=None):
 
     pos = nx.kamada_kawai_layout(G)
 
-    infos_noeuds = {n.nom: n for n in noeuds}
     node_colors = []
     labels = {}
+    appro = {}
+    sources = {}
+
+    if result and index_noeuds:
+        for p in ['J', 'K', 'L']:
+            flux = result.flow[index_noeuds[p], index_noeuds['super_puits']]
+            appro[p] = flux
+        for s in ['A', 'B', 'C', 'D']:
+            flux = result.flow[index_noeuds['super_source'], index_noeuds[s]]
+            sources[s] = flux
 
     for node in G.nodes:
-        noeud = infos_noeuds.get(node)
-        if noeud is None:
-            node_colors.append('grey')
-            labels[node] = node
-            continue
-
-        cap = noeud.capaciteMax if hasattr(noeud, 'capaciteMax') else '?'
-
-        if noeud.type == "source":
-            node_colors.append('lightcoral')
-            labels[node] = f"{node}\n({cap} u.)"
-        elif noeud.type == "ville":
+        if node in appro:
             node_colors.append('lightgreen')
-            labels[node] = f"{node}\n({cap} u.)"
+            labels[node] = f"{node}\n({appro[node]} u.)"
+        elif node in sources:
+            node_colors.append('lightcoral')
+            labels[node] = f"{node}\n({sources[node]} u.)"
         else:
             node_colors.append('skyblue')
             labels[node] = node
 
-    # ✅ NOUVEAU : créer la figure
     fig, ax = plt.subplots(figsize=(10, 7))
-
     nx.draw_networkx_nodes(G, pos, node_color=node_colors, node_size=1000, edgecolors='black', ax=ax)
     nx.draw_networkx_edges(G, pos, edge_color='gray', arrows=True, arrowstyle='-|>', arrowsize=20, ax=ax)
     nx.draw_networkx_labels(G, pos, labels, font_size=12, font_weight='bold', ax=ax)
@@ -72,7 +66,7 @@ def afficherCarte(result=None, index_noeuds=None, noeuds=None, liaisons=None):
         cap = G[u][v]['weight']
         if result and index_noeuds:
             try:
-                flux = int(result.flow[index_noeuds[u], index_noeuds[v]])
+                flux = result.flow[index_noeuds[u], index_noeuds[v]]
                 edge_labels[(u, v)] = f"{int(flux)} / {cap}"
             except KeyError:
                 edge_labels[(u, v)] = f"0 / {cap}"
@@ -82,16 +76,15 @@ def afficherCarte(result=None, index_noeuds=None, noeuds=None, liaisons=None):
     nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_color='red', ax=ax)
 
     if result:
-        ax.text(1.05, 0.05, f"Flot maximal : {result.flow_value} u.",
-                fontsize=12, color='darkred', transform=ax.transAxes,
-                bbox=dict(facecolor='white', edgecolor='darkred', boxstyle='round,pad=0.3'))
+        flot_maximal = result.flow_value
+        fig.text(0.95, 0.05, f"Flot maximal : {flot_maximal} u.",
+                 fontsize=12, color='darkred', ha='right', va='bottom',
+                 bbox=dict(facecolor='white', edgecolor='darkred', boxstyle='round,pad=0.3'))
 
     ax.set_title("Carte des Liaisons avec Flot Effectif sur les Arêtes")
     ax.axis('off')
     fig.tight_layout()
-
-    return fig  # ✅ essentiel pour st.pyplot(fig)
-
+    return fig
 
 def afficherCarteEnoncer(result=None, index_noeuds=None, noeuds=None, liaisons=None):
     """
@@ -109,8 +102,9 @@ def afficherCarteEnoncer(result=None, index_noeuds=None, noeuds=None, liaisons=N
     Exemple
         >>> afficherCarte(result, index_noeuds, noeuds, liaisons)
     """
+
     if noeuds is None or liaisons is None:
-        raise ValueError("Il faut fournir les listes 'noeuds' et 'liaisons'")
+        raise ValueError("Il faut fournir les noeuds et liaisons")
 
     G = nx.DiGraph()
     G.add_nodes_from([n.nom for n in noeuds])
@@ -125,27 +119,22 @@ def afficherCarteEnoncer(result=None, index_noeuds=None, noeuds=None, liaisons=N
     infos_noeuds = {n.nom: n for n in noeuds}
 
     for node in G.nodes:
-        noeud = infos_noeuds.get(node)
-        if noeud is None:
-            # Noeud non reconnu, gris neutre
-            node_colors.append('grey')
-            labels[node] = node
-            continue
-
-        cap = getattr(noeud, 'capaciteMax', '?')
-
-        if noeud.type == "source":
-            node_colors.append('lightcoral')  # rouge clair
-            labels[node] = f"{node}\n({cap} u.)"
-        elif noeud.type == "ville" or noeud.type == "puits":
-            node_colors.append('lightgreen')  # vert clair
-            labels[node] = f"{node}\n({cap} u.)"
+        n = infos_noeuds.get(node)
+        if n is not None:
+            if n.type == "source":
+                node_colors.append('lightcoral')
+                labels[node] = f"{node}\n({n.capaciteMax} u.)"
+            elif n.type == "ville":
+                node_colors.append('lightgreen')
+                labels[node] = f"{node}\n({n.capaciteMax} u.)"
+            else:
+                node_colors.append('skyblue')
+                labels[node] = node
         else:
-            node_colors.append('skyblue')  # bleu ciel
+            node_colors.append('skyblue')
             labels[node] = node
 
     fig, ax = plt.subplots(figsize=(10, 7))
-
     nx.draw_networkx_nodes(G, pos, node_color=node_colors, node_size=1000, edgecolors='black', ax=ax)
     nx.draw_networkx_edges(G, pos, edge_color='gray', arrows=True, arrowstyle='-|>', arrowsize=20, ax=ax)
     nx.draw_networkx_labels(G, pos, labels, font_size=12, font_weight='bold', ax=ax)
@@ -155,12 +144,11 @@ def afficherCarteEnoncer(result=None, index_noeuds=None, noeuds=None, liaisons=N
 
     if result:
         flot_maximal = result.flow_value
-        ax.text(1.05, 0.05, f"Flot maximal : {flot_maximal} u.",
-                fontsize=12, color='darkred', transform=ax.transAxes,
-                bbox=dict(facecolor='white', edgecolor='darkred', boxstyle='round,pad=0.3'))
+        fig.text(0.95, 0.05, f"Flot maximal : {flot_maximal} u.",
+                 fontsize=12, color='darkred', ha='right', va='bottom',
+                 bbox=dict(facecolor='white', edgecolor='darkred', boxstyle='round,pad=0.3'))
 
     ax.set_title("Carte des Liaisons (Capacités maximales)")
     ax.axis('off')
     fig.tight_layout()
-
     return fig
