@@ -1,5 +1,6 @@
 from typing import List, Tuple, Dict, Optional
 from numpy import array
+from itertools import combinations, product
 import copy
 import json
 import os
@@ -70,7 +71,7 @@ def creer_noeud(nom : str, type_noeud : str, capacite: int=0, noms_existants: se
         return Noeud(nom, type_noeud)
     else:
         if capacite <= 0:
-            raise ValueError("❌ La capacité doit être un entier positif pour les sources et villes.")
+            raise ValueError("❌ La capacité doit être un entier positif pour les sources/ville")
         return Noeud(nom, type_noeud, capacite)
 
 def creer_liaison(depart: str, arrivee: str, capacite: int, noms_noeuds: set, liaisons_existantes: list) -> Liaison:
@@ -476,112 +477,86 @@ def demander_cap_max(valeur_defaut=25, essais_max=3) -> int:
     return valeur_defaut
 
 
+
 def satisfaction(
-    noeuds : List[Noeud],
+    noeuds: List[Noeud],
     liaisons_actuelles: List[Liaison],
     liaisons_possibles: List[Tuple[str, str]],
-    objectif_flot: Optional[int] = None
+    objectif_flot: Optional[int] = None,
+    cap_max: Optional[int] = None,
+    max_travaux: int = 5
 ) -> Tuple[List[Liaison], List[Tuple[Tuple[str, str], int, int]]]:
     """
-    Optimise les liaisons à ajouter ou modifier dans un réseau hydraulique afin d'atteindre
-    un objectif de flot minimal (défini par l'utilisateur ou calculé automatiquement).
-
-    Si aucun objectif n'est fourni, la somme des capacités des villes est utilisée.
-
-    Returns:
-        - La configuration finale des liaisons.
-        - La liste des travaux effectués : ((départ, arrivée), capacité, flot atteint).
+    Optimisation gloutonne limitée : à chaque étape, augmente la capacité d'une seule liaison saturée (greedy),
+    jusqu'à 5 travaux consécutifs ou jusqu'à atteindre l'objectif.
     """
-    # 🧠 Calcul de l'objectif recommandé
-    objectif_calcule = sum(n.capaciteMax for n in noeuds if getattr(n, "type", "").lower() == "ville")
-    
-    # 🎯 Proposition interactive à l'utilisateur
-    if objectif_flot is None:
-        print(f"\n🎯 Objectif recommandé pour approvisionner toutes les villes : {objectif_calcule} unités")
-        saisie = input("Entrez votre objectif de flot souhaité (ou appuyez sur Entrée pour utiliser l'objectif recommandé) : ").strip()
-        if saisie:
-            try:
-                objectif_flot = int(saisie)
-                if objectif_flot <= 0:
-                    print("⚠️ Objectif invalide. Utilisation de l'objectif recommandé.")
-                    objectif_flot = objectif_calcule
-            except ValueError:
-                print("⚠️ Entrée non valide. Utilisation de l'objectif recommandé.")
-                objectif_flot = objectif_calcule
-        else:
-            objectif_flot = objectif_calcule
-    
-    meilleure_config = liaisons_actuelles[:]
-    liaisons_restantes = liaisons_possibles[:]
-    travaux_effectues = []
+    if cap_max is None:
+        raise ValueError("cap_max doit être défini par l'utilisateur.")
 
-    reseau_initial = ReseauHydraulique(noeuds, meilleure_config)
-    result_init, _ = reseau_initial.calculerFlotMaximal()
-    flot_actuel = result_init.flow_value
+    objectif_calcule = sum(n.capaciteMax for n in noeuds if getattr(n, "type", "").lower() == "ville")
+    if objectif_flot is None:
+        objectif_flot = objectif_calcule
+
+    config = copy.deepcopy(liaisons_actuelles)
+    travaux = []
+
+    reseau = ReseauHydraulique(noeuds, config)
+    result, index_noeuds = reseau.calculerFlotMaximal()
+    flot_actuel = result.flow_value
 
     if flot_actuel >= objectif_flot:
-        print(f"✅ Flot actuel ({flot_actuel}) déjà supérieur ou égal à l'objectif ({objectif_flot}).")
-        return meilleure_config, travaux_effectues  # Déjà bon !
+        return config, []
 
-    cap_max = demander_cap_max(25)
-
-    while liaisons_restantes and flot_actuel < objectif_flot:
-        meilleur_gain = flot_actuel
-        meilleure_liaison = None
-        meilleur_cap = None
-        meilleure_config_temp = None
-        meilleur_result_temp = None
-
-        for liaison_cible in liaisons_restantes:
-            # Cherche si la liaison existe déjà
-            index_exist = None
-            for i, liaison_obj in enumerate(meilleure_config):
-                if (liaison_obj.depart, liaison_obj.arrivee) == liaison_cible:
-                    index_exist = i
-                    break
-
-            for cap_test in range(1, cap_max + 1):
-                # Créer une copie propre de la config
-                config_test = copy.deepcopy(meilleure_config)  # copie
-                
-                if index_exist is not None:
-                    # Modifier la liaison existante avec la nouvelle capacité
-                    config_test[index_exist] = Liaison(liaison_cible[0], liaison_cible[1], cap_test)
-                else:
-                    # Ajouter la nouvelle liaison
-                    config_test.append(Liaison(liaison_cible[0], liaison_cible[1], cap_test))
-                print(f"Test capacité {cap_test} pour liaison {liaison_cible}")  # <-- Ajouté
-                
-                reseau_temp = ReseauHydraulique(noeuds, config_test)
-                temp_result, _ = reseau_temp.calculerFlotMaximal()
-                
-                print(f"Flot calculé avec capacité {cap_test} : {temp_result.flow_value}")  # <-- Ajouté
-
-                if temp_result.flow_value > meilleur_gain:
-                    meilleur_gain = temp_result.flow_value
-                    meilleure_liaison = liaison_cible
-                    meilleur_cap = cap_test
-                    meilleure_config_temp = config_test
-                    meilleur_result_temp = temp_result
-                    
-                    if meilleur_gain >= objectif_flot:
-                        break  # Stoppe la boucle cap_test
-
-            if meilleur_gain >= objectif_flot:
-                break  # Stoppe la boucle liaison_cible
-
-        if meilleure_liaison is None:
-            print("⚠️ Aucune amélioration possible, objectif non atteint.")
+    essais = 0
+    while flot_actuel < objectif_flot and essais < max_travaux:
+        # Cherche les liaisons saturées
+        liaisons_sats = liaisons_saturees(result, index_noeuds, config)
+        candidates = [l for l in config if (l.depart, l.arrivee) in liaisons_sats and l.capacite < cap_max]
+        if not candidates:
             break
 
-        # Appliquer la meilleure amélioration trouvée
-        meilleure_config = meilleure_config_temp
-        travaux_effectues.append((meilleure_liaison, meilleur_cap, meilleur_result_temp.flow_value))
-        flot_actuel = meilleur_result_temp.flow_value
-        liaisons_restantes.remove(meilleure_liaison)
+        best_gain = 0
+        best_liaison = None
+        best_cap = None
+        best_result = None
 
-    print("\n📋 Résumé des travaux effectués :")
-    for i, (liaison, cap, flot) in enumerate(travaux_effectues, 1):
-        print(f"Travaux #{i} : {liaison[0]} -> {liaison[1]}, capacité {cap} ➝ flot atteint : {flot} unités")
+        for liaison in candidates:
+            old_cap = liaison.capacite
+            for new_cap in range(old_cap + 1, cap_max + 1):
+                liaison.capacite = new_cap
+                reseau_test = ReseauHydraulique(noeuds, config)
+                result_test, _ = reseau_test.calculerFlotMaximal()
+                gain = result_test.flow_value - flot_actuel
+                if gain > best_gain:
+                    best_gain = gain
+                    best_liaison = (liaison.depart, liaison.arrivee)
+                    best_cap = new_cap
+                    best_result = result_test
+                liaison.capacite = old_cap  # reset
 
-    return meilleure_config, travaux_effectues
+        if best_gain == 0:
+            essais += 1  # On compte quand même un essai même si pas d'amélioration
+            continue    # On continue jusqu'à max_travaux
+
+        # Applique la meilleure amélioration trouvée
+        for liaison in config:
+            if (liaison.depart, liaison.arrivee) == best_liaison:
+                liaison.capacite = best_cap
+                break
+        flot_actuel = best_result.flow_value
+        travaux.append((best_liaison, best_cap, flot_actuel))
+        result = best_result  # update pour la prochaine boucle
+        essais += 1
+
+    return config, travaux
+
+def liaisons_saturees(result, index_noeuds, liaisons):
+    """Retourne la liste des (depart, arrivee) saturées dans le flot maximal."""
+    saturees = []
+    flow_matrix = result.flow
+    for liaison in liaisons:
+        i = index_noeuds[liaison.depart]
+        j = index_noeuds[liaison.arrivee]
+        if flow_matrix[i, j] >= liaison.capacite and liaison.capacite > 0:
+            saturees.append((liaison.depart, liaison.arrivee))
+    return saturees
