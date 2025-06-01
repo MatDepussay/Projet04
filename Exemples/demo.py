@@ -6,8 +6,8 @@ import copy
 # 📁 Ajout du chemin vers le dossier 'src' pour importer les modules du projet
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
 
-from data import Noeud, Liaison, GestionReseau ,ReseauHydraulique, optimiser_liaisons, satisfaction, liaison_existe
-from affichage import afficherCarte, afficherCarteEnoncer
+from data import Noeud, Liaison, ReseauHydraulique, optimiser_liaisons, satisfaction
+from affichage import afficherCarte
 
 # === Données ===
 
@@ -54,7 +54,7 @@ reseau_demo = ReseauHydraulique(ListeNoeuds, ListeLiaisons)
 result, index_noeuds = reseau_demo.calculerFlotMaximal()
 
 print(f"Flot maximal initial : {result.flow_value} unités")
-afficherCarte(result=result, index_noeuds=index_noeuds, noeuds=ListeNoeuds, liaisons=ListeLiaisons)
+afficherCarte(result=result, index_noeuds=index_noeuds, noeuds=ListeNoeuds, liaisons=ListeLiaisons, montrer_saturees=True)
 
 plt.pause(1)
 
@@ -105,6 +105,6 @@ reseau_satis = ReseauHydraulique(ListeNoeuds, nouvelle_config)
 result_satis, index_noeuds_satis = reseau_satis.calculerFlotMaximal()
 
 print(f"Flot maximal après satisfaction : {result_satis.flow_value} unités")
-afficherCarte(result=result_satis, index_noeuds=index_noeuds_satis, noeuds=ListeNoeuds, liaisons=nouvelle_config)
+afficherCarte(result=result_satis, index_noeuds=index_noeuds_satis, noeuds=ListeNoeuds, liaisons=nouvelle_config, montrer_saturees=False)
 
 plt.show()

@@ -1,7 +1,7 @@
 import streamlit as st
 import copy
 from data import (
-    GestionReseau, ReseauHydraulique, optimiser_liaisons, satisfaction, liaison_existe, Noeud, Liaison
+    GestionReseau, ReseauHydraulique, optimiser_liaisons, satisfaction, Noeud, Liaison
 )
 from affichage import afficherCarte, afficherCarteEnoncer
 import matplotlib.pyplot as plt
@@ -208,7 +208,7 @@ def menu_travaux():
             st.write(f"Travaux #{i+1} : Liaison {u} ➝ {v}, capacité {cap} unités, flot atteint : {flot} unités")
         reseau_hydro = ReseauHydraulique(reseau.ListeNoeuds, config_finale)
         result, index_noeuds = reseau_hydro.calculerFlotMaximal()
-        fig = afficherCarte(result=result, index_noeuds=index_noeuds, noeuds=reseau.ListeNoeuds, liaisons=config_finale)
+        fig = afficherCarte(result=result, index_noeuds=index_noeuds, noeuds=reseau.ListeNoeuds, liaisons=config_finale, montrer_saturees=True)
         st.pyplot(fig)
 
 def menu_generalisation():
@@ -249,7 +249,7 @@ def menu_generalisation():
                     st.write(f"Liaison {depart} ➝ {arrivee} ajustée à {cap} u. → Flot = {new_flot} u.")
                 reseau_opt = ReseauHydraulique(reseau.ListeNoeuds, nouvelle_config)
                 result, index_noeuds = reseau_opt.calculerFlotMaximal()
-                fig = afficherCarte(result=result, index_noeuds=index_noeuds, noeuds=reseau.ListeNoeuds, liaisons=nouvelle_config)
+                fig = afficherCarte(result=result, index_noeuds=index_noeuds, noeuds=reseau.ListeNoeuds, liaisons=nouvelle_config, montrer_saturees=True)
                 st.pyplot(fig)
     else:
         import random
@@ -273,7 +273,7 @@ def menu_generalisation():
             st.write(f"Source choisie : <span style='color:#d62728;font-weight:bold'>{st.session_state['source_assechee']}</span>", unsafe_allow_html=True)
             reseau_hydro = ReseauHydraulique(reseau.ListeNoeuds, reseau.ListeLiaisons)
             result, index_noeuds = reseau_hydro.calculerFlotMaximal()
-            fig = afficherCarte(result=result, index_noeuds=index_noeuds, noeuds=reseau.ListeNoeuds, liaisons=reseau.ListeLiaisons)
+            fig = afficherCarte(result=result, index_noeuds=index_noeuds, noeuds=reseau.ListeNoeuds, liaisons=reseau.ListeLiaisons, montrer_saturees=True)
             st.pyplot(fig)
             liaisons_possibles = [(l.depart, l.arrivee) for l in reseau.ListeLiaisons]
             liaison_str = st.selectbox("Sélectionnez une liaison à renforcer (+5 unités)", [f"{u} ➝ {v}" for u, v in liaisons_possibles])
@@ -287,7 +287,7 @@ def menu_generalisation():
                         break
                 reseau_hydro = ReseauHydraulique(reseau.ListeNoeuds, reseau.ListeLiaisons)
                 result_modifie, index_noeuds_modifie = reseau_hydro.calculerFlotMaximal()
-                fig = afficherCarte(result=result_modifie, index_noeuds=index_noeuds_modifie, noeuds=reseau.ListeNoeuds, liaisons=reseau.ListeLiaisons)
+                fig = afficherCarte(result=result_modifie, index_noeuds=index_noeuds_modifie, noeuds=reseau.ListeNoeuds, liaisons=reseau.ListeLiaisons, montrer_saturees=True)
                 st.pyplot(fig)
                 st.write(f"Nouveau flot maximal : {result_modifie.flow_value} u.")
 
