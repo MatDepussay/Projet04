@@ -125,7 +125,7 @@ class GestionReseau:
             res += "Aucune liaison enregistrée.\n"
 
         return res
-        
+
     def saisir_noeuds(self, type_noeud: str) -> None:
         """
         Saisie interactive des noeuds (source, ville, intermédiaire).
@@ -252,16 +252,19 @@ class GestionReseau:
 
         with open(fichier, 'w') as f:
             json.dump(data, f, indent=4)
+    
+    @staticmethod
+    def charger_reseau(fichier):
+        """Appelle la méthode interne pour charger tous les réseaux"""
+        return GestionReseau.charger_reseaux(fichier)
 
-    def charger_reseaux(fichier : str, reseau_nom: str) -> Tuple[List[Noeud], List[Liaison]]:
+    @staticmethod
+    def charger_reseaux(fichier : str) -> Dict[str, Tuple[List[Noeud], List[Liaison]]]:
         """
-        Charge les réseaux hydrauliques sauvegardés depuis un fichier JSON.
-
-        Convertit les données JSON en objets `Noeud` et `Liaison` pour permettre leur réutilisation
-        dans l'application. Retourne un dictionnaire contenant les différents réseaux sauvegardés.
+        Charge tous les réseaux hydrauliques sauvegardés depuis un fichier JSON.
 
         Args:
-            fichier (str): Nom du fichier JSON à lire (par défaut 'reseaux.json').
+        fichier (str): Nom du fichier JSON à lire.
 
         Returns:
             Dict[str, Tuple[List[Noeud], List[Liaison]]]: 
@@ -279,17 +282,20 @@ class GestionReseau:
         with open(fichier, 'r') as f:
             data = json.load(f)
 
-        if reseau_nom not in data:
-            raise ValueError(f"Réseau {reseau_nom} introuvable dans le fichier.")
+        reseaux = {}
+        for nom_reseau, contenu in data.items():
+            noeuds = [Noeud.from_dict(nd) for nd in contenu.get("noeuds", [])]
+            liaisons = [Liaison.from_dict(ld) for ld in contenu.get("liaisons", [])]
+            reseaux[nom_reseau] = (noeuds, liaisons)
 
-        noeuds_data = data[reseau_nom]["noeuds"]
-        liaisons_data = data[reseau_nom]["liaisons"]
-
-        noeuds = [Noeud.from_dict(nd) for nd in noeuds_data]
-        liaisons = [Liaison.from_dict(ld) for ld in liaisons_data]
-
-        return noeuds, liaisons
-
+        return reseaux
+    
+    @staticmethod
+    def supprimer_reseau(fichier: str = 'reseaux.json') -> None:
+        """Appelle la méthode interne pour supprimer les réseaux"""
+        GestionReseau.supprimer_reseaux(fichier)
+    
+    @staticmethod
     def supprimer_reseaux(fichier : str ='reseaux.json') -> None:
         """
         Supprime définitivement le fichier contenant les réseaux sauvegardés.
@@ -358,6 +364,24 @@ class ReseauHydraulique:
                     print(f"(Erreur lors de la lecture du flux de {i} à {j}) : {e}")
 
         return result, self.index_noeuds
+    
+    def liaisons_saturees(self):
+        result = maximum_flow(self.matrice_sparse, 
+                              self.index_noeuds["super_source"], 
+                              self.index_noeuds["super_puits"])
+        flow_matrix = result.flow
+
+        liaisons_saturees = []
+
+        for liaison in self.liaisons:
+            i = self.index_noeuds[liaison.depart]
+            j = self.index_noeuds[liaison.arrivee]
+            flux_utilise = flow_matrix[i, j]
+
+            if flux_utilise == liaison.capacite:
+                liaisons_saturees.append((liaison.depart, liaison.arrivee, liaison.capacite))
+
+        return liaisons_saturees
     
 def liaison_existe(depart: str, arrivee: str, liaisons: List[Liaison]) -> bool:
     '''
@@ -454,7 +478,7 @@ def optimiser_liaisons(
 
     return meilleure_config, travaux_effectues
 
-def demander_cap_max(valeur_defaut=25, essais_max=3) -> int:
+def demander_cap_max(valeur_defaut=20, essais_max=3) -> int:
     """
     Demande à l'utilisateur la capacité maximale à tester pour chaque liaison.
     Retourne un entier positif ou la valeur par défaut après plusieurs erreurs.
@@ -476,9 +500,79 @@ def demander_cap_max(valeur_defaut=25, essais_max=3) -> int:
     print(f"Trop d'erreurs, utilisation de la valeur par défaut {valeur_defaut}.")
     return valeur_defaut
 
+def satisfaction(noeuds, liaisons, optimiser_fonction, objectif=None) -> Tuple[List[Liaison], List[Tuple[Tuple[str, str], int, int]]]:
+    """
+    Améliore progressivement les liaisons saturées pour satisfaire la demande des villes
+    ou atteindre un objectif de flot maximal défini par l'utilisateur.
+
+    La fonction identifie les liaisons saturées dans le réseau hydraulique, puis teste
+    différentes augmentations de leur capacité (par pas de 5 unités, jusqu'à une limite
+    fixée par l'utilisateur ou une valeur par défaut). À chaque étape, elle applique
+    la meilleure amélioration possible, c'est-à-dire celle qui maximise l'augmentation
+    du flot total.
+
+    Args:
+        noeuds (List[Noeud]): Liste des noeuds du réseau (sources, villes, intermédiaires).
+        liaisons (List[Liaison]): Liste des liaisons existantes avec leurs capacités.
+        optimiser_fonction (Callable): Fonction d’optimisation des liaisons (non utilisée ici, mais conservée pour compatibilité ou extensions futures).
+        objectif (int, optional): Objectif de flot à atteindre. Si None, la somme des besoins des villes est utilisée.
+
+    Returns:
+        Tuple[List[Liaison], List[Tuple[Tuple[str, str], int, int]]]:
+            - La liste finale de liaisons modifiées (avec leurs nouvelles capacités).
+            - La liste des travaux effectués, sous forme de :
+              ((départ, arrivée), nouvelle capacité, flot obtenu après modification).
+    """
+    objectif_utilisateur = objectif or sum(n.capaciteMax for n in noeuds if n.type == "ville")
+    capacite_max_test = demander_cap_max()  # Appelle ta fonction d’entrée utilisateur
+    
+    reseau = ReseauHydraulique(noeuds, liaisons)
+    result, _ = reseau.calculerFlotMaximal()
+
+    travaux_effectues = []
+    liaisons_courantes = liaisons[:]
+
+    while result.flow_value < objectif_utilisateur:
+        saturations = reseau.liaisons_saturees()
+        meilleures_améliorations = []
+
+        for (depart, arrivee, cap_actuelle) in saturations:
+            for augmentation in range(5, capacite_max_test + 1, 5):
+                nouvelle_cap = cap_actuelle + augmentation
+                liaisons_test = [
+                    Liaison(l.depart, l.arrivee, (nouvelle_cap if l.depart == depart and l.arrivee == arrivee else l.capacite))
+                    for l in liaisons_courantes
+                ]
+                reseau_test = ReseauHydraulique(noeuds, liaisons_test)
+                result_test, _ = reseau_test.calculerFlotMaximal()
+                gain = result_test.flow_value - result.flow_value
+
+                if gain > 0:
+                    meilleures_améliorations.append(((depart, arrivee), nouvelle_cap, result_test.flow_value))
+
+        if not meilleures_améliorations:
+            print("⚠️ Aucune amélioration supplémentaire ne permet d'augmenter le flot.")
+            break  # plus d'améliorations possibles
+
+        # Appliquer la meilleure amélioration (celle qui donne le plus gros flot)
+        meilleure = max(meilleures_améliorations, key=lambda x: x[2])
+        (depart, arrivee), cap, new_flot = meilleure
+
+        # Mise à jour de la liaison
+        for i, l in enumerate(liaisons_courantes):
+            if l.depart == depart and l.arrivee == arrivee:
+                liaisons_courantes[i] = Liaison(depart, arrivee, cap)
+                break
+
+        travaux_effectues.append(((depart, arrivee), cap, new_flot))
+        reseau = ReseauHydraulique(noeuds, liaisons_courantes)
+        result, _ = reseau.calculerFlotMaximal()
+
+    print(f"✅ Objectif atteint ou optimisation maximale atteinte. Flot final : {result.flow_value} / {objectif_utilisateur}")
+    return liaisons_courantes, travaux_effectues
 
 
-def satisfaction(
+def satisfaction_villes(
     noeuds: List[Noeud],
     liaisons_actuelles: List[Liaison],
     liaisons_possibles: List[Tuple[str, str]],
@@ -510,7 +604,7 @@ def satisfaction(
     essais = 0
     while flot_actuel < objectif_flot and essais < max_travaux:
         # Cherche les liaisons saturées
-        liaisons_sats = liaisons_saturees(result, index_noeuds, config)
+        liaisons_sats = liaisons_saturees_2(result, index_noeuds, config)
         candidates = [l for l in config if (l.depart, l.arrivee) in liaisons_sats and l.capacite < cap_max]
         if not candidates:
             break
@@ -550,7 +644,7 @@ def satisfaction(
 
     return config, travaux
 
-def liaisons_saturees(result, index_noeuds, liaisons):
+def liaisons_saturees_2(result, index_noeuds, liaisons):
     """Retourne la liste des (depart, arrivee) saturées dans le flot maximal."""
     saturees = []
     flow_matrix = result.flow

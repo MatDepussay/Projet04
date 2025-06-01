@@ -2,7 +2,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from data import GestionReseau
 
-def afficherCarte(result=None, index_noeuds=None, noeuds=None, liaisons=None):
+def afficherCarte(result=None, index_noeuds=None, noeuds=None, liaisons=None, montrer_saturees=False):
     """    
     Affiche une carte du réseau hydraulique en utilisant NetworkX et Matplotlib.
 
@@ -10,7 +10,13 @@ def afficherCarte(result=None, index_noeuds=None, noeuds=None, liaisons=None):
     en eau. Si un flot a été calculé, les flux effectifs sont annotés sur les arêtes ainsi que les apports
     reçus par les villes et délivrés par les sources.
 
-
+    Args:
+        result: Résultat du calcul de flot (de maximum_flow).
+        index_noeuds (dict): Dictionnaire nom -> index.
+        noeuds (List[Noeud]): Liste des nœuds du réseau.
+        liaisons (List[Liaison]): Liste des liaisons du réseau.
+        montrer_saturees (bool): Si True, met en évidence les liaisons saturées.
+        
     Notes
         - Les nœuds de type **source** sont colorés en rouge clair avec leur contribution (u.).
         - Les nœuds de type **ville** sont colorés en vert clair avec leur réception (u.).
@@ -26,39 +32,64 @@ def afficherCarte(result=None, index_noeuds=None, noeuds=None, liaisons=None):
 
     G = nx.DiGraph()
     G.add_nodes_from([n.nom for n in noeuds])
-
+    infos_noeuds = {n.nom: n for n in noeuds}
+    
     for liaison in liaisons:
         G.add_edge(liaison.depart, liaison.arrivee, weight=liaison.capacite)
 
     pos = nx.kamada_kawai_layout(G)
-
     node_colors = []
     labels = {}
     appro = {}
     sources = {}
-
+    
+    # Récupérer flux sources et villes via les types
     if result and index_noeuds:
-        for p in ['J', 'K', 'L']:
-            flux = result.flow[index_noeuds[p], index_noeuds['super_puits']]
-            appro[p] = flux
-        for s in ['A', 'B', 'C', 'D']:
-            flux = result.flow[index_noeuds['super_source'], index_noeuds[s]]
-            sources[s] = flux
+        for nom, noeud in infos_noeuds.items():
+            if noeud.type == "ville":
+                flux = result.flow[index_noeuds[nom], index_noeuds['super_puits']]
+                appro[nom] = flux
+            elif noeud.type == "source":
+                flux = result.flow[index_noeuds['super_source'], index_noeuds[nom]]
+                sources[nom] = flux
 
+    # Construction des couleurs et labels
     for node in G.nodes:
+        n = infos_noeuds.get(node)
         if node in appro:
             node_colors.append('lightgreen')
             labels[node] = f"{node}\n({appro[node]} u.)"
         elif node in sources:
             node_colors.append('lightcoral')
             labels[node] = f"{node}\n({sources[node]} u.)"
-        else:
+        elif n:
             node_colors.append('skyblue')
             labels[node] = node
+        else:
+            node_colors.append('gray')
+            labels[node] = node
+    
+    # Mise en évidence des liaisons saturées
+    edges_normal = []
+    edges_saturees = []
+
+    if montrer_saturees and result and index_noeuds:
+        reseau_temp = GestionReseau.construire_reseau(noeuds, liaisons)
+        saturations = reseau_temp.liaisons_saturees(result=result, index=index_noeuds)
+        saturees_set = set((d, a) for d, a, _ in saturations)
+    else:
+        saturees_set = set()
+
+    for u, v in G.edges:
+        if (u, v) in saturees_set:
+            edges_saturees.append((u, v))
+        else:
+            edges_normal.append((u, v))
 
     fig, ax = plt.subplots(figsize=(10, 7))
     nx.draw_networkx_nodes(G, pos, node_color=node_colors, node_size=1000, edgecolors='black', ax=ax)
-    nx.draw_networkx_edges(G, pos, edge_color='gray', arrows=True, arrowstyle='-|>', arrowsize=20, ax=ax)
+    nx.draw_networkx_edges(G, pos, edgelist=edges_normal, edge_color='gray', arrows=True, arrowstyle='-|>', arrowsize=20, ax=ax)
+    nx.draw_networkx_edges(G, pos, edgelist=edges_saturees, edge_color='red', width=3.5, arrows=True, arrowstyle='-|>', arrowsize=25, ax=ax)
     nx.draw_networkx_labels(G, pos, labels, font_size=12, font_weight='bold', ax=ax)
 
     edge_labels = {}
@@ -75,13 +106,14 @@ def afficherCarte(result=None, index_noeuds=None, noeuds=None, liaisons=None):
 
     nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_color='red', ax=ax)
 
+    # Affichage du flot maximal
     if result:
         flot_maximal = result.flow_value
         fig.text(0.95, 0.05, f"Flot maximal : {flot_maximal} u.",
                  fontsize=12, color='darkred', ha='right', va='bottom',
                  bbox=dict(facecolor='white', edgecolor='darkred', boxstyle='round,pad=0.3'))
 
-    ax.set_title("Carte des Liaisons avec Flot Effectif sur les Arêtes")
+    ax.set_title("Carte des Liaisons avec Flot Effectif sur les Arêtes" + (" (liaisons saturées en rouge)" if montrer_saturees else ""))
     ax.axis('off')
     fig.tight_layout()
     return fig

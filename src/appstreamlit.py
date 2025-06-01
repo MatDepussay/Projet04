@@ -271,16 +271,18 @@ def menu_chargement():
     fichier = st.text_input("Nom du fichier à charger", value="reseaux.json")
 
     # Charger les réseaux une seule fois et les garder en mémoire
-    if "reseaux_charges" not in st.session_state or st.session_state.get("dernier_fichier_charge") != fichier:
-        if st.button("🔄 Charger le réseau"):
-            try:
-                reseaux = GestionReseau().charger_reseau(fichier)
+
+    if st.button("🔄 Charger le réseau"):
+        try:
+            reseaux = GestionReseau.charger_reseau(fichier)
+            if not reseaux:
+                    st.warning("Aucun réseau trouvé dans ce fichier.")
+            else:
                 st.session_state["reseaux_charges"] = reseaux
                 st.session_state["dernier_fichier_charge"] = fichier
-                if not reseaux:
-                    st.warning("Aucun réseau trouvé dans ce fichier.")
-            except Exception as e:
-                st.error(f"Erreur lors du chargement : {e}")
+                st.success("Réseaux chargés avec succès.")
+        except Exception as e:
+            st.error(f"Erreur lors du chargement : {e}")
 
     reseaux = st.session_state.get("reseaux_charges", {})
     if reseaux:

@@ -92,9 +92,9 @@ liaisons_modifiables = [(l.depart, l.arrivee) for l in ListeLiaisons]
 
 nouvelle_config, travaux_satisfaction = satisfaction(
     noeuds=ListeNoeuds,
-    liaisons_actuelles=ListeLiaisons,
-    liaisons_possibles=liaisons_modifiables,
-    objectif_flot=objectif
+    liaisons=ListeLiaisons,
+    optimiser_fonction=optimiser_liaisons,  # ou la fonction d’optimisation que tu utilises
+    objectif=objectif  # optionnel : si tu veux forcer une valeur
 )
 
 print("Travaux réalisés pour la satisfaction :")
