@@ -6,7 +6,45 @@ from data import (
 from affichage import afficherCarte, afficherCarteEnoncer
 import matplotlib.pyplot as plt
 
-st.set_page_config(page_title="Réseau Hydraulique", layout="wide")
+st.set_page_config(page_title="Réseau Hydraulique", layout="wide", page_icon="🚰")
+
+# Bandeau d'accueil
+st.markdown(
+    """
+    <style>
+    .big-title {
+        font-size:2.2em !important;
+        color:#0072B5;
+        font-weight:bold;
+        margin-bottom:0.2em;
+    }
+    .subtitle {
+        font-size:1.2em !important;
+        color:#444;
+        margin-bottom:1em;
+    }
+    .stButton>button {
+        background-color: #0072B5;
+        color: white;
+        font-weight: bold;
+        border-radius: 8px;
+        border: none;
+        padding: 0.5em 1.2em;
+        margin: 0.2em 0.2em 0.2em 0;
+    }
+    .stButton>button:hover {
+        background-color: #005a8c;
+        color: #fff;
+    }
+    .stSidebar {
+        background-color: #f3f7fa;
+    }
+    </style>
+    <div class="big-title">🚰 Gestion de Réseau Hydraulique</div>
+    <div class="subtitle">Créez, visualisez et optimisez un réseau d'approvisionnement en eau de façon interactive.</div>
+    """,
+    unsafe_allow_html=True
+)
 
 if "reseau" not in st.session_state:
     st.session_state["reseau"] = GestionReseau()
@@ -19,60 +57,36 @@ def reset_reseau():
     st.session_state["reseau"] = GestionReseau()
     st.session_state["reseau_valide"] = False
 
-def menu_demarrage():
-    st.title("🚰 Gestion de Réseau Hydraulique")
-    choix = st.radio("Démarrage", ["Saisir un nouveau réseau", "Charger un réseau existant"])
-    if choix == "Saisir un nouveau réseau":
-        if st.button("Réinitialiser le réseau"):
-            reset_reseau()
-            st.experimental_rerun()
-        menu_saisie_reseau()
-    else:
-        fichier = st.text_input("Nom du fichier à charger", value="reseaux.json")
-        if st.button("Charger le réseau"):
-            try:
-                reseaux = GestionReseau().charger_reseau(fichier)
-                if reseaux:
-                    nom_reseau = st.selectbox("Choisir un réseau", list(reseaux.keys()))
-                    if st.button("Valider le chargement"):
-                        noeuds, liaisons = reseaux[nom_reseau]
-                        st.session_state["reseau"] = GestionReseau(noeuds, liaisons)
-                        st.session_state["reseau_valide"] = True
-                        st.success("Réseau chargé avec succès.")
-                        st.experimental_rerun()
-                else:
-                    st.warning("Aucun réseau trouvé dans ce fichier.")
-            except Exception as e:
-                st.error(f"Erreur lors du chargement : {e}")
-
 def menu_saisie_reseau():
-    st.header("Saisie du réseau")
-    with st.expander("Ajouter des sources"):
+    st.header("🛠️ Création d'un nouveau réseau")
+    st.info("Ajoutez vos sources, villes, intermédiaires et liaisons pour construire votre réseau hydraulique.")
+    with st.expander("💧 Ajouter des sources"):
         ajouter_noeuds("source")
-    with st.expander("Ajouter des villes"):
+    with st.expander("🏙️ Ajouter des villes"):
         ajouter_noeuds("ville")
-    with st.expander("Ajouter des intermédiaires"):
+    with st.expander("🔵 Ajouter des intermédiaires"):
         ajouter_noeuds("intermediaire")
-    with st.expander("Ajouter des liaisons"):
+    with st.expander("🔗 Ajouter des liaisons"):
         ajouter_liaisons()
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("Valider le réseau"):
+        if st.button("✅ Valider le réseau"):
             if reseau.ListeNoeuds and reseau.ListeLiaisons:
                 st.session_state["reseau_valide"] = True
                 st.success("Réseau validé. Vous pouvez maintenant afficher ou optimiser le réseau.")
             else:
                 st.warning("Veuillez ajouter au moins un noeud et une liaison.")
     with col2:
-        if st.button("Sauvegarder ce réseau"):
+        if st.button("💾 Sauvegarder ce réseau"):
             nom_fichier = st.text_input("Nom du fichier de sauvegarde", value="reseau1.json")
             if nom_fichier:
                 reseau.sauvegarder_reseau(nom_fichier)
                 st.success(f"Réseau sauvegardé dans {nom_fichier}")
 
 def ajouter_noeuds(type_noeud):
+    icones = {"source": "💧", "ville": "🏙️", "intermediaire": "🔵"}
     noms_existants = {n.nom for n in reseau.ListeNoeuds}
-    nom = st.text_input(f"Nom de la {type_noeud}", key=f"{type_noeud}_nom")
+    nom = st.text_input(f"{icones[type_noeud]} Nom de la {type_noeud}", key=f"{type_noeud}_nom")
     capacite = 0
     if type_noeud != "intermediaire":
         capacite = st.number_input("Capacité maximale", min_value=1, value=10, key=f"{type_noeud}_cap")
@@ -88,6 +102,7 @@ def ajouter_noeuds(type_noeud):
             st.error(str(e))
 
 def ajouter_liaisons():
+    st.markdown("Ajoutez une liaison entre deux nœuds existants.")
     noms_noeuds = {n.nom for n in reseau.ListeNoeuds}
     depart = st.text_input("Départ de la liaison", key="liaison_depart")
     arrivee = st.text_input("Arrivée de la liaison", key="liaison_arrivee")
@@ -107,31 +122,21 @@ def ajouter_liaisons():
         except Exception as e:
             st.error(str(e))
 
-def menu_terminal():
-    st.header("Menu principal")
-    choix = st.selectbox("Choisissez une action", [
-        "Afficher la carte de l'énoncé",
-        "Afficher la carte avec flot maximal",
-        "Travaux (optimisation manuelle)",
-        "Généralisation (optimisation globale)",
-        "Ajouter un élément",
-        "Réinitialiser le réseau"
-    ])
-    if choix == "Afficher la carte de l'énoncé":
-        afficher_carte_enoncer()
-    elif choix == "Afficher la carte avec flot maximal":
-        afficher_carte_flot()
-    elif choix == "Travaux (optimisation manuelle)":
-        menu_travaux()
-    elif choix == "Généralisation (optimisation globale)":
-        menu_generalisation()
-    elif choix == "Ajouter un élément":
-        menu_ajout_elements()
-    elif choix == "Réinitialiser le réseau":
-        reset_reseau()
-        st.experimental_rerun()
+def menu_ajout_elements():
+    st.header("➕ Ajouter un élément au réseau")
+    st.info("Ajoutez dynamiquement des sources, villes, intermédiaires ou liaisons à votre réseau existant.")
+    with st.expander("💧 Ajouter une source"):
+        ajouter_noeuds("source")
+    with st.expander("🏙️ Ajouter une ville"):
+        ajouter_noeuds("ville")
+    with st.expander("🔵 Ajouter un intermédiaire"):
+        ajouter_noeuds("intermediaire")
+    with st.expander("🔗 Ajouter une liaison"):
+        ajouter_liaisons()
 
 def afficher_carte_enoncer():
+    st.header("🗺️ Carte de l'énoncé")
+    st.info("Visualisez la structure de votre réseau sans calcul de flot maximal.")
     if not st.session_state.get("reseau_valide", False):
         st.warning("Veuillez valider le réseau avant d'afficher la carte.")
         return
@@ -144,6 +149,8 @@ def afficher_carte_enoncer():
     st.pyplot(fig)
 
 def afficher_carte_flot():
+    st.header("💦 Carte avec flot maximal")
+    st.info("Visualisez le flot maximal calculé sur votre réseau hydraulique.")
     if not st.session_state.get("reseau_valide", False):
         st.warning("Veuillez valider le réseau avant d'afficher la carte.")
         return
@@ -155,22 +162,12 @@ def afficher_carte_flot():
     fig = afficherCarte(result=result, index_noeuds=index_noeuds, noeuds=reseau.ListeNoeuds, liaisons=reseau.ListeLiaisons)
     st.pyplot(fig)
 
-def menu_ajout_elements():
-    st.subheader("Ajouter un élément au réseau")
-    with st.expander("Ajouter une source"):
-        ajouter_noeuds("source")
-    with st.expander("Ajouter une ville"):
-        ajouter_noeuds("ville")
-    with st.expander("Ajouter un intermédiaire"):
-        ajouter_noeuds("intermediaire")
-    with st.expander("Ajouter une liaison"):
-        ajouter_liaisons()
-
 def menu_travaux():
+    st.header("🛠️ Optimisation manuelle des travaux")
+    st.info("Sélectionnez les liaisons à optimiser pour améliorer le flot de votre réseau.")
     if not st.session_state.get("reseau_valide", False):
         st.warning("Veuillez valider le réseau avant d'utiliser cette fonctionnalité.")
         return
-    st.subheader("Optimisation manuelle des travaux")
     liaisons_possibles = [(l.depart, l.arrivee) for l in reseau.ListeLiaisons]
     selection = st.multiselect(
         "Sélectionnez les liaisons à optimiser (format : Départ ➝ Arrivée)",
@@ -180,7 +177,7 @@ def menu_travaux():
     for s in selection:
         u, v = s.split("➝")
         liaisons_a_optimiser.append((u.strip(), v.strip()))
-    if st.button("Lancer l'optimisation"):
+    if st.button("🚀 Lancer l'optimisation"):
         if not liaisons_a_optimiser:
             st.warning("Aucune liaison sélectionnée.")
             return
@@ -195,19 +192,20 @@ def menu_travaux():
         st.pyplot(fig)
 
 def menu_generalisation():
+    st.header("🌍 Optimisation globale / généralisation")
+    st.info("Optimisez automatiquement votre réseau pour répondre à différents scénarios.")
     if not st.session_state.get("reseau_valide", False):
         st.warning("Veuillez valider le réseau avant d'utiliser cette fonctionnalité.")
         return
-    st.subheader("Optimisation globale / généralisation")
     choix = st.radio("Scénario", [
         "Optimiser pour approvisionner 100% des villes",
         "Assèchement aléatoire d'une source"
     ])
     if choix == "Optimiser pour approvisionner 100% des villes":
         objectif = sum(n.capaciteMax for n in reseau.ListeNoeuds if n.type == "ville")
-        st.write(f"Objectif : {objectif} unités (100% des villes)")
+        st.write(f"🎯 Objectif : {objectif} unités (100% des villes)")
         liaisons_modifiables = [(l.depart, l.arrivee) for l in reseau.ListeLiaisons]
-        if st.button("Lancer l'optimisation globale"):
+        if st.button("🔧 Lancer l'optimisation globale"):
             nouvelle_config, travaux = satisfaction(
                 noeuds=reseau.ListeNoeuds,
                 liaisons_actuelles=reseau.ListeLiaisons,
@@ -227,9 +225,9 @@ def menu_generalisation():
         if not sources:
             st.warning("Aucune source trouvée.")
             return
-        if st.button("Assécher une source aléatoirement"):
+        if st.button("💣 Assécher une source aléatoirement"):
             source_choisie = random.choice(sources)
-            st.write(f"Source choisie : {source_choisie.nom}")
+            st.write(f"Source choisie : <span style='color:#d62728;font-weight:bold'>{source_choisie.nom}</span>", unsafe_allow_html=True)
             for n in reseau.ListeNoeuds:
                 if n.nom == source_choisie.nom:
                     n.capaciteMax = 0
@@ -239,7 +237,7 @@ def menu_generalisation():
             st.pyplot(fig)
             liaisons_possibles = [(l.depart, l.arrivee) for l in reseau.ListeLiaisons]
             liaison_str = st.selectbox("Sélectionnez une liaison à renforcer (+5 unités)", [f"{u} ➝ {v}" for u, v in liaisons_possibles])
-            if st.button("Renforcer la liaison sélectionnée"):
+            if st.button("💪 Renforcer la liaison sélectionnée"):
                 u, v = liaison_str.split("➝")
                 u, v = u.strip(), v.strip()
                 for liaison in reseau.ListeLiaisons:
@@ -254,12 +252,13 @@ def menu_generalisation():
                 st.write(f"Nouveau flot maximal : {result_modifie.flow_value} u.")
 
 def menu_chargement():
-    st.title("🚰 Gestion de Réseau Hydraulique")
+    st.header("📂 Chargement d'un réseau existant")
+    st.info("Chargez un réseau sauvegardé pour le visualiser ou l'optimiser.")
     fichier = st.text_input("Nom du fichier à charger", value="reseaux.json")
 
     # Charger les réseaux une seule fois et les garder en mémoire
     if "reseaux_charges" not in st.session_state or st.session_state.get("dernier_fichier_charge") != fichier:
-        if st.button("Charger le réseau"):
+        if st.button("🔄 Charger le réseau"):
             try:
                 reseaux = GestionReseau().charger_reseau(fichier)
                 st.session_state["reseaux_charges"] = reseaux
@@ -272,14 +271,14 @@ def menu_chargement():
     reseaux = st.session_state.get("reseaux_charges", {})
     if reseaux:
         nom_reseau = st.selectbox("Choisir un réseau", list(reseaux.keys()))
-        if st.button("Valider le chargement"):
+        if st.button("✅ Valider le chargement"):
             noeuds, liaisons = reseaux[nom_reseau]
             st.session_state["reseau"] = GestionReseau(noeuds, liaisons)
             st.session_state["reseau_valide"] = False  # On force la validation manuelle
             st.success("Réseau chargé. Cliquez sur 'Valider le réseau' pour continuer.")
 
     # Ajout du bouton de validation ici aussi
-    if st.button("Valider le réseau"):
+    if st.button("✅ Valider le réseau"):
         reseau = st.session_state["reseau"]
         if reseau.ListeNoeuds and reseau.ListeLiaisons:
             st.session_state["reseau_valide"] = True
@@ -288,19 +287,32 @@ def menu_chargement():
             st.warning("Veuillez charger un réseau contenant au moins un noeud et une liaison.")
 
 # === MENU LATERAL PRINCIPAL ===
-menu = st.sidebar.radio(
-    "Navigation",
-    [
-        "Créer un réseau",
-        "Charger un réseau",
-        "Afficher la carte de l'énoncé",
-        "Afficher la carte avec flot maximal",
-        "Travaux (optimisation manuelle)",
-        "Généralisation (optimisation globale)",
-        "Ajouter un élément",
-        "Réinitialiser le réseau"
-    ]
-)
+with st.sidebar:
+    st.image("https://cdn-icons-png.flaticon.com/512/2933/2933884.png", width=80)
+    st.markdown("<h3 style='color:#0072B5'>Menu principal</h3>", unsafe_allow_html=True)
+    menu = st.selectbox(
+        "Navigation",
+        [
+            "Créer un réseau",
+            "Charger un réseau",
+            "Afficher la carte de l'énoncé",
+            "Afficher la carte avec flot maximal",
+            "Travaux (optimisation manuelle)",
+            "Généralisation (optimisation globale)",
+            "Ajouter un élément",
+            "Réinitialiser le réseau"
+        ]
+    )
+    st.markdown(
+        """
+        <hr>
+        <div style='font-size:0.95em;color:#555'>
+        <b>Astuce :</b> Validez votre réseau avant d'accéder aux fonctionnalités d'affichage ou d'optimisation.<br>
+        <b>Couleurs :</b> <span style='color:#d62728'>Sources</span>, <span style='color:#2ca02c'>Villes</span>, <span style='color:#1f77b4'>Intermédiaires</span>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 if menu == "Créer un réseau":
     menu_saisie_reseau()
