@@ -236,10 +236,10 @@ def menu_generalisation():
         if st.button("🔧 Lancer l'optimisation globale"):
             nouvelle_config, travaux = satisfaction(
                 noeuds=reseau.ListeNoeuds,
-                liaisons_actuelles=reseau.ListeLiaisons,
-                liaisons_possibles=liaisons_modifiables,
-                objectif_flot=objectif,
-                cap_max=capacite_maximale  # Ajoute ce paramètre
+                liaisons=reseau.ListeLiaisons,
+                objectif=objectif,
+                cap_max=capacite_maximale,   # transmis depuis le number_input
+                max_travaux=10                # ou un autre nombre si tu veux le rendre paramétrable
             )
             if not travaux:
                 st.warning("⚠️ Objectif non atteignable avec la configuration actuelle du réseau et les capacités testées.")
@@ -257,12 +257,20 @@ def menu_generalisation():
         if not sources:
             st.warning("Aucune source trouvée.")
             return
+
+        # Stocker l'état dans session_state
+        if "source_assechee" not in st.session_state:
+            st.session_state["source_assechee"] = None
+
         if st.button("💣 Assécher une source aléatoirement"):
             source_choisie = random.choice(sources)
-            st.write(f"Source choisie : <span style='color:#d62728;font-weight:bold'>{source_choisie.nom}</span>", unsafe_allow_html=True)
+            st.session_state["source_assechee"] = source_choisie.nom
             for n in reseau.ListeNoeuds:
                 if n.nom == source_choisie.nom:
                     n.capaciteMax = 0
+
+        if st.session_state["source_assechee"]:
+            st.write(f"Source choisie : <span style='color:#d62728;font-weight:bold'>{st.session_state['source_assechee']}</span>", unsafe_allow_html=True)
             reseau_hydro = ReseauHydraulique(reseau.ListeNoeuds, reseau.ListeLiaisons)
             result, index_noeuds = reseau_hydro.calculerFlotMaximal()
             fig = afficherCarte(result=result, index_noeuds=index_noeuds, noeuds=reseau.ListeNoeuds, liaisons=reseau.ListeLiaisons)
@@ -282,6 +290,10 @@ def menu_generalisation():
                 fig = afficherCarte(result=result_modifie, index_noeuds=index_noeuds_modifie, noeuds=reseau.ListeNoeuds, liaisons=reseau.ListeLiaisons)
                 st.pyplot(fig)
                 st.write(f"Nouveau flot maximal : {result_modifie.flow_value} u.")
+
+            # Ajouter un bouton pour réinitialiser l'état si besoin
+            if st.button("🔄 Réinitialiser l'assèchement"):
+                st.session_state["source_assechee"] = None
 
 def menu_chargement():
     st.header("📂 Chargement d'un réseau existant")
