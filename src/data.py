@@ -534,14 +534,13 @@ def satisfaction(
     """
     objectif_utilisateur = objectif or sum(n.capaciteMax for n in noeuds if n.type == "ville")
     reseau = ReseauHydraulique(noeuds, liaisons)
-    result, _ = reseau.calculerFlotMaximal()
-
+    result, index_noeuds = reseau.calculerFlotMaximal()
     travaux_effectues = []
     liaisons_courantes = liaisons[:]
     essais = 0
 
     while result.flow_value < objectif_utilisateur and essais < max_travaux:
-        saturations = reseau.liaisons_saturees()
+        saturations = reseau.liaisons_saturees(result, index_noeuds)
         meilleures_améliorations = []
 
         for (depart, arrivee, cap_actuelle) in saturations:
