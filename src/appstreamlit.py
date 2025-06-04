@@ -273,7 +273,6 @@ def menu_generalisation():
             value=objectif_defaut,
             step=1
         )
-        liaisons_modifiables = [(liaison.depart, liaison.arrivee) for liaison in reseau.ListeLiaisons]
         capacite_maximale = st.number_input("Capacité maximale des liaisons (par défaut 10)", min_value=1, value=10, step=1)
         if st.button("🔧 Lancer l'optimisation globale"):
             nouvelle_config, travaux = satisfaction(
