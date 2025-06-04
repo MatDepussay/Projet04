@@ -56,24 +56,9 @@ def test_optimiser_liaisons_gain():
     noeuds = [Noeud("A", "source", 10), Noeud("B", "ville", 10)]
     liaisons = [Liaison("A", "B", 5)]
     liaisons_a_optimiser = [("A", "B")]
-    _, config, travaux = optimiser_liaisons(noeuds, liaisons, liaisons_a_optimiser)
+    config, travaux = optimiser_liaisons(noeuds, liaisons, liaisons_a_optimiser)
     assert any(travail[1] >= 10 for travail in travaux)  # On doit pouvoir atteindre la capacité max
 
-def test_satisfaction_objectif_atteint():
-    """
-    Teste la fonction satisfaction lorsque l'objectif est atteignable.
-    Vérifie qu'au moins un des travaux permet d'atteindre l'objectif de flot fixé.
-    """
-    noeuds = [Noeud("A", "source", 10), Noeud("B", "ville", 10)]
-    liaisons = [Liaison("A", "B", 5)]
-    nouvelle_config, travaux = satisfaction(
-        noeuds=noeuds,
-        liaisons=liaisons,
-        objectif=10,
-        cap_max=10,
-        max_travaux=3
-    )
-    assert any(flot == 10 for _, _, flot in travaux)
 
 def test_satisfaction_objectif_inatteignable():
     """

@@ -1,5 +1,5 @@
 from affichage import afficherCarte, afficherCarteEnoncer
-from data import GestionReseau, ReseauHydraulique, optimiser_liaisons, satisfaction, liaison_existe
+from data import GestionReseau, ReseauHydraulique, optimiser_liaisons, satisfaction
 import copy
 import random
 import matplotlib.pyplot as plt 

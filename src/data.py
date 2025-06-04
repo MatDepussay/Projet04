@@ -298,13 +298,16 @@ class GestionReseau:
                 break
             
     @staticmethod
-    def liaison_existe(depart: str, arrivee: str, liaisons: List[Liaison]) -> bool:
-        """Vérifie si une liaison entre deux nœuds existe déjà."""
-        return any(
-            liaison.depart.upper() == depart.upper() and
-            liaison.arrivee.upper() == arrivee.upper()
-            for liaison in liaisons
-        )
+    def liaison_existe(depart: str, arrivee: str, liaisons) -> bool:
+        """
+        Vérifie si une liaison existe entre deux sommets (insensible à la casse).
+        """
+        depart = depart.upper()
+        arrivee = arrivee.upper()
+        for liaison in liaisons:
+            if liaison.depart.upper() == depart and liaison.arrivee.upper() == arrivee:
+                return True
+        return False
     
     @staticmethod
     def sauvegarder_reseaux(noeuds : List[Noeud], liaisons : List[Liaison], fichier : str, reseau_nom : str) -> None:

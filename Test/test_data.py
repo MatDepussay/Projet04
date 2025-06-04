@@ -255,3 +255,6 @@ def test_reseau_hydraulique_str():
     assert "Nom : A" in rep
     assert "--- Liaisons ---" in rep
     assert "Départ : A" in rep
+
+
+liaison_existe = GestionReseau.liaison_existe
