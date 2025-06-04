@@ -298,13 +298,16 @@ class GestionReseau:
                 break
             
     @staticmethod
-    def liaison_existe(depart: str, arrivee: str, liaisons: List[Liaison]) -> bool:
-        """Vérifie si une liaison entre deux nœuds existe déjà."""
-        return any(
-            liaison.depart.upper() == depart.upper() and
-            liaison.arrivee.upper() == arrivee.upper()
-            for liaison in liaisons
-        )
+    def liaison_existe(depart: str, arrivee: str, liaisons) -> bool:
+        """
+        Vérifie si une liaison existe entre deux sommets (insensible à la casse).
+        """
+        depart = depart.upper()
+        arrivee = arrivee.upper()
+        for liaison in liaisons:
+            if liaison.depart.upper() == depart and liaison.arrivee.upper() == arrivee:
+                return True
+        return False
     
     @staticmethod
     def sauvegarder_reseaux(noeuds : List[Noeud], liaisons : List[Liaison], fichier : str, reseau_nom : str) -> None:
@@ -499,8 +502,7 @@ def optimiser_liaisons(
     noeuds: List[Noeud],
     liaisons_actuelles: List[Liaison],
     liaisons_a_optimiser: List[Tuple[str, str]]
-    ) -> Tuple[List[Noeud], List[Liaison], List[Tuple[Tuple[str, str], int, int]]]:
-    
+    ) -> Tuple[List[Liaison], List[Tuple[Tuple[str, str], int, int]]]:
     """
     Optimise l'ordre et la capacités des flots des liaisons choisies afin de maximiser le flot global.
     
@@ -528,18 +530,18 @@ def optimiser_liaisons(
 
         for liaison_cible in liaisons_restantes:
             depart, arrivee = liaison_cible
-            
+
             for cap_test in [5, 10, 15, 20]:
                 config_temp = []
                 liaison_trouvee = False
-                
+
                 for liaison in meilleure_config:
                     if (liaison.depart, liaison.arrivee) == (depart, arrivee):
                         config_temp.append(Liaison(depart, arrivee, cap_test))
                         liaison_trouvee = True
                     else:
                         config_temp.append(liaison)
-                
+
                 if not liaison_trouvee:
                     config_temp.append(Liaison(depart, arrivee, cap_test))
 
@@ -557,16 +559,19 @@ def optimiser_liaisons(
                     meilleure_config_temp = config_temp[:]
                     meilleur_result_temp = result
 
-            if meilleure_liaison:
-                meilleure_config = meilleure_config_temp
-                travaux_effectues.append((meilleure_liaison, meilleure_capacite, meilleur_result_temp.flow_value))
+        if meilleure_liaison:
+            meilleure_config = meilleure_config_temp
+            travaux_effectues.append((meilleure_liaison, meilleure_capacite, meilleur_result_temp.flow_value))
+            if meilleure_liaison in liaisons_restantes:
                 liaisons_restantes.remove(meilleure_liaison)
-                result_init = meilleur_result_temp  # mise à jour du flot de référence
             else:
-                print("🚫 Aucun gain supplémentaire possible. Arrêt de l’optimisation.")
+                print("⚠️ Liaison déjà supprimée ou non trouvée, arrêt de la boucle pour éviter un blocage.")
                 break
+            result_init = meilleur_result_temp  # mise à jour du flot de référence
+        else:
+            print("🚫 Aucun gain supplémentaire possible. Arrêt de l’optimisation.")
+            break
 
-    # Affichage du résumé clair (Qualité UX)
     print("\n📋 Résumé des travaux effectués :")
     for i, (liaison, cap, flot) in enumerate(travaux_effectues, 1):
         print(f"Travaux #{i} : {liaison[0]} -> {liaison[1]}, capacité {cap} ➝ flot atteint : {flot} unités")
@@ -627,6 +632,7 @@ def satisfaction(
     travaux_effectues = []
     liaisons_courantes = liaisons[:]
     essais = 0
+    dernier_flot = result.flow_value  # Ajout pour mémoriser le flot précédent
 
     while result.flow_value < objectif_utilisateur and essais < max_travaux:
         saturations = reseau.liaisons_saturees(result)
@@ -648,8 +654,9 @@ def satisfaction(
                 if gain > 0:
                     meilleures_améliorations.append(((depart, arrivee), nouvelle_cap, result_test.flow_value))
 
-        if not meilleures_améliorations:
-            print("⚠️ Aucune amélioration supplémentaire ne permet d'augmenter le flot.")
+        # Condition d'arrêt supplémentaire : aucune amélioration ou flot inchangé
+        if not meilleures_améliorations or result.flow_value == dernier_flot:
+            print("⚠️ Aucune amélioration supplémentaire ne permet d'augmenter le flot ou flot inchangé. Arrêt.")
             break
 
         # Appliquer la meilleure amélioration (celle qui donne le plus gros flot)
@@ -664,6 +671,7 @@ def satisfaction(
 
         travaux_effectues.append(((depart, arrivee), cap, new_flot))
         reseau = ReseauHydraulique(noeuds, liaisons_courantes)
+        dernier_flot = result.flow_value  # Met à jour le flot précédent
         result, _ = reseau.calculerFlotMaximal()
         essais += 1
 
