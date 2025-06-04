@@ -307,7 +307,7 @@ class GestionReseau:
         )
     
     @staticmethod
-    def sauvegarder_reseau(noeuds : List[Noeud], liaisons : List[Liaison], fichier : str, reseau_nom : str) -> None:
+    def sauvegarder_reseaux(noeuds : List[Noeud], liaisons : List[Liaison], fichier : str, reseau_nom : str) -> None:
         """
         Sauvegarde un réseau hydraulique dans un fichier JSON sous le nom spécifié.
 

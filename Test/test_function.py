@@ -1,10 +1,8 @@
 import sys
 import os
-import pytest
-from unittest.mock import MagicMock, patch
-from pyinstrument import Profiler
+from unittest.mock import MagicMock
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
-from data import demander_cap_max, satisfaction, optimiser_liaisons, liaison_existe, ReseauHydraulique, Liaison, Noeud
+from data import demander_cap_max, satisfaction, optimiser_liaisons, ReseauHydraulique, Liaison, Noeud
 
 def test_liaison_existe():
     noeuds = [
@@ -167,13 +165,6 @@ def test_liaisons_saturees():
     assert ("A", "B", 5) in saturees
     assert ("B", "C", 8) not in saturees  # liaison non saturée car 8 < 10
 
-## Tests liaison_existe
-
-def test_liaison_existe():
-    liaisons = [Liaison("A", "E", 10), Liaison("B", "C", 15)]
-    assert liaison_existe("A", "E", liaisons)
-    assert not liaison_existe("A", "H", liaisons)
-
 ## Tests Demander_cap_max
 
 def test_default_value_on_empty_input(monkeypatch):
@@ -269,7 +260,6 @@ def test_modification_liaison_ameliore_flot():
     flot_avant, _ = ReseauHydraulique(noeuds, original).calculerFlotMaximal()
     flot_apres, _ = ReseauHydraulique(noeuds, modifiee).calculerFlotMaximal()
 
-    
     assert flot_apres.flow_value > flot_avant.flow_value
 
 def test_flot_zero_si_aucune_liaison():
@@ -289,8 +279,6 @@ def test_satisfaction_amelioration_progresive(monkeypatch):
         Liaison("A", "B", 5),
         Liaison("B", "C", 10)
     ]
-
-    reseau_instance = ReseauHydraulique(noeuds, liaisons)
 
     # Mock de resultats de flot pour simuler augmentation progressive
     class MockResult:
@@ -353,8 +341,6 @@ def test_satisfaction_arret_sans_amelioration(monkeypatch):
     liaisons = [
         Liaison("A", "C", 10)
     ]
-
-    reseau_instance = ReseauHydraulique(noeuds, liaisons)
 
     class MockResult:
         def __init__(self):

@@ -80,7 +80,7 @@ def menu_saisie_reseau():
         if st.button("💾 Sauvegarder ce réseau"):
             nom_fichier = st.text_input("Nom du fichier de sauvegarde", value="reseau1.json")
             if nom_fichier:
-                reseau.sauvegarder_reseau(nom_fichier)
+                reseau.sauvegarder_reseaux(nom_fichier)
                 st.success(f"Réseau sauvegardé dans {nom_fichier}")
 
 def ajouter_noeuds(type_noeud):

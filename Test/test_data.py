@@ -1,9 +1,6 @@
 import sys
 import os
-import builtins
 import pytest
-from unittest.mock import MagicMock, patch
-from pyinstrument import Profiler
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
 from data import ReseauHydraulique, Liaison, Noeud, creer_liaison, creer_noeud, GestionReseau
 
@@ -19,7 +16,7 @@ def test_creation_inter():
     n1 = Noeud("N1", "intermediaire")
     assert n1.capaciteMax == 0
 
-def test_str_representation():
+def test_str_representationNoeud():
     noeud = Noeud("L", "ville", 150)
     rep = str(noeud)
     print(f"Représentation __str__ : '{rep}'")
@@ -51,7 +48,7 @@ def test_creation_liaison():
     assert liaison.arrivee == "L"
     assert liaison.capacite == 300
 
-def test_str_representation():
+def test_str_representationLiaison():
     liaison = Liaison("T", "N", 150)
     rep = str(liaison)
     assert "Départ : T" in rep
@@ -67,11 +64,11 @@ def test_liaison_to_dict():
     assert not d == {"depart": "C", "arrivee": "C", "capacite": 50}
 
 def test_from_dict():
-    d = {"depart": "Nantes", "arrivee": "Lille", "capacite": 100}
+    d = {"depart": "N", "arrivee": "L", "capacite": 100}
     l = Liaison.from_dict(d)
     assert isinstance(l, Liaison)
-    assert l.depart == "Nantes"
-    assert l.arrivee == "Lille"
+    assert l.depart == "N"
+    assert l.arrivee == "L"
     assert l.capacite == 100
 
 def test_from_dict_invalide():
@@ -213,14 +210,14 @@ def test_str_affichage(noeuds_et_liaisons):
     assert "Nom : A" in res
     assert "Départ : A, Arrivée : B" in res
 
-def test_sauvegarder_et_charger_reseau(tmp_path, noeuds_et_liaisons):
+def test_sauvegarder_et_charger_reseaux(tmp_path, noeuds_et_liaisons):
     fichier = tmp_path / "reseaux.json"
     noeuds, liaisons = noeuds_et_liaisons
-    GestionReseau.sauvegarder_reseau(noeuds, liaisons, str(fichier), "reseau_test")
+    GestionReseau.sauvegarder_reseaux(noeuds, liaisons, str(fichier), "reseau_test")
 
     assert os.path.exists(fichier)
 
-    reseaux = GestionReseau.charger_reseau(str(fichier))
+    reseaux = GestionReseau.charger_reseaux(str(fichier))
     assert "reseau_test" in reseaux
     noeuds_charges, liaisons_charges = reseaux["reseau_test"]
     assert isinstance(noeuds_charges[0], Noeud)
@@ -230,7 +227,7 @@ def test_sauvegarder_et_charger_reseau(tmp_path, noeuds_et_liaisons):
 def test_supprimer_reseaux(tmp_path, noeuds_et_liaisons):
     fichier = tmp_path / "reseaux.json"
     noeuds, liaisons = noeuds_et_liaisons
-    GestionReseau.sauvegarder_reseau(noeuds, liaisons, str(fichier), "test")
+    GestionReseau.sauvegarder_reseaux(noeuds, liaisons, str(fichier), "test")
     assert os.path.exists(fichier)
 
     GestionReseau.supprimer_reseaux(str(fichier))
@@ -238,7 +235,7 @@ def test_supprimer_reseaux(tmp_path, noeuds_et_liaisons):
 
 def test_charger_reseau_inexistant(tmp_path):
     with pytest.raises(FileNotFoundError):
-        GestionReseau.charger_reseau(str(tmp_path / "inexistant.json"))
+        GestionReseau.charger_reseaux(str(tmp_path / "inexistant.json"))
 
 ## Tests class Reseau_hydraulique
 
