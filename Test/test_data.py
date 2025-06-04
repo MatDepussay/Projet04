@@ -23,7 +23,7 @@ def test_str_representationNoeud():
     assert "Nom : L" in rep
     assert "Type : ville" in rep
     assert "Capacite max : 150" in rep
-
+    
 def test_noeud_to_dict():
     noeuds = Noeud("A", "source", 100)
     d = noeuds.to_dict()
