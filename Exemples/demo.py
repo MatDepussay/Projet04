@@ -84,11 +84,11 @@ plt.pause(1)
 
 # === Satisfaction : approvisionnement 100% des villes ===
 
-objectif = sum(n.capaciteMax for n in ListeNoeuds if n.type == "ville")
+objectif = sum(noeud.capaciteMax for noeud in ListeNoeuds if noeud.type == "ville")
 print(f"\n--- Satisfaction : Approvisionner {objectif} unités (100% des villes) ---")
 
 # On considère toutes les liaisons comme modifiables pour la satisfaction
-liaisons_modifiables = [(l.depart, l.arrivee) for l in ListeLiaisons]
+liaisons_modifiables = [(liaison.depart, liaison.arrivee) for liaison in ListeLiaisons]
 
 nouvelle_config, travaux_satisfaction = satisfaction(
     noeuds=ListeNoeuds,
@@ -98,7 +98,7 @@ nouvelle_config, travaux_satisfaction = satisfaction(
 )
 
 print("Travaux réalisés pour la satisfaction :")
-for (u,v), cap, flot in travaux_satisfaction:
+for (u, v), cap, flot in travaux_satisfaction:
     print(f"Liaison {u} -> {v} ajustée à {cap} unités, flot = {flot}")
 
 reseau_satis = ReseauHydraulique(ListeNoeuds, nouvelle_config)

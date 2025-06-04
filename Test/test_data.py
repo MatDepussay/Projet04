@@ -34,11 +34,11 @@ def test_noeud_to_dict():
 
 def test_from_dict_complet():
     d = {"nom": "K", "type": "ville", "capaciteMax": 120}
-    n = Noeud.from_dict(d)
-    assert isinstance(n, Noeud)
-    assert n.nom == "K"
-    assert n.type == "ville"
-    assert n.capaciteMax == 120
+    noeud = Noeud.from_dict(d)
+    assert isinstance(noeud, Noeud)
+    assert noeud.nom == "K"
+    assert noeud.type == "ville"
+    assert noeud.capaciteMax == 120
 
 # Tests class Liaison
 
@@ -56,8 +56,8 @@ def test_str_representationLiaison():
     assert "Capacite : 150" in rep
 
 def test_liaison_to_dict():
-    liaisons = Liaison("A", "B", 50)
-    d = liaisons.to_dict()
+    liaison = Liaison("A", "B", 50)
+    d = liaison.to_dict()
     assert d == {"depart": "A", "arrivee": "B", "capacite": 50}
     assert not d == {"depart": "A", "arrivee": "B", "capacite": 100}
     assert not d == {"depart": "B", "arrivee": "A", "capacite": 50}
@@ -65,11 +65,11 @@ def test_liaison_to_dict():
 
 def test_from_dict():
     d = {"depart": "N", "arrivee": "L", "capacite": 100}
-    l = Liaison.from_dict(d)
-    assert isinstance(l, Liaison)
-    assert l.depart == "N"
-    assert l.arrivee == "L"
-    assert l.capacite == 100
+    liaison = Liaison.from_dict(d)
+    assert isinstance(liaison, Liaison)
+    assert liaison.depart == "N"
+    assert liaison.arrivee == "L"
+    assert liaison.capacite == 100
 
 def test_from_dict_invalide():
     d = {"depart": "Nice", "capacite": 50}  # Il manque "arrivee"

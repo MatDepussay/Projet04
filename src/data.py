@@ -137,7 +137,7 @@ def creer_liaison(depart: str, arrivee: str, capacite: int, noms_noeuds: set[str
     if capacite <= 0:
         raise ValueError("❌ La capacité de la liaison doit être un entier positif.")
 
-    if any(l.depart == depart and l.arrivee == arrivee for l in liaisons_existantes):
+    if any(liaison.depart == depart and liaison.arrivee == arrivee for liaison in liaisons_existantes):
         raise ValueError("❌ Cette liaison existe déjà.")
 
     return Liaison(depart, arrivee, capacite)
@@ -330,7 +330,7 @@ class GestionReseau:
 
         data[reseau_nom] = {
             "noeuds": [n.to_dict() for n in noeuds],
-            "liaisons": [l.to_dict() for l in liaisons]
+            "liaisons": [liaison.to_dict() for liaison in liaisons]
         }
 
         with open(fichier, 'w') as f:
@@ -386,6 +386,36 @@ class GestionReseau:
             os.remove(fichier)
 
 class ReseauHydraulique:
+    """
+    Classe représentant un réseau hydraulique orienté pour le calcul de flot maximal.
+
+    Cette classe permet :
+    - de construire la matrice d'adjacence du réseau à partir d'une liste de nœuds et de liaisons,
+    - d'ajouter automatiquement une super source et un super puits pour modéliser l'approvisionnement global,
+    - de calculer le flot maximal entre la super source et le super puits,
+    - d'obtenir le détail des flux utilisés sur chaque liaison,
+    - d'identifier les liaisons saturées (utilisées à leur capacité maximale).
+
+    Attributs :
+        noeuds (Dict[str, Noeud]) : Dictionnaire des objets Noeud indexés par leur nom.
+        liaisons (List[Liaison]) : Liste des objets Liaison représentant les connexions entre nœuds.
+        index_noeuds (Dict[str, int]) : Dictionnaire associant chaque nom de nœud à un indice de matrice.
+        index_inverse (Dict[int, str]) : Dictionnaire inverse pour retrouver le nom d'un nœud à partir de son indice.
+        matrice_np (np.ndarray) : Matrice d'adjacence du réseau (capacités).
+        matrice_sparse (csr_matrix) : Version sparse de la matrice pour les algorithmes de flot.
+
+    Méthodes principales :
+        - __init__(noeuds, liaisons) : Construit la matrice du réseau avec super source/puits.
+        - __str__() : Affiche une représentation textuelle du réseau.
+        - calculerFlotMaximal() : Calcule le flot maximal et affiche le détail des flux.
+        - liaisons_saturees(result) : Retourne la liste des liaisons saturées pour un résultat de flot donné.
+
+    Exemple d'utilisation :
+
+        >>> reseau = ReseauHydraulique(liste_noeuds, liste_liaisons)
+        >>> result, index_noeuds = reseau.calculerFlotMaximal()
+        >>> liaisons_sats = reseau.liaisons_saturees(result)
+    """
     def __init__(self, noeuds: List[Noeud], liaisons: List[Liaison]):
         self.noeuds = {n.nom: n for n in noeuds}
         self.liaisons = liaisons
@@ -399,9 +429,9 @@ class ReseauHydraulique:
         
         self.matrice_np = array([[0] * n for _ in range(n)])
 
-        for l in liaisons:
-            i, j = self.index_noeuds[l.depart], self.index_noeuds[l.arrivee]
-            self.matrice_np[i][j] = l.capacite
+        for liaison in liaisons:
+            i, j = self.index_noeuds[liaison.depart], self.index_noeuds[liaison.arrivee]
+            self.matrice_np[i][j] = liaison.capacite
 
         for node in self.noeuds.values():
             idx = self.index_noeuds[node.nom]
@@ -416,7 +446,7 @@ class ReseauHydraulique:
 
     def __str__(self):
         noeuds_str = "\n".join(str(n) for n in self.noeuds.values())
-        liaisons_str = "\n".join(str(l) for l in self.liaisons)
+        liaisons_str = "\n".join(str(liaison) for liaison in self.liaisons)
         return f"--- Noeuds ---\n{noeuds_str}\n\n--- Liaisons ---\n{liaisons_str}"
 
     def calculerFlotMaximal(self):
@@ -608,8 +638,8 @@ def satisfaction(
                 if nouvelle_cap > cap_max:
                     continue
                 liaisons_test = [
-                    Liaison(l.depart, l.arrivee, (nouvelle_cap if l.depart == depart and l.arrivee == arrivee else l.capacite))
-                    for l in liaisons_courantes
+                    Liaison(liaison_courante.depart, liaison_courante.arrivee, (nouvelle_cap if liaison_courante.depart == depart and liaison_courante.arrivee == arrivee else liaison_courante.capacite))
+                    for liaison_courante in liaisons_courantes
                 ]
                 reseau_test = ReseauHydraulique(noeuds, liaisons_test)
                 result_test, _ = reseau_test.calculerFlotMaximal()
@@ -627,8 +657,8 @@ def satisfaction(
         (depart, arrivee), cap, new_flot = meilleure
 
         # Mise à jour de la liaison
-        for i, l in enumerate(liaisons_courantes):
-            if l.depart == depart and l.arrivee == arrivee:
+        for i, liaison_courante in enumerate(liaisons_courantes):
+            if liaison_courante.depart == depart and liaison_courante.arrivee == arrivee:
                 liaisons_courantes[i] = Liaison(depart, arrivee, cap)
                 break
 

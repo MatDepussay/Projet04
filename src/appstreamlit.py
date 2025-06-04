@@ -1,3 +1,47 @@
+"""
+Module Streamlit pour l'application de gestion et d'optimisation de réseau hydraulique.
+
+Ce module fournit une interface graphique interactive permettant :
+- la création, la visualisation et la modification d'un réseau hydraulique (sources, villes, intermédiaires, liaisons),
+- la sauvegarde et le chargement de réseaux depuis des fichiers JSON,
+- l'affichage graphique du réseau et du flot maximal calculé,
+- l'optimisation manuelle ou automatique des liaisons pour maximiser le flot,
+- la simulation de scénarios (assèchement de source, généralisation, etc.).
+
+Fonctionnalités principales :
+    - menu_saisie_reseau() : Interface pour la saisie interactive des nœuds et liaisons.
+    - ajouter_noeuds(type_noeud) : Ajout d'un nœud de type donné via l'interface.
+    - ajouter_liaisons() : Ajout d'une liaison entre deux nœuds via l'interface.
+    - menu_ajout_elements() : Ajout dynamique d'éléments à un réseau existant.
+    - afficher_carte_enoncer() : Affichage graphique du réseau sans calcul de flot.
+    - afficher_carte_flot() : Affichage graphique du réseau avec calcul du flot maximal.
+    - menu_travaux() : Optimisation manuelle des liaisons sélectionnées.
+    - menu_generalisation() : Optimisation automatique selon différents scénarios.
+    - menu_chargement() : Chargement d'un réseau existant depuis un fichier.
+    - reset_reseau() : Réinitialisation complète du réseau courant.
+
+Utilisation :
+    L'utilisateur navigue via la barre latérale pour accéder aux différentes fonctionnalités.
+    Les modifications et optimisations sont visualisées en temps réel sur la carte du réseau.
+
+Exemple d'utilisation :
+
+    >>> # Lancer l'application Streamlit
+    >>> streamlit run appstreamlit.py
+
+    >>> # Depuis l'interface :
+    >>> # - Créer un réseau (ajouter sources, villes, intermédiaires, liaisons)
+    >>> # - Valider et afficher la carte
+    >>> # - Optimiser manuellement ou automatiquement le réseau
+    >>> # - Sauvegarder ou charger un réseau
+
+Notes :
+    - Toutes les modifications sont stockées dans st.session_state pour garantir la persistance entre les interactions.
+    - Les calculs de flot maximal et d'optimisation utilisent les fonctions du module data.py.
+    - L'affichage graphique s'appuie sur matplotlib et networkx via le module affichage.py.
+
+"""
+
 import streamlit as st
 from data import (
     GestionReseau, ReseauHydraulique, optimiser_liaisons, satisfaction, Noeud, Liaison
@@ -113,7 +157,7 @@ def ajouter_liaisons():
                 st.warning("Une liaison ne peut pas relier un noeud à lui-même.")
             elif depart.upper() not in noms_noeuds or arrivee.upper() not in noms_noeuds:
                 st.warning("Noeud de départ ou d’arrivée introuvable.")
-            elif any(l.depart == depart.upper() and l.arrivee == arrivee.upper() for l in reseau.ListeLiaisons):
+            elif any(liaison.depart == depart.upper() and liaison.arrivee == arrivee.upper() for liaison in reseau.ListeLiaisons):
                 st.warning("Cette liaison existe déjà.")
             else:
                 liaison = Liaison(depart.upper(), arrivee.upper(), capacite)
@@ -186,7 +230,7 @@ def menu_travaux():
     if not st.session_state.get("reseau_valide", False):
         st.warning("Veuillez valider le réseau avant d'utiliser cette fonctionnalité.")
         return
-    liaisons_possibles = [(l.depart, l.arrivee) for l in reseau.ListeLiaisons]
+    liaisons_possibles = [(liaison.depart, liaison.arrivee) for liaison in reseau.ListeLiaisons]
     selection = st.multiselect(
         "Sélectionnez les liaisons à optimiser (format : Départ ➝ Arrivée)",
         options=[f"{u} ➝ {v}" for u, v in liaisons_possibles]
@@ -229,7 +273,7 @@ def menu_generalisation():
             value=objectif_defaut,
             step=1
         )
-        liaisons_modifiables = [(l.depart, l.arrivee) for l in reseau.ListeLiaisons]
+        liaisons_modifiables = [(liaison.depart, liaison.arrivee) for liaison in reseau.ListeLiaisons]
         capacite_maximale = st.number_input("Capacité maximale des liaisons (par défaut 10)", min_value=1, value=10, step=1)
         if st.button("🔧 Lancer l'optimisation globale"):
             nouvelle_config, travaux = satisfaction(
@@ -284,7 +328,7 @@ def menu_generalisation():
             result, index_noeuds = reseau_hydro.calculerFlotMaximal()
             fig = afficherCarte(result=result, index_noeuds=index_noeuds, noeuds=reseau.ListeNoeuds, liaisons=reseau.ListeLiaisons, montrer_saturees=True)
             st.pyplot(fig)
-            liaisons_possibles = [(l.depart, l.arrivee) for l in reseau.ListeLiaisons]
+            liaisons_possibles = [(liaison.depart, liaison.arrivee) for liaison in reseau.ListeLiaisons]
             liaison_str = st.selectbox("Sélectionnez une liaison à renforcer (+5 unités)", [f"{u} ➝ {v}" for u, v in liaisons_possibles])
             if st.button("💪 Renforcer la liaison sélectionnée"):
                 u, v = liaison_str.split("➝")

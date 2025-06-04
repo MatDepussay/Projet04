@@ -1,10 +1,8 @@
 import sys
 import os
-from unittest.mock import patch
-from pyinstrument import Profiler
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
 
-from app import menu_terminal, menu_generalisation, menu_demarrage
+from app import menu_terminal, menu_generalisation
 
 
 def simulate_inputs(inputs):
