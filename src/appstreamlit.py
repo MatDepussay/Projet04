@@ -1,10 +1,8 @@
 import streamlit as st
-import copy
 from data import (
     GestionReseau, ReseauHydraulique, optimiser_liaisons, satisfaction, Noeud, Liaison
 )
 from affichage import afficherCarte, afficherCarteEnoncer
-import matplotlib.pyplot as plt
 
 
 
@@ -219,7 +217,7 @@ def menu_generalisation():
         return
     choix = st.radio("Scénario", [
         "Optimiser pour approvisionner 100% des villes",
-        "Assèchement aléatoire d'une source"
+        "Assèchement d'une source"
     ])
     if choix == "Optimiser pour approvisionner 100% des villes":
         objectif_defaut = sum(n.capaciteMax for n in reseau.ListeNoeuds if n.type == "ville")
@@ -257,20 +255,31 @@ def menu_generalisation():
         if not sources:
             st.warning("Aucune source trouvée.")
             return
-
-        # Stocker l'état dans session_state
+        
         if "source_assechee" not in st.session_state:
             st.session_state["source_assechee"] = None
 
-        if st.button("💣 Assécher une source aléatoirement"):
-            source_choisie = random.choice(sources)
-            st.session_state["source_assechee"] = source_choisie.nom
-            for n in reseau.ListeNoeuds:
-                if n.nom == source_choisie.nom:
-                    n.capaciteMax = 0
+        mode_choix = st.radio("Méthode d’assèchement :", ["🔀 Aléatoire", "🎯 Manuel"], horizontal=True)
+
+        if mode_choix == "🔀 Aléatoire":
+            if st.button("💣 Assécher une source aléatoirement"):
+                source_choisie = random.choice(sources)
+                st.session_state["source_assechee"] = source_choisie.nom
+                for n in reseau.ListeNoeuds:
+                    if n.nom == source_choisie.nom:
+                        n.capaciteMax = 0
+        
+        elif mode_choix == "🎯 Manuel":
+            source_noms = [n.nom for n in sources]
+            source_select = st.selectbox("Choisissez une source à assécher :", source_noms)
+            if st.button("💣 Assécher la source sélectionnée"):
+                st.session_state["source_assechee"] = source_select
+                for n in reseau.ListeNoeuds:
+                    if n.nom == source_select:
+                        n.capaciteMax = 0
 
         if st.session_state["source_assechee"]:
-            st.write(f"Source choisie : <span style='color:#d62728;font-weight:bold'>{st.session_state['source_assechee']}</span>", unsafe_allow_html=True)
+            st.write(f"Source choisie : <span style='color:#d62728;font-weight:bold'>{st.session_state['source_assechee']}</span>",unsafe_allow_html=True)
             reseau_hydro = ReseauHydraulique(reseau.ListeNoeuds, reseau.ListeLiaisons)
             result, index_noeuds = reseau_hydro.calculerFlotMaximal()
             fig = afficherCarte(result=result, index_noeuds=index_noeuds, noeuds=reseau.ListeNoeuds, liaisons=reseau.ListeLiaisons, montrer_saturees=True)
@@ -304,7 +313,7 @@ def menu_chargement():
 
     if st.button("🔄 Charger le réseau"):
         try:
-            reseaux = GestionReseau.charger_reseau(fichier)
+            reseaux = GestionReseau.charger_reseaux(fichier)
             if not reseaux:
                     st.warning("Aucun réseau trouvé dans ce fichier.")
             else:

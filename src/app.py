@@ -214,7 +214,6 @@ def menu_generalisation():
     Aucune valeur n’est retournée ; les actions sont effectuées et les résultats affichés
     directement dans le terminal et via des cartes graphiques.
     """
-    liaisons_actuelles = copy.deepcopy(reseau.ListeLiaisons)
     while True:
         print("\n=== MENU GÉNÉRALISATION ===")
         print("1. Optimiser les liaisons pour approvisionner 100% des villes")

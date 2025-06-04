@@ -1,6 +1,6 @@
 import networkx as nx
 import matplotlib.pyplot as plt
-from data import ReseauHydraulique, GestionReseau
+from data import ReseauHydraulique
 
 def afficherCarte(result=None, index_noeuds=None, noeuds=None, liaisons=None, montrer_saturees=False):
     """    
@@ -22,7 +22,9 @@ def afficherCarte(result=None, index_noeuds=None, noeuds=None, liaisons=None, mo
         - Les nœuds de type **ville** sont colorés en vert clair avec leur réception (u.).
         - Les autres nœuds sont colorés en bleu ciel.
         - Les arêtes affichent les flux effectifs suivis de leur capacité maximale sous forme `flux / capacité`.
-
+    
+    Returns
+        >>> Matplotlib figure de la carte dessinée.
     Exemple
         >>> afficherCarte(result, index_noeuds, noeuds, liaisons)
     """
@@ -32,7 +34,7 @@ def afficherCarte(result=None, index_noeuds=None, noeuds=None, liaisons=None, mo
     G = nx.DiGraph()
     G.add_nodes_from([n.nom for n in noeuds])
     infos_noeuds = {n.nom: n for n in noeuds}
-        
+
     for liaison in liaisons:
         G.add_edge(liaison.depart, liaison.arrivee, weight=liaison.capacite)
 
@@ -42,7 +44,11 @@ def afficherCarte(result=None, index_noeuds=None, noeuds=None, liaisons=None, mo
     appro = {}
     sources = {}
 
-    if result and index_noeuds:
+    # Calcul des flux sources/villes si result est fourni
+    if result:
+        reseau_temp = ReseauHydraulique(noeuds, liaisons)
+        index_noeuds = reseau_temp.index_noeuds
+        
         for nom, noeud in infos_noeuds.items():
             if noeud.type == "ville":
                 flux = result.flow[index_noeuds[nom], index_noeuds['super_puits']]
@@ -51,6 +57,7 @@ def afficherCarte(result=None, index_noeuds=None, noeuds=None, liaisons=None, mo
                 flux = result.flow[index_noeuds['super_source'], index_noeuds[nom]]
                 sources[nom] = flux
 
+    # Couleurs et étiquettes des noeuds
     for node in G.nodes:
         n = infos_noeuds.get(node)
         if node in appro:
@@ -69,13 +76,11 @@ def afficherCarte(result=None, index_noeuds=None, noeuds=None, liaisons=None, mo
     edges_normal = []
     edges_saturees = []
 
-    if montrer_saturees and result and index_noeuds:
-        # 🔧 Correction ici : on passe noeuds et liaisons à ReseauHydraulique
-        reseau_temp = ReseauHydraulique(noeuds, liaisons)
-        saturations = reseau_temp.liaisons_saturees(result=result, index=index_noeuds)
+    # Détection des liaisons saturées
+    saturees_set = set()
+    if montrer_saturees and result:
+        saturations = reseau_temp.liaisons_saturees(result=result)
         saturees_set = set((d, a) for d, a, _ in saturations)
-    else:
-        saturees_set = set()
 
     for u, v in G.edges:
         if (u, v) in saturees_set:
@@ -83,16 +88,18 @@ def afficherCarte(result=None, index_noeuds=None, noeuds=None, liaisons=None, mo
         else:
             edges_normal.append((u, v))
 
+    # Dessin du graphe
     fig, ax = plt.subplots(figsize=(10, 7))
     nx.draw_networkx_nodes(G, pos, node_color=node_colors, node_size=1000, edgecolors='black', ax=ax)
     nx.draw_networkx_edges(G, pos, edgelist=edges_normal, edge_color='gray', arrows=True, arrowstyle='-|>', arrowsize=20, ax=ax)
     nx.draw_networkx_edges(G, pos, edgelist=edges_saturees, edge_color='red', width=3.5, arrows=True, arrowstyle='-|>', arrowsize=25, ax=ax)
     nx.draw_networkx_labels(G, pos, labels, font_size=12, font_weight='bold', ax=ax)
 
+    # Étiquettes des arêtes
     edge_labels = {}
     for u, v in G.edges:
         cap = G[u][v]['weight']
-        if result and index_noeuds:
+        if result:
             try:
                 flux = result.flow[index_noeuds[u], index_noeuds[v]]
                 edge_labels[(u, v)] = f"{int(flux)} / {cap}"
@@ -103,9 +110,9 @@ def afficherCarte(result=None, index_noeuds=None, noeuds=None, liaisons=None, mo
 
     nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_color='red', ax=ax)
 
+    # Flot maximal
     if result:
-        flot_maximal = result.flow_value
-        fig.text(0.95, 0.05, f"Flot maximal : {flot_maximal} u.",
+        fig.text(0.95, 0.05, f"Flot maximal : {result.flow_value} u.",
                 fontsize=12, color='darkred', ha='right', va='bottom',
                 bbox=dict(facecolor='white', edgecolor='darkred', boxstyle='round,pad=0.3'))
 

@@ -69,3 +69,4 @@ uv run --check --fix
 uv run -m pyinstrument 
 uv run pytest tests/test_data.py
 uv run coverage report
+uv run coverage run --source=src -m pytest
