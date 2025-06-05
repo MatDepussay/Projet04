@@ -1,12 +1,8 @@
 import sys
 import os
 import pytest
-import matplotlib
 import matplotlib.pyplot as plt
-from unittest.mock import MagicMock, patch
 from types import SimpleNamespace
-import networkx as nx
-matplotlib.use('Agg')  # backend non interactif pour tests
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
 from data import Liaison, Noeud, ReseauHydraulique
@@ -29,8 +25,6 @@ def test_afficherCarteEnoncer_basic():
     assert isinstance(fig, plt.Figure)
     ax = fig.axes[0]
     assert "Carte des Liaisons" in ax.get_title()
-
-
 
     # Vérifier que les labels des noeuds correspondent aux couleurs/types
     labels = [text.get_text() for text in ax.texts]
