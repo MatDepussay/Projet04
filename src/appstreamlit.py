@@ -278,25 +278,42 @@ def menu_generalisation():
             value=objectif_defaut,
             step=1
         )
-        capacite_maximale = st.number_input("Capacité maximale des liaisons (par défaut 10)", min_value=1, value=10, step=1)
+        capacite_maximale = st.number_input("Capacité maximale des liaisons (par défaut 10)", min_value=1, value=25, step=1)
         if st.button("🔧 Lancer l'optimisation globale"):
             nouvelle_config, travaux = satisfaction(
                 noeuds=reseau.ListeNoeuds,
                 liaisons=reseau.ListeLiaisons,
                 objectif=objectif,
-                cap_max=capacite_maximale,   # transmis depuis le number_input
-                max_travaux=10                # ou un autre nombre si tu veux le rendre paramétrable
+                cap_max=capacite_maximale,
+                max_travaux=10
             )
-            if not travaux:
-                st.warning("⚠️ Objectif non atteignable avec la configuration actuelle du réseau et les capacités testées.")
+
+            # Affiche TOUJOURS les travaux réalisés
+            st.markdown("**Travaux réalisés :**")
+            if travaux:
+                for i, ((depart, arrivee), cap, new_flot) in enumerate(travaux, 1):
+                    st.write(f"Travaux #{i} : Liaison {depart} ➝ {arrivee} portée à {cap} unités → Flot = {new_flot} unités")
+                flot_final = travaux[-1][2]
             else:
-                st.success("Optimisation globale terminée.")
-                for (depart, arrivee), cap, new_flot in travaux:
-                    st.write(f"Liaison {depart} ➝ {arrivee} ajustée à {cap} u. → Flot = {new_flot} u.")
+                st.write("Aucun travaux n'a été réalisé.")
+                # Calcul du flot final avec la config finale
                 reseau_opt = ReseauHydraulique(reseau.ListeNoeuds, nouvelle_config)
-                result, index_noeuds = reseau_opt.calculerFlotMaximal()
-                fig = afficherCarte(result=result, index_noeuds=index_noeuds, noeuds=reseau.ListeNoeuds, liaisons=nouvelle_config, montrer_saturees=True)
-                st.pyplot(fig)
+                result, _ = reseau_opt.calculerFlotMaximal()
+                flot_final = result.flow_value
+
+            st.markdown(f"**Flot maximal obtenu : <span style='color:#0072B5;font-weight:bold'>{flot_final}</span> unités**", unsafe_allow_html=True)
+
+            # Affiche TOUJOURS la carte finale
+            reseau_final = ReseauHydraulique(reseau.ListeNoeuds, nouvelle_config)
+            result_final, index_noeuds_final = reseau_final.calculerFlotMaximal()
+            fig = afficherCarte(
+                result=result_final,
+                index_noeuds=index_noeuds_final,
+                noeuds=reseau.ListeNoeuds,
+                liaisons=nouvelle_config,
+                montrer_saturees=True
+            )
+            st.pyplot(fig)
     else:
         import random
         sources = [n for n in reseau.ListeNoeuds if n.type == "source"]

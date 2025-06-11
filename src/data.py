@@ -609,22 +609,9 @@ def satisfaction(
     max_travaux=5
 ) -> Tuple[List[Liaison], List[Tuple[Tuple[str, str], int, int]]]:
     """
-    Optimise progressivement les liaisons saturées pour satisfaire la demande des villes
+    Optimise progressivement les liaisons (toutes, pas seulement saturées) pour satisfaire la demande des villes
     ou atteindre un objectif de flot maximal défini par l'utilisateur.
-
-    Args:
-        noeuds (List[Noeud]): Liste des noeuds du réseau.
-        liaisons (List[Liaison]): Liste des liaisons existantes avec leurs capacités.
-        optimiser_fonction (Callable): Optionnel, non utilisé ici.
-        objectif (int, optional): Objectif de flot à atteindre.
-        cap_max (int): Capacité maximale à tester pour chaque liaison.
-        max_travaux (int): Nombre maximum de travaux à effectuer.
-
-    Returns:
-        Tuple[List[Liaison], List[Tuple[Tuple[str, str], int, int]]]:
-            - La liste finale de liaisons modifiées (avec leurs nouvelles capacités).
-            - La liste des travaux effectués, sous forme de :
-              ((départ, arrivée), nouvelle capacité, flot obtenu après modification).
+    À chaque étape, applique la meilleure amélioration possible sur une liaison, jusqu'à 5 travaux.
     """
     objectif_utilisateur = objectif or sum(n.capaciteMax for n in noeuds if n.type == "ville")
     reseau = ReseauHydraulique(noeuds, liaisons)
@@ -632,35 +619,47 @@ def satisfaction(
     travaux_effectues = []
     liaisons_courantes = liaisons[:]
     essais = 0
-    dernier_flot = result.flow_value  # Ajout pour mémoriser le flot précédent
+    dernier_flot = result.flow_value
 
     while result.flow_value < objectif_utilisateur and essais < max_travaux:
-        saturations = reseau.liaisons_saturees(result)
         meilleures_améliorations = []
 
-        for (depart, arrivee, cap_actuelle) in saturations:
-            for augmentation in range(5, cap_max - cap_actuelle + 1, 5):
-                nouvelle_cap = cap_actuelle + augmentation
-                if nouvelle_cap > cap_max:
-                    continue
+        # On teste toutes les liaisons existantes, pas seulement les saturées
+        for liaison in liaisons_courantes:
+            depart, arrivee, cap_actuelle = liaison.depart, liaison.arrivee, liaison.capacite
+            flot_ref = result.flow_value
+            for nouvelle_cap in range(cap_actuelle + 1, cap_max + 1):
                 liaisons_test = [
-                    Liaison(liaison_courante.depart, liaison_courante.arrivee, (nouvelle_cap if liaison_courante.depart == depart and liaison_courante.arrivee == arrivee else liaison_courante.capacite))
-                    for liaison_courante in liaisons_courantes
+                    Liaison(l.depart, l.arrivee, (nouvelle_cap if l.depart == depart and l.arrivee == arrivee else l.capacite))
+                    for l in liaisons_courantes
                 ]
                 reseau_test = ReseauHydraulique(noeuds, liaisons_test)
                 result_test, _ = reseau_test.calculerFlotMaximal()
-                gain = result_test.flow_value - result.flow_value
-
+                gain = result_test.flow_value - flot_ref
                 if gain > 0:
+                    print(f"✅ Gain de {gain} en passant {depart}->{arrivee} à {nouvelle_cap}")
                     meilleures_améliorations.append(((depart, arrivee), nouvelle_cap, result_test.flow_value))
+                    flot_ref = result_test.flow_value  # Met à jour pour la suite des tests
+                else:
+                    print(f"❌ Aucun gain en augmentant {depart}->{arrivee} à {nouvelle_cap}, on arrête là.")
+                    break  # Stoppe dès qu’il n’y a plus de gain
 
-        print("Saturations à cette étape :", saturations)
+        print("Test de toutes les liaisons à cette étape.")
         print("Flot actuel :", result.flow_value)
 
-        # Condition d'arrêt supplémentaire : aucune amélioration ou flot inchangé
-        if not meilleures_améliorations or result.flow_value == dernier_flot:
-            print("⚠️ Aucune amélioration supplémentaire ne permet d'augmenter le flot ou flot inchangé. Arrêt.")
-            break
+        if not meilleures_améliorations:
+            print("⚠️ Aucune amélioration avec un seul changement. On tente malgré tout en augmentant au hasard.")
+            # Choisit une liaison non maxée et l'augmente un peu pour débloquer des chemins
+            for liaison in liaisons_courantes:
+                if liaison.capacite < cap_max:
+                    liaison.capacite += 1
+                    print(f"🔧 Liaison {liaison.depart}➝{liaison.arrivee} augmentée à {liaison.capacite} (sans gain immédiat)")
+                    break
+            # Recalculer flot
+            reseau = ReseauHydraulique(noeuds, liaisons_courantes)
+            result, _ = reseau.calculerFlotMaximal()
+            essais += 1
+            continue
 
         # Appliquer la meilleure amélioration (celle qui donne le plus gros flot)
         meilleure = max(meilleures_améliorations, key=lambda x: x[2])
@@ -674,9 +673,15 @@ def satisfaction(
 
         travaux_effectues.append(((depart, arrivee), cap, new_flot))
         reseau = ReseauHydraulique(noeuds, liaisons_courantes)
-        dernier_flot = result.flow_value  # Met à jour le flot précédent
+        dernier_flot = result.flow_value
         result, _ = reseau.calculerFlotMaximal()
         essais += 1
 
     print(f"✅ Objectif atteint ou optimisation maximale atteinte. Flot final : {result.flow_value} / {objectif_utilisateur}")
+    if travaux_effectues:
+        print("📋 Travaux réalisés pour atteindre ce flot maximal :")
+        for i, ((depart, arrivee), cap, new_flot) in enumerate(travaux_effectues, 1):
+            print(f"  - Travaux #{i} : Liaison {depart} ➝ {arrivee} portée à {cap} unités → Flot = {new_flot} unités")
+    else:
+        print("Aucune amélioration n'a pu être réalisée.")
     return liaisons_courantes, travaux_effectues
