@@ -444,8 +444,6 @@ class ReseauHydraulique:
                 self.matrice_np[idx][self.index_noeuds["super_puits"]] = node.capaciteMax
 
         self.matrice_sparse = csr_matrix(self.matrice_np)
-        print("Construction matrice (np) :")
-        print(self.matrice_np)
 
     def __str__(self):
         noeuds_str = "\n".join(str(n) for n in self.noeuds.values())
