@@ -50,7 +50,7 @@ from affichage import afficherCarte, afficherCarteEnoncer
 
 
 
-st.set_page_config(page_title="Réseau Hydraulique", layout="wide", page_icon="🚰")
+st.set_page_config(page_title="AquaFlow", layout="wide", page_icon="🚰")
 
 # Bandeau d'accueil
 st.markdown(
@@ -180,7 +180,7 @@ def menu_ajout_elements():
 
 def afficher_carte_enoncer():
     st.header("🗺️ Carte de l'énoncé")
-    st.info("Visualisez la structure de votre réseau sans calcul de flot maximal.")
+    st.info("Visualisez un premier aperçu de votre réseau sans analyse")
     if not st.session_state.get("reseau_valide", False):
         st.warning("Veuillez valider le réseau avant d'afficher la carte.")
         return
@@ -194,8 +194,8 @@ def afficher_carte_enoncer():
 
 def afficher_carte_flot():
     st.header("💦 Carte avec flot maximal")
-    st.info("Visualisez le flot maximal calculé sur votre réseau hydraulique.")
-    
+    st.info("Visualisez la circulation d'eau dans votre réseau et les liaisons saturées.")
+
     reseau = st.session_state.get("reseau", None)
     if not reseau:
         st.warning("Aucun réseau n’a été chargé.")
@@ -226,7 +226,7 @@ def afficher_carte_flot():
 
 def menu_travaux():
     st.header("🛠️ Optimisation manuelle des travaux")
-    st.info("Sélectionnez les liaisons à optimiser pour améliorer le flot de votre réseau.")
+    st.info("Sélectionnez les liaisons de votre choix pour améliorer le flot de votre réseau.")
     if not st.session_state.get("reseau_valide", False):
         st.warning("Veuillez valider le réseau avant d'utiliser cette fonctionnalité.")
         return
@@ -247,7 +247,12 @@ def menu_travaux():
         st.success("Optimisation terminée.")
         for i, (liaison, cap, flot) in enumerate(travaux):
             u, v = liaison
-            st.write(f"Travaux #{i+1} : Liaison {u} ➝ {v}, capacité {cap} unités, flot atteint : {flot} unités")
+            # Cherche l'ancienne capacité dans la config initiale
+            ancienne_cap = next((l.capacite for l in reseau.ListeLiaisons if l.depart == u and l.arrivee == v), None)
+            if ancienne_cap is not None:
+                st.write(f"Travaux #{i+1} : Liaison {u} ➝ {v}, capacité {ancienne_cap} ➔ {cap} unités, flot atteint : {flot} unités")
+            else:
+                st.write(f"Travaux #{i+1} : Liaison {u} ➝ {v}, capacité {cap} unités (nouvelle liaison), flot atteint : {flot} unités")
         reseau_hydro = ReseauHydraulique(reseau.ListeNoeuds, config_finale)
         result, index_noeuds = reseau_hydro.calculerFlotMaximal()
         fig = afficherCarte(result=result, index_noeuds=index_noeuds, noeuds=reseau.ListeNoeuds, liaisons=config_finale, montrer_saturees=True)
@@ -380,7 +385,7 @@ def menu_chargement():
         reseau = st.session_state["reseau"]
         if reseau.ListeNoeuds and reseau.ListeLiaisons:
             st.session_state["reseau_valide"] = True
-            st.success("Réseau validé. Vous pouvez maintenant afficher ou optimiser le réseau.")
+            st.success("Votre réséau est pret à etre utilisé")
         else:
             st.warning("Veuillez charger un réseau contenant au moins un noeud et une liaison.")
 
@@ -393,10 +398,10 @@ with st.sidebar:
         [
             "Créer un réseau",
             "Charger un réseau",
-            "Afficher la carte de l'énoncé",
-            "Afficher la carte avec flot maximal",
-            "Travaux (optimisation manuelle)",
-            "Généralisation (optimisation globale)",
+            "Afficher le réseau initial",
+            "Visualiser les flux",
+            "Simuler des travaux",
+            "Preparer votre réséeau au défi multiple",
             "Ajouter un élément",
             "Réinitialiser le réseau"
         ]
@@ -416,13 +421,13 @@ if menu == "Créer un réseau":
     menu_saisie_reseau()
 elif menu == "Charger un réseau":
     menu_chargement()
-elif menu == "Afficher la carte de l'énoncé":
+elif menu == "Afficher le réseau initial":
     afficher_carte_enoncer()
-elif menu == "Afficher la carte avec flot maximal":
+elif menu == "Visualiser les flux":
     afficher_carte_flot()
-elif menu == "Travaux (optimisation manuelle)":
+elif menu == "Simuler des travaux":
     menu_travaux()
-elif menu == "Généralisation (optimisation globale)":
+elif menu == "Preparer votre réséeau au défi multiple":
     menu_generalisation()
 elif menu == "Ajouter un élément":
     menu_ajout_elements()
