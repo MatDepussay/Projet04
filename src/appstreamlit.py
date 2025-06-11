@@ -43,6 +43,7 @@ Notes :
 """
 
 import streamlit as st
+import copy
 from data import (
     GestionReseau, ReseauHydraulique, optimiser_liaisons, satisfaction, Noeud, Liaison
 )
@@ -98,8 +99,15 @@ if "reseau_valide" not in st.session_state:
 reseau = st.session_state["reseau"]
 
 def reset_reseau():
-    st.session_state["reseau"] = GestionReseau()
-    st.session_state["reseau_valide"] = False
+    if "reseau_original_noeuds" in st.session_state and "reseau_original_liaisons" in st.session_state:
+        # Recharge la copie initiale
+        st.session_state["reseau"].ListeNoeuds = copy.deepcopy(st.session_state["reseau_original_noeuds"])
+        st.session_state["reseau"].ListeLiaisons = copy.deepcopy(st.session_state["reseau_original_liaisons"])
+        st.session_state["reseau_valide"] = True  # Ou False selon ce que tu souhaites
+        st.success("Le réseau a été réinitialisé à son état validé initial.")
+    else:
+        st.warning("Impossible de réinitialiser : état initial non trouvé.")
+
 
 def menu_saisie_reseau():
     st.header("🛠️ Création d'un nouveau réseau")
@@ -117,6 +125,10 @@ def menu_saisie_reseau():
         if st.button("✅ Valider le réseau"):
             if reseau.ListeNoeuds and reseau.ListeLiaisons:
                 st.session_state["reseau_valide"] = True
+                # Sauvegarde de la version initiale du réseau
+                st.session_state["reseau_original_noeuds"] = copy.deepcopy(reseau.ListeNoeuds)
+                st.session_state["reseau_original_liaisons"] = copy.deepcopy(reseau.ListeLiaisons)
+                st.success("Votre réseau est prêt à être utilisé.")
                 st.success("Réseau validé. Vous pouvez maintenant afficher ou optimiser le réseau.")
             else:
                 st.warning("Veuillez ajouter au moins un noeud et une liaison.")
@@ -131,19 +143,29 @@ def ajouter_noeuds(type_noeud):
     icones = {"source": "💧", "ville": "🏙️", "intermediaire": "🔵"}
     noms_existants = {n.nom for n in reseau.ListeNoeuds}
     nom = st.text_input(f"{icones[type_noeud]} Nom de la {type_noeud}", key=f"{type_noeud}_nom")
+    
+    # Message d'info sur la conversion en majuscules
+    if nom:
+        st.info("⚠️ Le nom sera converti automatiquement en MAJUSCULES. Évitez les doublons.")
+    
     capacite = 0
     if type_noeud != "intermediaire":
         capacite = st.number_input("Capacité maximale", min_value=1, value=10, key=f"{type_noeud}_cap")
+    
     if st.button(f"Ajouter {type_noeud}", key=f"btn_{type_noeud}"):
-        try:
-            noeud = Noeud(nom.upper(), type_noeud, capacite) if type_noeud != "intermediaire" else Noeud(nom.upper(), type_noeud)
-            if nom.upper() in noms_existants:
-                st.warning("Ce nom est déjà utilisé.")
-            else:
+        nom_upper = nom.strip().upper()
+        if nom.strip() == "":
+            st.warning("Le nom ne peut pas être vide.")
+            return
+        if nom_upper in noms_existants:
+            st.warning("Ce nom est déjà utilisé.")
+        else:
+            try:
+                noeud = Noeud(nom_upper, type_noeud, capacite) if type_noeud != "intermediaire" else Noeud(nom_upper, type_noeud)
                 reseau.ListeNoeuds.append(noeud)
-                st.success(f"{type_noeud.capitalize()} ajoutée : {nom.upper()}")
-        except Exception as e:
-            st.error(str(e))
+                st.success(f"{type_noeud.capitalize()} ajoutée : {nom_upper}")
+            except Exception as e:
+                st.error(str(e))
 
 def ajouter_liaisons():
     st.markdown("Ajoutez une liaison entre deux nœuds existants.")
@@ -151,20 +173,27 @@ def ajouter_liaisons():
     depart = st.text_input("Départ de la liaison", key="liaison_depart")
     arrivee = st.text_input("Arrivée de la liaison", key="liaison_arrivee")
     capacite = st.number_input("Capacité de la liaison", min_value=1, value=5, key="liaison_cap")
+    
     if st.button("Ajouter la liaison"):
-        try:
-            if depart.upper() == arrivee.upper():
-                st.warning("Une liaison ne peut pas relier un noeud à lui-même.")
-            elif depart.upper() not in noms_noeuds or arrivee.upper() not in noms_noeuds:
-                st.warning("Noeud de départ ou d’arrivée introuvable.")
-            elif any(liaison.depart == depart.upper() and liaison.arrivee == arrivee.upper() for liaison in reseau.ListeLiaisons):
-                st.warning("Cette liaison existe déjà.")
-            else:
-                liaison = Liaison(depart.upper(), arrivee.upper(), capacite)
+        depart_upper = depart.strip().upper()
+        arrivee_upper = arrivee.strip().upper()
+        if depart.strip() == "" or arrivee.strip() == "":
+            st.warning("Les noms de départ et d'arrivée ne peuvent pas être vides.")
+            return
+        if depart_upper == arrivee_upper:
+            st.warning("Une liaison ne peut pas relier un noeud à lui-même.")
+        elif depart_upper not in noms_noeuds or arrivee_upper not in noms_noeuds:
+            st.warning("Noeud de départ ou d’arrivée introuvable.")
+        elif any(liaison.depart == depart_upper and liaison.arrivee == arrivee_upper for liaison in reseau.ListeLiaisons):
+            st.warning("Cette liaison existe déjà.")
+        else:
+            try:
+                liaison = Liaison(depart_upper, arrivee_upper, capacite)
                 reseau.ListeLiaisons.append(liaison)
-                st.success(f"Liaison ajoutée : {depart.upper()} ➝ {arrivee.upper()}")
-        except Exception as e:
-            st.error(str(e))
+                st.success(f"Liaison ajoutée : {depart_upper} ➝ {arrivee_upper}")
+            except Exception as e:
+                st.error(str(e))
+
 
 def menu_ajout_elements():
     st.header("➕ Ajouter un élément au réseau")
@@ -261,6 +290,7 @@ def menu_travaux():
 def menu_generalisation():
     st.header("🌍 Optimisation globale / généralisation")
     st.info("Optimisez automatiquement votre réseau pour répondre à différents scénarios.")
+    
     if not st.session_state.get("reseau_valide", False):
         st.warning("Veuillez valider le réseau avant d'utiliser cette fonctionnalité.")
         return
@@ -268,8 +298,13 @@ def menu_generalisation():
         "Optimiser pour approvisionner 100% des villes",
         "Assèchement d'une source"
     ])
+    
     if choix == "Optimiser pour approvisionner 100% des villes":
-        objectif_defaut = sum(n.capaciteMax for n in reseau.ListeNoeuds if n.type == "ville")
+        # Crée une copie propre du réseau pour l’optimisation
+        noeuds_copie = copy.deepcopy(reseau.ListeNoeuds)
+        liaisons_copie = copy.deepcopy(reseau.ListeLiaisons)
+
+        objectif_defaut = sum(n.capaciteMax for n in noeuds_copie if n.type == "ville")
         st.write(f"🎯 Objectif : {objectif_defaut} unités (100% des villes)")
         objectif = st.number_input(
             "Saisissez l'objectif de flot à atteindre (en unités) :",
@@ -279,14 +314,26 @@ def menu_generalisation():
             step=1
         )
         capacite_maximale = st.number_input("Capacité maximale des liaisons (par défaut 10)", min_value=1, value=10, step=1)
+        
         if st.button("🔧 Lancer l'optimisation globale"):
             nouvelle_config, travaux = satisfaction(
-                noeuds=reseau.ListeNoeuds,
-                liaisons=reseau.ListeLiaisons,
+                noeuds=noeuds_copie,
+                liaisons=liaisons_copie,
                 objectif=objectif,
-                cap_max=capacite_maximale,   # transmis depuis le number_input
-                max_travaux=10                # ou un autre nombre si tu veux le rendre paramétrable
+                cap_max=capacite_maximale,
+                max_travaux=10
             )
+            if not travaux:
+                st.warning("⚠️ Objectif non atteignable avec la configuration actuelle du réseau et les capacités testées.")
+            else:
+                st.success("Optimisation globale terminée.")
+                for (depart, arrivee), cap, new_flot in travaux:
+                    st.write(f"Liaison {depart} ➝ {arrivee} ajustée à {cap} u. → Flot = {new_flot} u.")
+                reseau_opt = ReseauHydraulique(noeuds_copie, nouvelle_config)
+                result, index_noeuds = reseau_opt.calculerFlotMaximal()
+                fig = afficherCarte(result=result, index_noeuds=index_noeuds, noeuds=noeuds_copie, liaisons=nouvelle_config, montrer_saturees=True)
+                st.pyplot(fig)
+
             if not travaux:
                 st.warning("⚠️ Objectif non atteignable avec la configuration actuelle du réseau et les capacités testées.")
             else:
@@ -352,6 +399,13 @@ def menu_generalisation():
             if st.button("🔄 Réinitialiser l'assèchement"):
                 st.session_state["source_assechee"] = None
 
+                if "reseau_original_noeuds" in st.session_state and "reseau_original_liaisons" in st.session_state:
+                    reseau.ListeNoeuds = copy.deepcopy(st.session_state["reseau_original_noeuds"])
+                    reseau.ListeLiaisons = copy.deepcopy(st.session_state["reseau_original_liaisons"])
+                    st.success("Le réseau a été restauré à son état initial.")
+                else:
+                    st.warning("Impossible de restaurer : données initiales non trouvées.")
+
 def menu_chargement():
     st.header("📂 Chargement d'un réseau existant")
     st.info("Chargez un réseau sauvegardé pour le visualiser ou l'optimiser.")
@@ -385,7 +439,10 @@ def menu_chargement():
         reseau = st.session_state["reseau"]
         if reseau.ListeNoeuds and reseau.ListeLiaisons:
             st.session_state["reseau_valide"] = True
-            st.success("Votre réséau est pret à etre utilisé")
+            # Sauvegarde de la version initiale du réseau
+            st.session_state["reseau_original_noeuds"] = copy.deepcopy(reseau.ListeNoeuds)
+            st.session_state["reseau_original_liaisons"] = copy.deepcopy(reseau.ListeLiaisons)
+            st.success("Votre réseau est prêt à être utilisé.")
         else:
             st.warning("Veuillez charger un réseau contenant au moins un noeud et une liaison.")
 
@@ -401,7 +458,7 @@ with st.sidebar:
             "Afficher le réseau initial",
             "Visualiser les flux",
             "Simuler des travaux",
-            "Preparer votre réséeau au défi multiple",
+            "Preparer votre réseau aux défis multiples",
             "Ajouter un élément",
             "Réinitialiser le réseau"
         ]
@@ -427,10 +484,12 @@ elif menu == "Visualiser les flux":
     afficher_carte_flot()
 elif menu == "Simuler des travaux":
     menu_travaux()
-elif menu == "Preparer votre réséeau au défi multiple":
+elif menu == "Preparer votre réseau aux défis multiples":
     menu_generalisation()
 elif menu == "Ajouter un élément":
     menu_ajout_elements()
 elif menu == "Réinitialiser le réseau":
-    reset_reseau()
-    st.experimental_rerun()
+    if st.button("🔄 Confirmer la réinitialisation du réseau"):
+        reset_reseau()
+        st.success("Le réseau a été réinitialisé.")
+        st.experimental_rerun()
