@@ -652,6 +652,9 @@ def satisfaction(
                 if gain > 0:
                     meilleures_améliorations.append(((depart, arrivee), nouvelle_cap, result_test.flow_value))
 
+        print("Saturations à cette étape :", saturations)
+        print("Flot actuel :", result.flow_value)
+
         # Condition d'arrêt supplémentaire : aucune amélioration ou flot inchangé
         if not meilleures_améliorations or result.flow_value == dernier_flot:
             print("⚠️ Aucune amélioration supplémentaire ne permet d'augmenter le flot ou flot inchangé. Arrêt.")
