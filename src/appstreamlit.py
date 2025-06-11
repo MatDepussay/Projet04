@@ -50,7 +50,7 @@ from affichage import afficherCarte, afficherCarteEnoncer
 
 
 
-st.set_page_config(page_title="Réseau Hydraulique", layout="wide", page_icon="🚰")
+st.set_page_config(page_title="Aquaflow", layout="wide", page_icon="🚰")
 
 # Bandeau d'accueil
 st.markdown(
