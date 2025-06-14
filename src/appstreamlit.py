@@ -329,8 +329,27 @@ def menu_generalisation():
                 st.warning("⚠️ Objectif non atteignable avec la configuration actuelle du réseau et les capacités testées.")
             else:
                 st.success("Optimisation globale terminée.")
+
+                # Résumé des travaux par liaison
+                resume_travaux = {}
                 for (depart, arrivee), cap, new_flot in travaux:
-                    st.write(f"Liaison {depart} ➝ {arrivee} ajustée à {cap} u. → Flot = {new_flot} u.")
+                    key = (depart, arrivee)
+                    if key not in resume_travaux:
+                        # Capacité de départ dans la config initiale
+                        cap_depart = next((l.capacite for l in liaisons_copie if l.depart == depart and l.arrivee == arrivee), None)
+                        resume_travaux[key] = {"cap_depart": cap_depart, "cap_fin": cap, "flot": new_flot}
+                    else:
+                        resume_travaux[key]["cap_fin"] = cap
+                        resume_travaux[key]["flot"] = new_flot
+
+                st.markdown("**Résumé des travaux par liaison :**")
+                for (depart, arrivee), infos in resume_travaux.items():
+                    st.write(
+                        f"Liaison {depart} ➝ {arrivee} : capacité {infos['cap_depart']} ➔ {infos['cap_fin']} unités, "
+                        f"flot maximal atteint lors du dernier changement : {infos['flot']} unités"
+                    )
+
+                # Affichage de la carte finale (une seule fois)
                 reseau_opt = ReseauHydraulique(noeuds_copie, nouvelle_config)
                 result, index_noeuds = reseau_opt.calculerFlotMaximal()
                 fig = afficherCarte(result=result, index_noeuds=index_noeuds, noeuds=noeuds_copie, liaisons=nouvelle_config, montrer_saturees=True)
