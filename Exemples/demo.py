@@ -149,7 +149,7 @@ nouvelle_config, travaux = satisfaction(
     optimiser_fonction=optimiser_liaisons,
     objectif=objectif,
     cap_max=25,
-    max_travaux=5
+    max_travaux=10
 )
 
 # === Résultat final ===
