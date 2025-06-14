@@ -632,8 +632,7 @@ def satisfaction(
             flot_ref = result.flow_value
             last_gain = 0
             # On augmente la capacité tant que le flot augmente et qu'on ne dépasse pas cap_max
-            while cap_test < cap_max:
-                cap_test += 1
+            for cap_test in range(cap_actuelle + 5, cap_max + 1, 5):
                 liaisons_test = [
                     Liaison(l.depart, l.arrivee, (cap_test if l.depart == depart and l.arrivee == arrivee else l.capacite))
                     for l in liaisons_courantes
@@ -645,8 +644,7 @@ def satisfaction(
                     last_gain = gain
                     meilleur_cap_temp = cap_test
                     meilleur_new_flot_temp = result_test.flow_value
-                else:
-                    break  # On s'arrête dès que ça n'améliore plus
+                    break  # On s'arrête dès qu'on trouve un gain pour cette liaison
 
             # Si on a trouvé une amélioration sur cette liaison
             if last_gain > 0 and (meilleur_new_flot_temp - result.flow_value) > meilleur_gain:
@@ -673,9 +671,27 @@ def satisfaction(
 
     print(f"✅ Objectif atteint ou optimisation maximale atteinte. Flot final : {result.flow_value} / {objectif_utilisateur}")
     if travaux_effectues:
-        print("📋 Travaux réalisés pour atteindre ce flot maximal :")
-        for i, ((depart, arrivee), cap, new_flot) in enumerate(travaux_effectues, 1):
-            print(f"  - Travaux #{i} : Liaison {depart} ➝ {arrivee} portée à {cap} unités → Flot = {new_flot} unités")
+        # Regroupe les travaux par liaison
+        resume_travaux = {}
+        for (depart, arrivee), cap, new_flot in travaux_effectues:
+            key = (depart, arrivee)
+            if key not in resume_travaux:
+                resume_travaux[key] = {"cap_depart": None, "cap_fin": cap, "flot": new_flot}
+            else:
+                resume_travaux[key]["cap_fin"] = cap
+                resume_travaux[key]["flot"] = new_flot
+        # Cherche la capacité de départ pour chaque liaison
+        for (depart, arrivee) in resume_travaux:
+            cap_depart = None
+            for l in liaisons:
+                if l.depart == depart and l.arrivee == arrivee:
+                    cap_depart = l.capacite
+                    break
+            resume_travaux[(depart, arrivee)]["cap_depart"] = cap_depart
+
+        print("📋 Résumé des travaux réalisés :")
+        for (depart, arrivee), infos in resume_travaux.items():
+            print(f"  - Liaison {depart} ➝ {arrivee} : capacité {infos['cap_depart']} ➔ {infos['cap_fin']} unités, flot maximal atteint lors du dernier changement : {infos['flot']} unités")
     else:
         print("Aucune amélioration n'a pu être réalisée.")
     return liaisons_courantes, travaux_effectues
