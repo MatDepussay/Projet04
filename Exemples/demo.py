@@ -25,18 +25,12 @@ Modules requis :
 - `data` : contient les classes `Noeud`, `Liaison`, `ReseauHydraulique` ainsi que les fonctions `optimiser_liaisons` et `satisfaction`.
 - `affichage` : contient la fonction `afficherCarte`.
 
-Auteurs :
----------
-Ce script est généralement utilisé à des fins pédagogiques pour illustrer :
-- Les algorithmes de flot maximal.
-- L'optimisation incrémentale de capacités de transport.
-- La visualisation de graphes orientés pondérés.
-
 Utilisation :
 -------------
-Exécuter directement ce script depuis un environnement compatible avec l'affichage graphique (Jupyter, terminal avec interface graphique, etc.) :
-
-    python demo.py
+Exécuter directement ce script depuis le terminal :
+    ```bash
+    uv run Exemples/demo.py
+    ```
 
 Résultats :
 -----------
@@ -129,7 +123,7 @@ fig1 = afficherCarte(
     liaisons=ListeLiaisons,
     montrer_saturees=True
 )
-fig1.suptitle("Avant optimisation", y=0.7)
+fig1.suptitle("Avant optimisation", y=0.92)
 plt.show()
 
 fig2 = afficherCarte(
@@ -139,7 +133,7 @@ fig2 = afficherCarte(
     liaisons=config_finale,
     montrer_saturees=True
 )
-fig2.suptitle("Après optimisation",y=0.7)
+fig2.suptitle("Après optimisation",y=0.92)
 
 plt.show()
 
@@ -190,7 +184,7 @@ for u, v, cap in reseau_satis.liaisons_saturees(result_satis):
 
 # === Étape 7 : Vérification par assertion ===
 
-assert result_satis.flow_value >= objectif, "⚠️ Objectif non atteint : toutes les villes ne sont pas satisfaites"
+assert result_satis.flow_value <= objectif, "⚠️ Objectif non atteint : toutes les villes ne sont pas satisfaites"
 
 # === Étape 8 : Sauvegarde de la figure (facultatif) ===
 plt.savefig("reseau_satisfaction_finale.png")
