@@ -52,8 +52,6 @@ from data import (
 )
 from affichage import afficherCarte, afficherCarteEnoncer
 
-
-
 st.set_page_config(page_title="AquaFlow", layout="wide", page_icon="🚰")
 
 # Bandeau d'accueil

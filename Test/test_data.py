@@ -3,6 +3,12 @@ import os
 import pytest
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
 from data import ReseauHydraulique, Liaison, Noeud, creer_liaison, creer_noeud, GestionReseau, satisfaction, demander_cap_max
+from main import main
+
+def test_main_output(capfd):
+    main()
+    out, _ = capfd.readouterr()
+    assert "Hello from AquaFlow!" in out
 
 # Tests class Noeud
 

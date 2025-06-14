@@ -1,3 +1,1 @@
-from .appstreamlit import main
-
-__all__ = ["main"]
+from .main import main
