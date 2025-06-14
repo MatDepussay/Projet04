@@ -2,7 +2,7 @@ import sys
 import os
 import pytest
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
-from data import ReseauHydraulique, Liaison, Noeud, creer_liaison, creer_noeud, GestionReseau
+from data import ReseauHydraulique, Liaison, Noeud, creer_liaison, creer_noeud, GestionReseau, satisfaction, demander_cap_max
 
 # Tests class Noeud
 
@@ -258,3 +258,34 @@ def test_reseau_hydraulique_str():
 
 
 liaison_existe = GestionReseau.liaison_existe
+
+def test_satisfaction_ameliore():
+    noeuds = [Noeud("A", "source", 10), Noeud("B", "ville", 10)]
+    liaisons = [Liaison("A", "B", 5)]
+    config_finale, travaux = satisfaction(noeuds, liaisons, cap_max=10, max_travaux=2)
+    assert travaux  # Il doit y avoir au moins un travaux
+    assert config_finale[0].capacite > 5
+
+
+def test_satisfaction_aucune_amelioration():
+    noeuds = [Noeud("A", "source", 5), Noeud("B", "ville", 5)]
+    liaisons = [Liaison("A", "B", 5)]
+    config_finale, travaux = satisfaction(noeuds, liaisons, cap_max=5, max_travaux=2)
+    assert travaux == []
+    assert config_finale[0].capacite == 5
+
+def test_demander_cap_max_valeur(monkeypatch):
+        monkeypatch.setattr("builtins.input", lambda _: "30")
+        assert demander_cap_max(valeur_defaut=25) == 30
+    
+def test_demander_cap_max_defaut(monkeypatch):
+        monkeypatch.setattr("builtins.input", lambda _: "")
+        assert demander_cap_max(valeur_defaut=25) == 25
+
+def test_liaisons_saturees():
+    noeuds = [Noeud("A", "source", 10), Noeud("B", "ville", 10)]
+    liaisons = [Liaison("A", "B", 10)]
+    reseau = ReseauHydraulique(noeuds, liaisons)
+    result, _ = reseau.calculerFlotMaximal()
+    saturees = reseau.liaisons_saturees(result)
+    assert ("A", "B", 10) in saturees
