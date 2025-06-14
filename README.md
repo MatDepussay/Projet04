@@ -66,10 +66,12 @@ uv run streamlit run src/appstreamlit.py
 uv run ruff check .
 uv run --check --fix
 uv run -m pyinstrument 
+uv run -m pyinstrument -m pytest .\src\data.py
 uv run pytest tests/test_data.py
 uv run coverage report
 uv run coverage run --source=src -m pytest
 coverage report -m | grep affichage
+uv run -m pyinstrument -m pytest Test/test_data.py
 
 ---
 
