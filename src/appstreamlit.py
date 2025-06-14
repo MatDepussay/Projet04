@@ -503,4 +503,4 @@ elif menu == "Réinitialiser le réseau":
     if st.button("🔄 Confirmer la réinitialisation du réseau"):
         reset_reseau()
         st.success("Le réseau a été réinitialisé.")
-        st.experimental_rerun()
+        st.rerun()
