@@ -1,2 +1,3 @@
-def main() -> None:
-    print("Hello from 04!")
+from .appstreamlit import main
+
+__all__ = ["main"]
