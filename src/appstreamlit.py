@@ -343,7 +343,8 @@ def menu_generalisation():
                         resume_travaux[key]["flot"] = new_flot
 
                 st.markdown("**Résumé des travaux par liaison :**")
-                for (depart, arrivee), infos in resume_travaux.items():
+                # Trie les travaux par valeur du flot maximal atteint lors du dernier changement (ordre croissant)
+                for (depart, arrivee), infos in sorted(resume_travaux.items(), key=lambda x: x[1]['flot']):
                     st.write(
                         f"Liaison {depart} ➝ {arrivee} : capacité {infos['cap_depart']} ➔ {infos['cap_fin']} unités, "
                         f"flot maximal atteint lors du dernier changement : {infos['flot']} unités"
