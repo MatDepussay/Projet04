@@ -1,13 +1,61 @@
+"""
+demo.py
+
+Script de démonstration pour la modélisation, l'analyse et l'optimisation d'un réseau hydraulique.
+
+Ce programme effectue plusieurs opérations sur un réseau de distribution d’eau entre des sources et des villes,
+en passant par des noeuds intermédiaires, à l’aide d’algorithmes de flot maximal et d’optimisation incrémentale.
+
+Fonctionnalités principales :
+----------------------------
+1. Définition d’un réseau hydraulique avec des noeuds (sources, villes, intermédiaires) et des liaisons (canalisations).
+2. Calcul du flot maximal initial dans le réseau.
+3. Optimisation ciblée de certaines liaisons pour augmenter le flot.
+4. Comparaison visuelle du réseau avant et après optimisation.
+5. Tentative de satisfaction totale des besoins en eau des villes (100 % de la demande).
+6. Affichage des liaisons saturées (utilisées à capacité maximale).
+7. Vérification par assertion que l’objectif est bien atteint.
+8. Sauvegarde d’une figure du réseau final optimisé.
+9. Simulation d’un objectif irréaliste pour illustrer les limites du système.
+
+Modules requis :
+----------------
+- `matplotlib.pyplot` : pour la visualisation.
+- `copy` : pour la duplication profonde des objets.
+- `data` : contient les classes `Noeud`, `Liaison`, `ReseauHydraulique` ainsi que les fonctions `optimiser_liaisons` et `satisfaction`.
+- `affichage` : contient la fonction `afficherCarte`.
+
+Auteurs :
+---------
+Ce script est généralement utilisé à des fins pédagogiques pour illustrer :
+- Les algorithmes de flot maximal.
+- L'optimisation incrémentale de capacités de transport.
+- La visualisation de graphes orientés pondérés.
+
+Utilisation :
+-------------
+Exécuter directement ce script depuis un environnement compatible avec l'affichage graphique (Jupyter, terminal avec interface graphique, etc.) :
+
+    python demo.py
+
+Résultats :
+-----------
+Le script affiche plusieurs visualisations du réseau et imprime les informations de flot et d’optimisation dans la console.
+Une figure est également sauvegardée (`reseau_satisfaction_finale.png`).
+
+"""
+
 import sys
 import os
 import matplotlib.pyplot as plt
+import networkx as nx
 import copy
 
 # 📁 Ajout du chemin vers le dossier 'src' pour importer les modules du projet
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
 
 from data import Noeud, Liaison, ReseauHydraulique, optimiser_liaisons, satisfaction
-from affichage import afficherCarte
+from affichage import afficherCarte, afficherCarteEnoncer
 
 # === Étape 1 : Définition des noeuds et liaisons ===
 
@@ -51,8 +99,9 @@ reseau_demo = ReseauHydraulique(ListeNoeuds, ListeLiaisons)
 result, index_noeuds = reseau_demo.calculerFlotMaximal()
 
 print(f"Flot maximal initial : {result.flow_value} unités")
-plt.figure(figsize=(10, 7))
-fig = afficherCarte(result=result, index_noeuds=index_noeuds, noeuds=ListeNoeuds, liaisons=ListeLiaisons, montrer_saturees=True)
+fig = afficherCarteEnoncer(result=result,
+                    noeuds=ListeNoeuds,
+                    liaisons=ListeLiaisons)
 plt.show()
 
 # === Étape 3 : Optimisation ciblée de liaisons ===
@@ -74,29 +123,24 @@ result_opt, index_noeuds_opt = reseau_opt.calculerFlotMaximal()
 print(f"Flot maximal après optimisation : {result_opt.flow_value} unités")
 
 # === Étape 4 : Visualisation comparative ===
-fig1, ax1 = plt.subplots(figsize=(10,7))
 fig1 = afficherCarte(
     result=result,
     index_noeuds=index_noeuds,
     noeuds=ListeNoeuds,
     liaisons=ListeLiaisons,
-    montrer_saturees=True,
-    fig=fig1,
-    ax=ax1
+    montrer_saturees=True
 )
-fig1.suptitle("Avant optimisation")
+fig1.suptitle("Avant optimisation", y=0.7)
+plt.show()
 
-fig2, ax2 = plt.subplots(figsize=(10,7))
 fig2 = afficherCarte(
     result=result_opt,
     index_noeuds=index_noeuds_opt,
     noeuds=ListeNoeuds,
     liaisons=config_finale,
-    montrer_saturees=True,
-    fig=fig2,
-    ax=ax2
+    montrer_saturees=True
 )
-fig2.suptitle("Après optimisation")
+fig2.suptitle("Après optimisation",y=0.7)
 
 plt.show()
 
@@ -125,9 +169,12 @@ print("✅ Travaux réalisés :")
 for (u, v), cap, flot in travaux:
     print(f"  - Liaison {u} ➝ {v} portée à {cap} unités, nouveau flot = {flot}")
 
-# === Optionnel : Affichage visuel si tu as une fonction afficherCarte ===
-plt.figure(figsize=(10, 7))
-fig = afficherCarte(resultat_final, noeuds=ListeNoeuds, liaisons=nouvelle_config, montrer_saturees=True)
+# === Visualisation satisfaction des villes  ===
+fig = afficherCarte(resultat_final,
+                    index_noeuds=index_noeuds,
+                    noeuds=ListeNoeuds,
+                    liaisons=nouvelle_config,
+                    montrer_saturees=True)
 plt.title("Réseau après satisfaction des villes")
 plt.show()
 

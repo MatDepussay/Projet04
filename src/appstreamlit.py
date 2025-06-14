@@ -1,46 +1,49 @@
 """
-Module Streamlit pour l'application de gestion et d'optimisation de réseau hydraulique.
+appstreamlit.py – Module Streamlit pour l'application de gestion et d'optimisation de réseau hydraulique.
 
 Ce module fournit une interface graphique interactive permettant :
-- la création, la visualisation et la modification d'un réseau hydraulique (sources, villes, intermédiaires, liaisons),
+- la création, la visualisation et la modification d'un réseau hydraulique (sources, villes, nœuds intermédiaires, liaisons),
 - la sauvegarde et le chargement de réseaux depuis des fichiers JSON,
 - l'affichage graphique du réseau et du flot maximal calculé,
 - l'optimisation manuelle ou automatique des liaisons pour maximiser le flot,
-- la simulation de scénarios (assèchement de source, généralisation, etc.).
+- la simulation de scénarios (assèchement de source, optimisations globales, etc.).
 
 Fonctionnalités principales :
     - menu_saisie_reseau() : Interface pour la saisie interactive des nœuds et liaisons.
-    - ajouter_noeuds(type_noeud) : Ajout d'un nœud de type donné via l'interface.
-    - ajouter_liaisons() : Ajout d'une liaison entre deux nœuds via l'interface.
-    - menu_ajout_elements() : Ajout dynamique d'éléments à un réseau existant.
+    - ajouter_noeuds(type_noeud) : Ajout d’un nœud de type donné via l’interface.
+    - ajouter_liaisons() : Ajout d’une liaison entre deux nœuds via l’interface.
+    - menu_ajout_elements() : Ajout dynamique d’éléments à un réseau existant.
     - afficher_carte_enoncer() : Affichage graphique du réseau sans calcul de flot.
     - afficher_carte_flot() : Affichage graphique du réseau avec calcul du flot maximal.
     - menu_travaux() : Optimisation manuelle des liaisons sélectionnées.
-    - menu_generalisation() : Optimisation automatique selon différents scénarios.
-    - menu_chargement() : Chargement d'un réseau existant depuis un fichier.
-    - reset_reseau() : Réinitialisation complète du réseau courant.
+    - menu_generalisation() : Optimisation automatique selon différents scénarios prédéfinis.
+    - menu_chargement() : Chargement d’un réseau existant depuis un fichier.
+    - reset_reseau() : Réinitialisation complète du réseau en cours.
 
 Utilisation :
     L'utilisateur navigue via la barre latérale pour accéder aux différentes fonctionnalités.
     Les modifications et optimisations sont visualisées en temps réel sur la carte du réseau.
 
 Exemple d'utilisation :
-
-    >>> # Lancer l'application Streamlit
+    >>> # Terminal : lancer l'application
     >>> streamlit run appstreamlit.py
 
-    >>> # Depuis l'interface :
-    >>> # - Créer un réseau (ajouter sources, villes, intermédiaires, liaisons)
-    >>> # - Valider et afficher la carte
-    >>> # - Optimiser manuellement ou automatiquement le réseau
-    >>> # - Sauvegarder ou charger un réseau
+    # Depuis l’interface Streamlit :
+    - Créer un réseau (ajout de sources, villes, intermédiaires, liaisons)
+    - Valider et afficher la carte
+    - Optimiser manuellement ou automatiquement
+    - Sauvegarder ou charger un réseau
+
+Pré-requis :
+    - Python >= 3.9
+    - streamlit, networkx, matplotlib (voir requirements.txt)
 
 Notes :
     - Toutes les modifications sont stockées dans st.session_state pour garantir la persistance entre les interactions.
-    - Les calculs de flot maximal et d'optimisation utilisent les fonctions du module data.py.
+    - Les calculs de flot maximal et d’optimisation utilisent les fonctions du module data.py.
     - L'affichage graphique s'appuie sur matplotlib et networkx via le module affichage.py.
-
 """
+
 
 import streamlit as st
 import copy
@@ -133,8 +136,8 @@ def menu_saisie_reseau():
             else:
                 st.warning("Veuillez ajouter au moins un noeud et une liaison.")
     with col2:
+        nom_fichier = st.text_input("Nom du fichier de sauvegarde", value="reseau1.json")
         if st.button("💾 Sauvegarder ce réseau"):
-            nom_fichier = st.text_input("Nom du fichier de sauvegarde", value="reseau1.json")
             if nom_fichier:
                 reseau.sauvegarder_reseaux(nom_fichier)
                 st.success(f"Réseau sauvegardé dans {nom_fichier}")
@@ -333,15 +336,6 @@ def menu_generalisation():
                 fig = afficherCarte(result=result, index_noeuds=index_noeuds, noeuds=noeuds_copie, liaisons=nouvelle_config, montrer_saturees=True)
                 st.pyplot(fig)
 
-            if not travaux:
-                st.warning("⚠️ Objectif non atteignable avec la configuration actuelle du réseau et les capacités testées.")
-            else:
-                st.write("Aucun travaux n'a été réalisé.")
-                # Calcul du flot final avec la config finale
-                reseau_opt = ReseauHydraulique(reseau.ListeNoeuds, nouvelle_config)
-                result, _ = reseau_opt.calculerFlotMaximal()
-                flot_final = result.flow_value
-
             st.markdown(f"**Flot maximal obtenu : <span style='color:#0072B5;font-weight:bold'>{flot_final}</span> unités**", unsafe_allow_html=True)
 
             # Affiche TOUJOURS la carte finale
@@ -469,7 +463,7 @@ with st.sidebar:
             "Afficher le réseau initial",
             "Visualiser les flux",
             "Simuler des travaux",
-            "Preparer votre réseau aux défis multiples",
+            "Préparer votre réseau aux défis multiples",
             "Ajouter un élément",
             "Réinitialiser le réseau"
         ]
@@ -495,7 +489,7 @@ elif menu == "Visualiser les flux":
     afficher_carte_flot()
 elif menu == "Simuler des travaux":
     menu_travaux()
-elif menu == "Preparer votre réseau aux défis multiples":
+elif menu == "Préparer votre réseau aux défis multiples":
     menu_generalisation()
 elif menu == "Ajouter un élément":
     menu_ajout_elements()
@@ -503,4 +497,4 @@ elif menu == "Réinitialiser le réseau":
     if st.button("🔄 Confirmer la réinitialisation du réseau"):
         reset_reseau()
         st.success("Le réseau a été réinitialisé.")
-        st.experimental_rerun()
+        st.rerun()
