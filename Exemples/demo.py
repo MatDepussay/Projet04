@@ -48,7 +48,6 @@ Une figure est également sauvegardée (`reseau_satisfaction_finale.png`).
 import sys
 import os
 import matplotlib.pyplot as plt
-import networkx as nx
 import copy
 
 # 📁 Ajout du chemin vers le dossier 'src' pour importer les modules du projet

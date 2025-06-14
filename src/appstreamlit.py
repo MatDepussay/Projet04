@@ -280,7 +280,7 @@ def menu_travaux():
         for i, (liaison, cap, flot) in enumerate(travaux):
             u, v = liaison
             # Cherche l'ancienne capacité dans la config initiale
-            ancienne_cap = next((l.capacite for l in reseau.ListeLiaisons if l.depart == u and l.arrivee == v), None)
+            ancienne_cap = next((liaison_obj.capacite for liaison_obj in reseau.ListeLiaisons if liaison_obj.depart == u and liaison_obj.arrivee == v), None)
             if ancienne_cap is not None:
                 st.write(f"Travaux #{i+1} : Liaison {u} ➝ {v}, capacité {ancienne_cap} ➔ {cap} unités, flot atteint : {flot} unités")
             else:
@@ -336,7 +336,7 @@ def menu_generalisation():
                     key = (depart, arrivee)
                     if key not in resume_travaux:
                         # Capacité de départ dans la config initiale
-                        cap_depart = next((l.capacite for l in liaisons_copie if l.depart == depart and l.arrivee == arrivee), None)
+                        cap_depart = next((liaison_obj.capacite for liaison_obj in liaisons_copie if liaison_obj.depart == depart and liaison_obj.arrivee == arrivee), None)
                         resume_travaux[key] = {"cap_depart": cap_depart, "cap_fin": cap, "flot": new_flot}
                     else:
                         resume_travaux[key]["cap_fin"] = cap

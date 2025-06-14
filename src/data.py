@@ -634,8 +634,8 @@ def satisfaction(
             # On augmente la capacité tant que le flot augmente et qu'on ne dépasse pas cap_max
             for cap_test in range(cap_actuelle + 5, cap_max + 1, 5):
                 liaisons_test = [
-                    Liaison(l.depart, l.arrivee, (cap_test if l.depart == depart and l.arrivee == arrivee else l.capacite))
-                    for l in liaisons_courantes
+                    Liaison(liaison_obj.depart, liaison_obj.arrivee, (cap_test if liaison_obj.depart == depart and liaison_obj.arrivee == arrivee else liaison_obj.capacite))
+                    for liaison_obj in liaisons_courantes
                 ]
                 reseau_test = ReseauHydraulique(noeuds, liaisons_test)
                 result_test, _ = reseau_test.calculerFlotMaximal()
@@ -683,9 +683,9 @@ def satisfaction(
         # Cherche la capacité de départ pour chaque liaison
         for (depart, arrivee) in resume_travaux:
             cap_depart = None
-            for l in liaisons:
-                if l.depart == depart and l.arrivee == arrivee:
-                    cap_depart = l.capacite
+            for liaison_obj in liaisons:
+                if liaison_obj.depart == depart and liaison_obj.arrivee == arrivee:
+                    cap_depart = liaison_obj.capacite
                     break
             resume_travaux[(depart, arrivee)]["cap_depart"] = cap_depart
 
