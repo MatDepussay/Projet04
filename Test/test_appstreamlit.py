@@ -1,3 +1,7 @@
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
+
 from data import Noeud, Liaison, GestionReseau, ReseauHydraulique, optimiser_liaisons, satisfaction
 
 def test_ajout_noeud_source():
