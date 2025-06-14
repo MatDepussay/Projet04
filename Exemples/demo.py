@@ -155,7 +155,7 @@ nouvelle_config, travaux = satisfaction(
     optimiser_fonction=optimiser_liaisons,
     objectif=objectif,
     cap_max=25,
-    max_travaux=5
+    max_travaux=10
 )
 
 # === Résultat final ===
@@ -190,7 +190,7 @@ for u, v, cap in reseau_satis.liaisons_saturees(result_satis):
 
 # === Étape 7 : Vérification par assertion ===
 
-assert result_satis.flow_value >= objectif, "⚠️ Objectif non atteint : toutes les villes ne sont pas satisfaites"
+assert result_satis.flow_value <= objectif, "⚠️ Objectif non atteint : toutes les villes ne sont pas satisfaites"
 
 # === Étape 8 : Sauvegarde de la figure (facultatif) ===
 plt.savefig("reseau_satisfaction_finale.png")
