@@ -336,19 +336,14 @@ def menu_generalisation():
                 fig = afficherCarte(result=result, index_noeuds=index_noeuds, noeuds=noeuds_copie, liaisons=nouvelle_config, montrer_saturees=True)
                 st.pyplot(fig)
 
-            st.markdown(f"**Flot maximal obtenu : <span style='color:#0072B5;font-weight:bold'>{flot_final}</span> unités**", unsafe_allow_html=True)
+            if travaux:
+                flot_final = travaux[-1][2]
+            else:
+                reseau_opt = ReseauHydraulique(noeuds_copie, nouvelle_config)
+                result, _ = reseau_opt.calculerFlotMaximal()
+                flot_final = result.flow_value
 
-            # Affiche TOUJOURS la carte finale
-            reseau_final = ReseauHydraulique(reseau.ListeNoeuds, nouvelle_config)
-            result_final, index_noeuds_final = reseau_final.calculerFlotMaximal()
-            fig = afficherCarte(
-                result=result_final,
-                index_noeuds=index_noeuds_final,
-                noeuds=reseau.ListeNoeuds,
-                liaisons=nouvelle_config,
-                montrer_saturees=True
-            )
-            st.pyplot(fig)
+            st.markdown(f"**Flot maximal obtenu : <span style='color:#0072B5;font-weight:bold'>{flot_final}</span> unités**", unsafe_allow_html=True)
     else:
         import random
         sources = [n for n in reseau.ListeNoeuds if n.type == "source"]
