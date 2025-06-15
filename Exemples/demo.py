@@ -45,7 +45,9 @@ import matplotlib.pyplot as plt
 import copy
 
 # 📁 Ajout du chemin vers le dossier 'src' pour importer les modules du projet
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
+sys.path.insert(
+    0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src'))
+)
 
 from data import Noeud, Liaison, ReseauHydraulique, optimiser_liaisons, satisfaction
 from affichage import afficherCarte, afficherCarteEnoncer
@@ -92,9 +94,7 @@ reseau_demo = ReseauHydraulique(ListeNoeuds, ListeLiaisons)
 result, index_noeuds = reseau_demo.calculerFlotMaximal()
 
 print(f"Flot maximal initial : {result.flow_value} unités")
-fig = afficherCarteEnoncer(result=result,
-                    noeuds=ListeNoeuds,
-                    liaisons=ListeLiaisons)
+fig = afficherCarteEnoncer(result=result, noeuds=ListeNoeuds, liaisons=ListeLiaisons)
 plt.show()
 
 # === Étape 3 : Optimisation ciblée de liaisons ===
@@ -103,11 +103,15 @@ liaisons_a_optimiser = [("A", "E"), ("I", "L")]
 print("\n--- Optimisation des liaisons B->F et E->I ---")
 
 liaisons_copie = copy.deepcopy(ListeLiaisons)
-config_finale, travaux = optimiser_liaisons(ListeNoeuds, liaisons_copie, liaisons_a_optimiser)
+config_finale, travaux = optimiser_liaisons(
+    ListeNoeuds, liaisons_copie, liaisons_a_optimiser
+)
 
 for i, (liaison, capacite, flot) in enumerate(travaux):
     u, v = liaison
-    print(f"Travaux #{i+1}: Liaison {u} -> {v}, capacité choisie : {capacite}, nouveau flot maximal : {flot}")
+    print(
+        f"Travaux #{i+1}: Liaison {u} -> {v}, capacité choisie : {capacite}, nouveau flot maximal : {flot}"
+    )
 
 # Affichage après optimisation
 reseau_opt = ReseauHydraulique(ListeNoeuds, config_finale)
@@ -121,7 +125,7 @@ fig1 = afficherCarte(
     index_noeuds=index_noeuds,
     noeuds=ListeNoeuds,
     liaisons=ListeLiaisons,
-    montrer_saturees=True
+    montrer_saturees=True,
 )
 fig1.suptitle("Avant optimisation", y=0.92)
 plt.show()
@@ -131,9 +135,9 @@ fig2 = afficherCarte(
     index_noeuds=index_noeuds_opt,
     noeuds=ListeNoeuds,
     liaisons=config_finale,
-    montrer_saturees=True
+    montrer_saturees=True,
 )
-fig2.suptitle("Après optimisation",y=0.92)
+fig2.suptitle("Après optimisation", y=0.92)
 
 plt.show()
 
@@ -149,7 +153,7 @@ nouvelle_config, travaux = satisfaction(
     optimiser_fonction=optimiser_liaisons,
     objectif=objectif,
     cap_max=25,
-    max_travaux=10
+    max_travaux=10,
 )
 
 # === Résultat final ===
@@ -163,11 +167,13 @@ for (u, v), cap, flot in travaux:
     print(f"  - Liaison {u} ➝ {v} portée à {cap} unités, nouveau flot = {flot}")
 
 # === Visualisation satisfaction des villes  ===
-fig = afficherCarte(resultat_final,
-                    index_noeuds=index_noeuds,
-                    noeuds=ListeNoeuds,
-                    liaisons=nouvelle_config,
-                    montrer_saturees=True)
+fig = afficherCarte(
+    resultat_final,
+    index_noeuds=index_noeuds,
+    noeuds=ListeNoeuds,
+    liaisons=nouvelle_config,
+    montrer_saturees=True,
+)
 plt.title("Réseau après satisfaction des villes")
 plt.show()
 
@@ -184,7 +190,9 @@ for u, v, cap in reseau_satis.liaisons_saturees(result_satis):
 
 # === Étape 7 : Vérification par assertion ===
 
-assert result_satis.flow_value <= objectif, "⚠️ Objectif non atteint : toutes les villes ne sont pas satisfaites"
+assert (
+    result_satis.flow_value <= objectif
+), "⚠️ Objectif non atteint : toutes les villes ne sont pas satisfaites"
 
 # === Étape 8 : Sauvegarde de la figure (facultatif) ===
 plt.savefig("reseau_satisfaction_finale.png")
@@ -198,10 +206,12 @@ _, travaux_impossibles = satisfaction(
     noeuds=ListeNoeuds,
     liaisons=ListeLiaisons,
     optimiser_fonction=optimiser_liaisons,
-    objectif=objectif_echec
+    objectif=objectif_echec,
 )
 if travaux_impossibles:
     dernier_flot = travaux_impossibles[-1][2]
-    print(f"Flot maximum atteint malgré les efforts : {dernier_flot} unités (objectif non atteint)")
+    print(
+        f"Flot maximum atteint malgré les efforts : {dernier_flot} unités (objectif non atteint)"
+    )
 else:
     print("Aucun ajustement possible avec ce niveau d’objectif.")

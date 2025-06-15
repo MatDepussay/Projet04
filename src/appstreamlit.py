@@ -44,11 +44,15 @@ Notes :
     - L'affichage graphique s'appuie sur matplotlib et networkx via le module affichage.py.
 """
 
-
 import streamlit as st
 import copy
 from data import (
-    GestionReseau, ReseauHydraulique, optimiser_liaisons, satisfaction, Noeud, Liaison
+    GestionReseau,
+    ReseauHydraulique,
+    optimiser_liaisons,
+    satisfaction,
+    Noeud,
+    Liaison,
 )
 from affichage import afficherCarte, afficherCarteEnoncer
 
@@ -89,7 +93,7 @@ st.markdown(
     <div class="big-title">🚰 Gestion de Réseau Hydraulique</div>
     <div class="subtitle">Créez, visualisez et optimisez un réseau d'approvisionnement en eau de façon interactive.</div>
     """,
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )
 
 if "reseau" not in st.session_state:
@@ -99,11 +103,19 @@ if "reseau_valide" not in st.session_state:
 
 reseau = st.session_state["reseau"]
 
+
 def reset_reseau():
-    if "reseau_original_noeuds" in st.session_state and "reseau_original_liaisons" in st.session_state:
+    if (
+        "reseau_original_noeuds" in st.session_state
+        and "reseau_original_liaisons" in st.session_state
+    ):
         # Recharge la copie initiale
-        st.session_state["reseau"].ListeNoeuds = copy.deepcopy(st.session_state["reseau_original_noeuds"])
-        st.session_state["reseau"].ListeLiaisons = copy.deepcopy(st.session_state["reseau_original_liaisons"])
+        st.session_state["reseau"].ListeNoeuds = copy.deepcopy(
+            st.session_state["reseau_original_noeuds"]
+        )
+        st.session_state["reseau"].ListeLiaisons = copy.deepcopy(
+            st.session_state["reseau_original_liaisons"]
+        )
         st.session_state["reseau_valide"] = True  # Ou False selon ce que tu souhaites
         st.success("Le réseau a été réinitialisé à son état validé initial.")
     else:
@@ -112,7 +124,9 @@ def reset_reseau():
 
 def menu_saisie_reseau():
     st.header("🛠️ Création d'un nouveau réseau")
-    st.info("Ajoutez vos sources, villes, intermédiaires et liaisons pour construire votre réseau hydraulique.")
+    st.info(
+        "Ajoutez vos sources, villes, intermédiaires et liaisons pour construire votre réseau hydraulique."
+    )
     with st.expander("💧 Ajouter des sources"):
         ajouter_noeuds("source")
     with st.expander("🏙️ Ajouter des villes"):
@@ -127,32 +141,47 @@ def menu_saisie_reseau():
             if reseau.ListeNoeuds and reseau.ListeLiaisons:
                 st.session_state["reseau_valide"] = True
                 # Sauvegarde de la version initiale du réseau
-                st.session_state["reseau_original_noeuds"] = copy.deepcopy(reseau.ListeNoeuds)
-                st.session_state["reseau_original_liaisons"] = copy.deepcopy(reseau.ListeLiaisons)
+                st.session_state["reseau_original_noeuds"] = copy.deepcopy(
+                    reseau.ListeNoeuds
+                )
+                st.session_state["reseau_original_liaisons"] = copy.deepcopy(
+                    reseau.ListeLiaisons
+                )
                 st.success("Votre réseau est prêt à être utilisé.")
-                st.success("Réseau validé. Vous pouvez maintenant afficher ou optimiser le réseau.")
+                st.success(
+                    "Réseau validé. Vous pouvez maintenant afficher ou optimiser le réseau."
+                )
             else:
                 st.warning("Veuillez ajouter au moins un noeud et une liaison.")
     with col2:
-        nom_fichier = st.text_input("Nom du fichier de sauvegarde", value="reseau1.json")
+        nom_fichier = st.text_input(
+            "Nom du fichier de sauvegarde", value="reseau1.json"
+        )
         if st.button("💾 Sauvegarder ce réseau"):
             if nom_fichier:
                 reseau.sauvegarder_reseaux(nom_fichier)
                 st.success(f"Réseau sauvegardé dans {nom_fichier}")
 
+
 def ajouter_noeuds(type_noeud):
     icones = {"source": "💧", "ville": "🏙️", "intermediaire": "🔵"}
     noms_existants = {n.nom for n in reseau.ListeNoeuds}
-    nom = st.text_input(f"{icones[type_noeud]} Nom de la {type_noeud}", key=f"{type_noeud}_nom")
-    
+    nom = st.text_input(
+        f"{icones[type_noeud]} Nom de la {type_noeud}", key=f"{type_noeud}_nom"
+    )
+
     # Message d'info sur la conversion en majuscules
     if nom:
-        st.info("⚠️ Le nom sera converti automatiquement en MAJUSCULES. Évitez les doublons.")
-    
+        st.info(
+            "⚠️ Le nom sera converti automatiquement en MAJUSCULES. Évitez les doublons."
+        )
+
     capacite = 0
     if type_noeud != "intermediaire":
-        capacite = st.number_input("Capacité maximale", min_value=1, value=10, key=f"{type_noeud}_cap")
-    
+        capacite = st.number_input(
+            "Capacité maximale", min_value=1, value=10, key=f"{type_noeud}_cap"
+        )
+
     if st.button(f"Ajouter {type_noeud}", key=f"btn_{type_noeud}"):
         nom_upper = nom.strip().upper()
         if nom.strip() == "":
@@ -162,19 +191,26 @@ def ajouter_noeuds(type_noeud):
             st.warning("Ce nom est déjà utilisé.")
         else:
             try:
-                noeud = Noeud(nom_upper, type_noeud, capacite) if type_noeud != "intermediaire" else Noeud(nom_upper, type_noeud)
+                noeud = (
+                    Noeud(nom_upper, type_noeud, capacite)
+                    if type_noeud != "intermediaire"
+                    else Noeud(nom_upper, type_noeud)
+                )
                 reseau.ListeNoeuds.append(noeud)
                 st.success(f"{type_noeud.capitalize()} ajoutée : {nom_upper}")
             except Exception as e:
                 st.error(str(e))
+
 
 def ajouter_liaisons():
     st.markdown("Ajoutez une liaison entre deux nœuds existants.")
     noms_noeuds = {n.nom for n in reseau.ListeNoeuds}
     depart = st.text_input("Départ de la liaison", key="liaison_depart")
     arrivee = st.text_input("Arrivée de la liaison", key="liaison_arrivee")
-    capacite = st.number_input("Capacité de la liaison", min_value=1, value=5, key="liaison_cap")
-    
+    capacite = st.number_input(
+        "Capacité de la liaison", min_value=1, value=5, key="liaison_cap"
+    )
+
     if st.button("Ajouter la liaison"):
         depart_upper = depart.strip().upper()
         arrivee_upper = arrivee.strip().upper()
@@ -185,7 +221,10 @@ def ajouter_liaisons():
             st.warning("Une liaison ne peut pas relier un noeud à lui-même.")
         elif depart_upper not in noms_noeuds or arrivee_upper not in noms_noeuds:
             st.warning("Noeud de départ ou d’arrivée introuvable.")
-        elif any(liaison.depart == depart_upper and liaison.arrivee == arrivee_upper for liaison in reseau.ListeLiaisons):
+        elif any(
+            liaison.depart == depart_upper and liaison.arrivee == arrivee_upper
+            for liaison in reseau.ListeLiaisons
+        ):
             st.warning("Cette liaison existe déjà.")
         else:
             try:
@@ -198,7 +237,9 @@ def ajouter_liaisons():
 
 def menu_ajout_elements():
     st.header("➕ Ajouter un élément au réseau")
-    st.info("Ajoutez dynamiquement des sources, villes, intermédiaires ou liaisons à votre réseau existant.")
+    st.info(
+        "Ajoutez dynamiquement des sources, villes, intermédiaires ou liaisons à votre réseau existant."
+    )
     with st.expander("💧 Ajouter une source"):
         ajouter_noeuds("source")
     with st.expander("🏙️ Ajouter une ville"):
@@ -207,6 +248,7 @@ def menu_ajout_elements():
         ajouter_noeuds("intermediaire")
     with st.expander("🔗 Ajouter une liaison"):
         ajouter_liaisons()
+
 
 def afficher_carte_enoncer():
     st.header("🗺️ Carte de l'énoncé")
@@ -219,12 +261,20 @@ def afficher_carte_enoncer():
         return
     reseau_hydro = ReseauHydraulique(reseau.ListeNoeuds, reseau.ListeLiaisons)
     result, index_noeuds = reseau_hydro.calculerFlotMaximal()
-    fig = afficherCarteEnoncer(result=result, index_noeuds=index_noeuds, noeuds=reseau.ListeNoeuds, liaisons=reseau.ListeLiaisons)
+    fig = afficherCarteEnoncer(
+        result=result,
+        index_noeuds=index_noeuds,
+        noeuds=reseau.ListeNoeuds,
+        liaisons=reseau.ListeLiaisons,
+    )
     st.pyplot(fig)
+
 
 def afficher_carte_flot():
     st.header("💦 Carte avec flot maximal")
-    st.info("Visualisez la circulation d'eau dans votre réseau et les liaisons saturées.")
+    st.info(
+        "Visualisez la circulation d'eau dans votre réseau et les liaisons saturées."
+    )
 
     reseau = st.session_state.get("reseau", None)
     if not reseau:
@@ -238,7 +288,7 @@ def afficher_carte_flot():
     if not reseau.ListeNoeuds or not reseau.ListeLiaisons:
         st.warning("Veuillez d'abord saisir des noeuds et des liaisons.")
         return
-    
+
     try:
         reseau_hydro = ReseauHydraulique(reseau.ListeNoeuds, reseau.ListeLiaisons)
         result, index_noeuds = reseau_hydro.calculerFlotMaximal()
@@ -248,22 +298,27 @@ def afficher_carte_flot():
             index_noeuds=index_noeuds,
             noeuds=reseau.ListeNoeuds,
             liaisons=reseau.ListeLiaisons,
-            montrer_saturees=True
+            montrer_saturees=True,
         )
         st.pyplot(fig)
     except Exception as e:
-            st.error(f"Erreur lors du calcul ou de l'affichage de la carte : {e}")
+        st.error(f"Erreur lors du calcul ou de l'affichage de la carte : {e}")
+
 
 def menu_travaux():
     st.header("🛠️ Optimisation manuelle des travaux")
-    st.info("Sélectionnez les liaisons de votre choix pour améliorer le flot de votre réseau.")
+    st.info(
+        "Sélectionnez les liaisons de votre choix pour améliorer le flot de votre réseau."
+    )
     if not st.session_state.get("reseau_valide", False):
         st.warning("Veuillez valider le réseau avant d'utiliser cette fonctionnalité.")
         return
-    liaisons_possibles = [(liaison.depart, liaison.arrivee) for liaison in reseau.ListeLiaisons]
+    liaisons_possibles = [
+        (liaison.depart, liaison.arrivee) for liaison in reseau.ListeLiaisons
+    ]
     selection = st.multiselect(
         "Sélectionnez les liaisons à optimiser (format : Départ ➝ Arrivée)",
-        options=[f"{u} ➝ {v}" for u, v in liaisons_possibles]
+        options=[f"{u} ➝ {v}" for u, v in liaisons_possibles],
     )
     liaisons_a_optimiser = []
     for s in selection:
@@ -273,33 +328,55 @@ def menu_travaux():
         if not liaisons_a_optimiser:
             st.warning("Aucune liaison sélectionnée.")
             return
-        config_finale, travaux = optimiser_liaisons(reseau.ListeNoeuds, reseau.ListeLiaisons, liaisons_a_optimiser)
+        config_finale, travaux = optimiser_liaisons(
+            reseau.ListeNoeuds, reseau.ListeLiaisons, liaisons_a_optimiser
+        )
         st.success("Optimisation terminée.")
         for i, (liaison, cap, flot) in enumerate(travaux):
             u, v = liaison
             # Cherche l'ancienne capacité dans la config initiale
-            ancienne_cap = next((liaison_obj.capacite for liaison_obj in reseau.ListeLiaisons if liaison_obj.depart == u and liaison_obj.arrivee == v), None)
+            ancienne_cap = next(
+                (
+                    liaison_obj.capacite
+                    for liaison_obj in reseau.ListeLiaisons
+                    if liaison_obj.depart == u and liaison_obj.arrivee == v
+                ),
+                None,
+            )
             if ancienne_cap is not None:
-                st.write(f"Travaux #{i+1} : Liaison {u} ➝ {v}, capacité {ancienne_cap} ➔ {cap} unités, flot atteint : {flot} unités")
+                st.write(
+                    f"Travaux #{i+1} : Liaison {u} ➝ {v}, capacité {ancienne_cap} ➔ {cap} unités, flot atteint : {flot} unités"
+                )
             else:
-                st.write(f"Travaux #{i+1} : Liaison {u} ➝ {v}, capacité {cap} unités (nouvelle liaison), flot atteint : {flot} unités")
+                st.write(
+                    f"Travaux #{i+1} : Liaison {u} ➝ {v}, capacité {cap} unités (nouvelle liaison), flot atteint : {flot} unités"
+                )
         reseau_hydro = ReseauHydraulique(reseau.ListeNoeuds, config_finale)
         result, index_noeuds = reseau_hydro.calculerFlotMaximal()
-        fig = afficherCarte(result=result, index_noeuds=index_noeuds, noeuds=reseau.ListeNoeuds, liaisons=config_finale, montrer_saturees=True)
+        fig = afficherCarte(
+            result=result,
+            index_noeuds=index_noeuds,
+            noeuds=reseau.ListeNoeuds,
+            liaisons=config_finale,
+            montrer_saturees=True,
+        )
         st.pyplot(fig)
+
 
 def menu_generalisation():
     st.header("🌍 Optimisation globale / généralisation")
-    st.info("Optimisez automatiquement votre réseau pour répondre à différents scénarios.")
-    
+    st.info(
+        "Optimisez automatiquement votre réseau pour répondre à différents scénarios."
+    )
+
     if not st.session_state.get("reseau_valide", False):
         st.warning("Veuillez valider le réseau avant d'utiliser cette fonctionnalité.")
         return
-    choix = st.radio("Scénario", [
-        "Optimiser pour approvisionner 100% des villes",
-        "Assèchement d'une source"
-    ])
-    
+    choix = st.radio(
+        "Scénario",
+        ["Optimiser pour approvisionner 100% des villes", "Assèchement d'une source"],
+    )
+
     if choix == "Optimiser pour approvisionner 100% des villes":
         # Crée une copie propre du réseau pour l’optimisation
         noeuds_copie = copy.deepcopy(reseau.ListeNoeuds)
@@ -312,19 +389,26 @@ def menu_generalisation():
             min_value=1,
             max_value=objectif_defaut,
             value=objectif_defaut,
-            step=1
+            step=1,
         )
-        capacite_maximale = st.number_input("Capacité maximale des liaisons (par défaut 10)", min_value=1, value=25, step=1)
+        capacite_maximale = st.number_input(
+            "Capacité maximale des liaisons (par défaut 10)",
+            min_value=1,
+            value=25,
+            step=1,
+        )
         if st.button("🔧 Lancer l'optimisation globale"):
             nouvelle_config, travaux = satisfaction(
                 noeuds=noeuds_copie,
                 liaisons=liaisons_copie,
                 objectif=objectif,
                 cap_max=capacite_maximale,
-                max_travaux=10
+                max_travaux=10,
             )
             if not travaux:
-                st.warning("⚠️ Objectif non atteignable avec la configuration actuelle du réseau et les capacités testées.")
+                st.warning(
+                    "⚠️ Objectif non atteignable avec la configuration actuelle du réseau et les capacités testées."
+                )
             else:
                 st.success("Optimisation globale terminée.")
 
@@ -334,15 +418,29 @@ def menu_generalisation():
                     key = (depart, arrivee)
                     if key not in resume_travaux:
                         # Capacité de départ dans la config initiale
-                        cap_depart = next((liaison_obj.capacite for liaison_obj in liaisons_copie if liaison_obj.depart == depart and liaison_obj.arrivee == arrivee), None)
-                        resume_travaux[key] = {"cap_depart": cap_depart, "cap_fin": cap, "flot": new_flot}
+                        cap_depart = next(
+                            (
+                                liaison_obj.capacite
+                                for liaison_obj in liaisons_copie
+                                if liaison_obj.depart == depart
+                                and liaison_obj.arrivee == arrivee
+                            ),
+                            None,
+                        )
+                        resume_travaux[key] = {
+                            "cap_depart": cap_depart,
+                            "cap_fin": cap,
+                            "flot": new_flot,
+                        }
                     else:
                         resume_travaux[key]["cap_fin"] = cap
                         resume_travaux[key]["flot"] = new_flot
 
                 st.markdown("**Résumé des travaux par liaison :**")
                 # Trie les travaux par valeur du flot maximal atteint lors du dernier changement (ordre croissant)
-                for (depart, arrivee), infos in sorted(resume_travaux.items(), key=lambda x: x[1]['flot']):
+                for (depart, arrivee), infos in sorted(
+                    resume_travaux.items(), key=lambda x: x[1]['flot']
+                ):
                     st.write(
                         f"Liaison {depart} ➝ {arrivee} : capacité {infos['cap_depart']} ➔ {infos['cap_fin']} unités, "
                         f"flot maximal atteint lors du dernier changement : {infos['flot']} unités"
@@ -351,7 +449,13 @@ def menu_generalisation():
                 # Affichage de la carte finale (une seule fois)
                 reseau_opt = ReseauHydraulique(noeuds_copie, nouvelle_config)
                 result, index_noeuds = reseau_opt.calculerFlotMaximal()
-                fig = afficherCarte(result=result, index_noeuds=index_noeuds, noeuds=noeuds_copie, liaisons=nouvelle_config, montrer_saturees=True)
+                fig = afficherCarte(
+                    result=result,
+                    index_noeuds=index_noeuds,
+                    noeuds=noeuds_copie,
+                    liaisons=nouvelle_config,
+                    montrer_saturees=True,
+                )
                 st.pyplot(fig)
 
             if travaux:
@@ -361,18 +465,24 @@ def menu_generalisation():
                 result, _ = reseau_opt.calculerFlotMaximal()
                 flot_final = result.flow_value
 
-            st.markdown(f"**Flot maximal obtenu : <span style='color:#0072B5;font-weight:bold'>{flot_final}</span> unités**", unsafe_allow_html=True)
+            st.markdown(
+                f"**Flot maximal obtenu : <span style='color:#0072B5;font-weight:bold'>{flot_final}</span> unités**",
+                unsafe_allow_html=True,
+            )
     else:
         import random
+
         sources = [n for n in reseau.ListeNoeuds if n.type == "source"]
         if not sources:
             st.warning("Aucune source trouvée.")
             return
-        
+
         if "source_assechee" not in st.session_state:
             st.session_state["source_assechee"] = None
 
-        mode_choix = st.radio("Méthode d’assèchement :", ["🔀 Aléatoire", "🎯 Manuel"], horizontal=True)
+        mode_choix = st.radio(
+            "Méthode d’assèchement :", ["🔀 Aléatoire", "🎯 Manuel"], horizontal=True
+        )
 
         if mode_choix == "🔀 Aléatoire":
             if st.button("💣 Assécher une source aléatoirement"):
@@ -381,10 +491,12 @@ def menu_generalisation():
                 for n in reseau.ListeNoeuds:
                     if n.nom == source_choisie.nom:
                         n.capaciteMax = 0
-        
+
         elif mode_choix == "🎯 Manuel":
             source_noms = [n.nom for n in sources]
-            source_select = st.selectbox("Choisissez une source à assécher :", source_noms)
+            source_select = st.selectbox(
+                "Choisissez une source à assécher :", source_noms
+            )
             if st.button("💣 Assécher la source sélectionnée"):
                 st.session_state["source_assechee"] = source_select
                 for n in reseau.ListeNoeuds:
@@ -392,24 +504,50 @@ def menu_generalisation():
                         n.capaciteMax = 0
 
         if st.session_state["source_assechee"]:
-            st.write(f"Source choisie : <span style='color:#d62728;font-weight:bold'>{st.session_state['source_assechee']}</span>",unsafe_allow_html=True)
+            st.write(
+                f"Source choisie : <span style='color:#d62728;font-weight:bold'>{st.session_state['source_assechee']}</span>",
+                unsafe_allow_html=True,
+            )
             reseau_hydro = ReseauHydraulique(reseau.ListeNoeuds, reseau.ListeLiaisons)
             result, index_noeuds = reseau_hydro.calculerFlotMaximal()
-            fig = afficherCarte(result=result, index_noeuds=index_noeuds, noeuds=reseau.ListeNoeuds, liaisons=reseau.ListeLiaisons, montrer_saturees=True)
+            fig = afficherCarte(
+                result=result,
+                index_noeuds=index_noeuds,
+                noeuds=reseau.ListeNoeuds,
+                liaisons=reseau.ListeLiaisons,
+                montrer_saturees=True,
+            )
             st.pyplot(fig)
-            liaisons_possibles = [(liaison.depart, liaison.arrivee) for liaison in reseau.ListeLiaisons]
-            liaison_str = st.selectbox("Sélectionnez une liaison à renforcer (+5 unités)", [f"{u} ➝ {v}" for u, v in liaisons_possibles])
+            liaisons_possibles = [
+                (liaison.depart, liaison.arrivee) for liaison in reseau.ListeLiaisons
+            ]
+            liaison_str = st.selectbox(
+                "Sélectionnez une liaison à renforcer (+5 unités)",
+                [f"{u} ➝ {v}" for u, v in liaisons_possibles],
+            )
             if st.button("💪 Renforcer la liaison sélectionnée"):
                 u, v = liaison_str.split("➝")
                 u, v = u.strip(), v.strip()
                 for liaison in reseau.ListeLiaisons:
                     if liaison.depart == u and liaison.arrivee == v:
                         liaison.capacite += 5
-                        st.write(f"Liaison {u} ➝ {v} renforcée à {liaison.capacite} unités.")
+                        st.write(
+                            f"Liaison {u} ➝ {v} renforcée à {liaison.capacite} unités."
+                        )
                         break
-                reseau_hydro = ReseauHydraulique(reseau.ListeNoeuds, reseau.ListeLiaisons)
-                result_modifie, index_noeuds_modifie = reseau_hydro.calculerFlotMaximal()
-                fig = afficherCarte(result=result_modifie, index_noeuds=index_noeuds_modifie, noeuds=reseau.ListeNoeuds, liaisons=reseau.ListeLiaisons, montrer_saturees=True)
+                reseau_hydro = ReseauHydraulique(
+                    reseau.ListeNoeuds, reseau.ListeLiaisons
+                )
+                result_modifie, index_noeuds_modifie = (
+                    reseau_hydro.calculerFlotMaximal()
+                )
+                fig = afficherCarte(
+                    result=result_modifie,
+                    index_noeuds=index_noeuds_modifie,
+                    noeuds=reseau.ListeNoeuds,
+                    liaisons=reseau.ListeLiaisons,
+                    montrer_saturees=True,
+                )
                 st.pyplot(fig)
                 st.write(f"Nouveau flot maximal : {result_modifie.flow_value} u.")
 
@@ -417,12 +555,22 @@ def menu_generalisation():
             if st.button("🔄 Réinitialiser l'assèchement"):
                 st.session_state["source_assechee"] = None
 
-                if "reseau_original_noeuds" in st.session_state and "reseau_original_liaisons" in st.session_state:
-                    reseau.ListeNoeuds = copy.deepcopy(st.session_state["reseau_original_noeuds"])
-                    reseau.ListeLiaisons = copy.deepcopy(st.session_state["reseau_original_liaisons"])
+                if (
+                    "reseau_original_noeuds" in st.session_state
+                    and "reseau_original_liaisons" in st.session_state
+                ):
+                    reseau.ListeNoeuds = copy.deepcopy(
+                        st.session_state["reseau_original_noeuds"]
+                    )
+                    reseau.ListeLiaisons = copy.deepcopy(
+                        st.session_state["reseau_original_liaisons"]
+                    )
                     st.success("Le réseau a été restauré à son état initial.")
                 else:
-                    st.warning("Impossible de restaurer : données initiales non trouvées.")
+                    st.warning(
+                        "Impossible de restaurer : données initiales non trouvées."
+                    )
+
 
 def menu_chargement():
     st.header("📂 Chargement d'un réseau existant")
@@ -435,7 +583,7 @@ def menu_chargement():
         try:
             reseaux = GestionReseau.charger_reseaux(fichier)
             if not reseaux:
-                    st.warning("Aucun réseau trouvé dans ce fichier.")
+                st.warning("Aucun réseau trouvé dans ce fichier.")
             else:
                 st.session_state["reseaux_charges"] = reseaux
                 st.session_state["dernier_fichier_charge"] = fichier
@@ -458,11 +606,18 @@ def menu_chargement():
         if reseau.ListeNoeuds and reseau.ListeLiaisons:
             st.session_state["reseau_valide"] = True
             # Sauvegarde de la version initiale du réseau
-            st.session_state["reseau_original_noeuds"] = copy.deepcopy(reseau.ListeNoeuds)
-            st.session_state["reseau_original_liaisons"] = copy.deepcopy(reseau.ListeLiaisons)
+            st.session_state["reseau_original_noeuds"] = copy.deepcopy(
+                reseau.ListeNoeuds
+            )
+            st.session_state["reseau_original_liaisons"] = copy.deepcopy(
+                reseau.ListeLiaisons
+            )
             st.success("Votre réseau est prêt à être utilisé.")
         else:
-            st.warning("Veuillez charger un réseau contenant au moins un noeud et une liaison.")
+            st.warning(
+                "Veuillez charger un réseau contenant au moins un noeud et une liaison."
+            )
+
 
 # === MENU LATERAL PRINCIPAL ===
 with st.sidebar:
@@ -478,8 +633,8 @@ with st.sidebar:
             "Simuler des travaux",
             "Préparer votre réseau aux défis multiples",
             "Ajouter un élément",
-            "Réinitialiser le réseau"
-        ]
+            "Réinitialiser le réseau",
+        ],
     )
     st.markdown(
         """
@@ -489,7 +644,7 @@ with st.sidebar:
         <b>Couleurs :</b> <span style='color:#d62728'>Sources</span>, <span style='color:#2ca02c'>Villes</span>, <span style='color:#1f77b4'>Intermédiaires</span>
         </div>
         """,
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
     )
 
 if menu == "Créer un réseau":

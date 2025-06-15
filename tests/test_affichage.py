@@ -4,16 +4,19 @@ import pytest
 import matplotlib.pyplot as plt
 from types import SimpleNamespace
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
+sys.path.insert(
+    0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src'))
+)
 from data import Liaison, Noeud, ReseauHydraulique
 from affichage import afficherCarte, afficherCarteEnoncer
+
 
 def test_afficherCarteEnoncer_basic():
     # Création de noeuds et liaisons simples
     noeuds = [
         Noeud("A", "source", 10),
         Noeud("B", "ville", 5),
-        Noeud("C", "intermediaire", 0)
+        Noeud("C", "intermediaire", 0),
     ]
     liaisons = [
         Liaison("A", "B", 10),
@@ -21,7 +24,9 @@ def test_afficherCarteEnoncer_basic():
     ]
 
     # Cas 1 : Sans result
-    fig = afficherCarteEnoncer(result=None, index_noeuds=None, noeuds=noeuds, liaisons=liaisons)
+    fig = afficherCarteEnoncer(
+        result=None, index_noeuds=None, noeuds=noeuds, liaisons=liaisons
+    )
     assert isinstance(fig, plt.Figure)
     ax = fig.axes[0]
     assert "Carte des Liaisons" in ax.get_title()
@@ -40,9 +45,12 @@ def test_afficherCarteEnoncer_basic():
         (1, 2): 5,
     }
     result = SimpleNamespace(flow=flow, flow_value=8)
-    fig2 = afficherCarteEnoncer(result=result, index_noeuds=None, noeuds=noeuds, liaisons=liaisons)
+    fig2 = afficherCarteEnoncer(
+        result=result, index_noeuds=None, noeuds=noeuds, liaisons=liaisons
+    )
     assert any("Flot maximal : 8" in text.get_text() for text in fig2.texts)
     plt.close(fig2)
+
 
 def test_afficherCarteEnoncer_exceptions():
     # Pas de noeuds ni liaisons : doit lever ValueError
@@ -55,18 +63,21 @@ def test_afficherCarteEnoncer_exceptions():
     with pytest.raises(ValueError):
         afficherCarteEnoncer(noeuds=None, liaisons=[])
 
+
 def test_afficherCarte_raises_without_noeuds_ou_liaisons():
     with pytest.raises(ValueError, match="Il faut fournir les noeuds et liaisons"):
         afficherCarte()
-        
+
+
 def test_afficherCarte_affichage_simple():
     noeuds = [
         Noeud(nom="A", type="source", capaciteMax=5),
-        Noeud(nom="B", type="ville", capaciteMax=5)
+        Noeud(nom="B", type="ville", capaciteMax=5),
     ]
     liaisons = [Liaison(depart="A", arrivee="B", capacite=5)]
     fig = afficherCarte(noeuds=noeuds, liaisons=liaisons)
     assert fig is not None
+
 
 def test_afficherCarte_couleurs_et_labels(monkeypatch):
     noeuds = [
@@ -81,23 +92,25 @@ def test_afficherCarte_couleurs_et_labels(monkeypatch):
         Liaison("C", "D", 3),
     ]
 
-    index_noeuds = {"A":0, "B":1, "C":2, "D":3, "super_source":4, "super_puits":5}
+    index_noeuds = {"A": 0, "B": 1, "C": 2, "D": 3, "super_source": 4, "super_puits": 5}
 
     # Création d'un objet result avec des flux simulés
     flow = {
         (4, 0): 10,  # super_source -> A
         (0, 2): 10,  # A -> C
-        (2, 1): 5,   # C -> B
-        (2, 3): 3,   # C -> D
-        (1, 5): 5,   # B -> super_puits
-        (3, 5): 3,   # D -> super_puits
+        (2, 1): 5,  # C -> B
+        (2, 3): 3,  # C -> D
+        (1, 5): 5,  # B -> super_puits
+        (3, 5): 3,  # D -> super_puits
     }
     result = SimpleNamespace(flow=flow, flow_value=8)
 
     # Patch la méthode liaisons_saturees pour éviter erreur
     monkeypatch.setattr(ReseauHydraulique, "liaisons_saturees", lambda self, result: [])
 
-    fig = afficherCarte(result=result, index_noeuds=index_noeuds, noeuds=noeuds, liaisons=liaisons)
+    fig = afficherCarte(
+        result=result, index_noeuds=index_noeuds, noeuds=noeuds, liaisons=liaisons
+    )
 
     # On cherche les labels dans la figure (axe principal)
     ax = fig.axes[0]
@@ -109,10 +122,15 @@ def test_afficherCarte_couleurs_et_labels(monkeypatch):
     assert "C" in texts
     assert "D" in texts
 
+
 @pytest.mark.parametrize("montrer_saturees", [True, False])
 @pytest.mark.parametrize("with_result", [True, False])
 def test_couverture_boucles(monkeypatch, montrer_saturees, with_result):
-    noeuds = [Noeud("A", "source",10), Noeud("B", "ville",5), Noeud("C", "intermediaire")]
+    noeuds = [
+        Noeud("A", "source", 10),
+        Noeud("B", "ville", 5),
+        Noeud("C", "intermediaire"),
+    ]
     liaisons = [
         Liaison("A", "B", 10),
         Liaison("B", "C", 5),
@@ -123,10 +141,10 @@ def test_couverture_boucles(monkeypatch, montrer_saturees, with_result):
         # On inclut uniquement les arêtes présentes dans le graphe pour éviter KeyError
         flow = {
             (3, 0): 10,  # super_source -> A
-            (0, 1): 8,   # A -> B
+            (0, 1): 8,  # A -> B
             (1, 2): 5,  # B -> C
-            (1, 4): 0, 
-            (2, 4): 5,   # C -> super_puits
+            (1, 4): 0,
+            (2, 4): 5,  # C -> super_puits
         }
         result = SimpleNamespace(flow=flow, flow_value=8)
     else:
@@ -136,13 +154,20 @@ def test_couverture_boucles(monkeypatch, montrer_saturees, with_result):
         if montrer_saturees and result:
             return [("A", "B", 10)]  # Saturée A->B
         return []
+
     monkeypatch.setattr(ReseauHydraulique, "liaisons_saturees", fake_liaisons_saturees)
 
     # Construire l’index_noeuds comme dans afficherCarte
     reseau_temp = ReseauHydraulique(noeuds, liaisons)
     index_noeuds = reseau_temp.index_noeuds
-    
-    fig = afficherCarte(result=result,index_noeuds=index_noeuds, noeuds=noeuds, liaisons=liaisons, montrer_saturees=montrer_saturees)
+
+    fig = afficherCarte(
+        result=result,
+        index_noeuds=index_noeuds,
+        noeuds=noeuds,
+        liaisons=liaisons,
+        montrer_saturees=montrer_saturees,
+    )
 
     ax = fig.axes[0]
 
