@@ -26,7 +26,7 @@ def afficherCarte(result=None, index_noeuds=None, noeuds=None, liaisons=None, mo
     Returns
         >>> Matplotlib figure de la carte dessinée.
     Exemple
-        >>> afficherCarte(result, index_noeuds, noeuds, liaisons)
+        >>> afficherCarte(result, index_noeuds, noeuds, liaisons, montrer_saturees=True)
     """
     if noeuds is None or liaisons is None:
         raise ValueError("Il faut fournir les noeuds et liaisons")

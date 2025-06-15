@@ -205,9 +205,11 @@ class GestionReseau:
         Cette fonction demande à l'utilisateur de saisir des noeuds du type spécifié, 
         vérifie les doublons avec la liste globale ListeNoeuds, 
         crée les noeuds et les ajoute à ListeNoeuds.
-
-        :param type_noeud: str - Type du noeud à saisir. Doit être "source", "ville" ou "intermediaire".
-        :return: None (modifie directement la liste globale ListeNoeuds)
+        
+        Attributs :
+            type_noeud: str - Type du noeud à saisir. Doit être "source", "ville" ou "intermediaire".
+        
+        Retourne : None (modifie directement la liste globale ListeNoeuds)
         """
         demande_capacite = (type_noeud != "intermediaire")
         noms_existants = {n.nom for n in self.ListeNoeuds}
@@ -607,10 +609,30 @@ def satisfaction(
     max_travaux=5
 ) -> Tuple[List[Liaison], List[Tuple[Tuple[str, str], int, int]]]:
     """
-    Optimise progressivement les liaisons (toutes, pas seulement saturées) pour satisfaire la demande des villes
-    ou atteindre un objectif de flot maximal défini par l'utilisateur.
-    À chaque étape, applique la meilleure amélioration possible sur une liaison, jusqu'à 5 travaux.
-    Mais pour chaque liaison, on pousse l'amélioration au maximum d'un coup (tant que ça améliore le flot).
+    Optimise les capacités du réseau hydraulique pour satisfaire la demande des villes.
+
+    Cette fonction améliore progressivement les capacités de certaines liaisons du réseau
+    (qu'elles soient saturées ou non), afin de maximiser le flot entre les sources et les
+    villes, jusqu'à satisfaire entièrement la demande ou atteindre une limite fixée de travaux.
+
+    À chaque itération :
+    - on teste une augmentation de capacité pour chaque liaison,
+    - on applique la meilleure amélioration détectée (celle qui maximise le flot),
+    - on répète jusqu'à `max_travaux` améliorations ou jusqu'à atteindre l'objectif.
+
+    Args:
+        noeuds (List[Noeud]): Liste des nœuds du réseau (sources, villes, intermédiaires).
+        liaisons (List[Liaison]): Liste des liaisons (arêtes) avec leurs capacités initiales.
+        optimiser_fonction (Callable, optional): Fonction personnalisée d’optimisation (non utilisée ici).
+        objectif (int, optional): Flot cible à atteindre. Si non spécifié, la somme des demandes des villes est utilisée.
+        cap_max (int, optional): Capacité maximale autorisée pour une liaison après amélioration. Par défaut à 25.
+        max_travaux (int, optional): Nombre maximal de travaux (améliorations) autorisés. Par défaut à 5.
+
+    Returns:
+        Tuple:
+            - List[Liaison]: Liste des liaisons après optimisation.
+            - List[Tuple[Tuple[str, str], int, int]]: Liste des travaux réalisés, avec pour chacun :
+            (liaison modifiée, capacité finale, flot maximal obtenu après modification).
     """
     objectif_utilisateur = objectif or sum(n.capaciteMax for n in noeuds if n.type == "ville")
     reseau = ReseauHydraulique(noeuds, liaisons)
