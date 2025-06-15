@@ -44,8 +44,14 @@ Notes :
     - L'affichage graphique s'appuie sur matplotlib et networkx via le module affichage.py.
 """
 
+import sys
+import os
 import streamlit as st
 import copy
+
+sys.path.insert(
+    0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src'))
+)
 from data import (
     GestionReseau,
     ReseauHydraulique,
