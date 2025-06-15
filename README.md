@@ -168,6 +168,7 @@ L'interface web se lance dans votre navigateur. Vous pouvez alors :
 uv run streamlit run src/appstreamlit.py
 uv run ruff check .
 uv run --check --fix
+uv run black --check .
 uv run -m pyinstrument -m pytest .\src\data.py
 uv run pytest tests/test_data.py
 uv run coverage report
