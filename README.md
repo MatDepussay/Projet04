@@ -1,4 +1,64 @@
-# Sujet 04 : Adduction d'eau
+# 🚰 Sujet 04 - AquaFlow – Application de gestion et d'optimisation de réseau hydraulique
+
+**AquaFlow** est une application interactive développée avec Streamlit permettant de modéliser, visualiser et optimiser un réseau hydraulique (sources, villes, nœuds intermédiaires, liaisons). Elle permet de simuler des scénarios réalistes d'approvisionnement, de test de résilience du réseau, et d'analyse d'optimisation des infrastructures hydrauliques.
+
+---
+
+## 🌟 Fonctionnalités principales
+
+- **Création interactive du réseau** :
+    - ajout de sources, villes, nœuds intermédiaires et liaisons.
+    - Chargement/Sauvegarde d'un réseau au format JSON (reseau.json fourni dans le projet)
+
+- **Affichage graphique** :
+  - Visualisation simple du réseau (flots, capacités, noeuds colorés par type).
+  - Visualisation des flots circulants dans le réseaux et des liaisons saturées.
+
+- **Optimisations et Simulations** :
+  - Sélection manuelle du nombre maximal de travaux à réaliser pour renforcer le réseau.
+  - Satisfaction automatique des villes à 100% (approvisionnement complet).
+  - Simulation de l’assèchement d’une ou plusieurs sources (choix aléatoire ou manuel).
+  - Possibilité de relancer la satisfaction des villes après que les sources voulues soient asséchées sans réinitialiser le réseau afin d'observer les effets cumulés.
+
+---
+
+## Installation
+
+Clonez le dépôt et installez les dépendances :
+```bash
+git clone https://github.com/MatDepussay/Projet04
+cd Projet04
+pip install -r requirements.txt4
+```
+
+--- 
+
+## Architecture du projet 
+
+```bash
+Projet04/
+│
+├── src/                            ← Code source principal
+│   ├── __init__.py
+│   ├── appstreamlit.py             ← Interface Streamlit
+│   ├── data.py                     ← Logique métier 
+│   └── affichage.py                ← Fonctions de visualisation avec NetworkX
+│
+├── tests/                          ← Tests unitaires Pytest
+│   ├── test_affichage.py
+│   ├── test_data.py
+│   └── test_function.py
+│
+├── exemples/                       
+│   └── demo.py
+│
+├── reseau.json                     ← Réseau de test (fichier chargeable)
+├── requirements.txt                ← Dépendances Python
+├── pyproject.toml                  ← Configuration du projet
+└── README.md                       ← Documentation
+```
+
+## Consigne
 
 Trois villes J, K, L sont alimentées en eau grâce à quatre réserves A, B, C, D.
 Les réserves journalières disponibles sont
@@ -46,56 +106,42 @@ Les prévisions des demandes journalières maximales sont de
    le flot maximal après chaque travaux.
    Calculer ce flot maximal à chaque étape.
 
-4. Generalisation
-   Dans un premier temps on cherche a approvisioner les villes a 100% de leurs demandent. 
-   Selection aléatoire d'une source qui s'asseches comment la charge se repartie pour faire des travaux. 
-
 Questions à l'oral :
 - dans optimiser_liaison_pour_approvisionnement différence si on fait in range(1:21) et si on fait [5, 10, 15, 20]. On ne retrouve pas le meme résultat. 
 
 Retour du prof : 
 Saisie manuelle du réseau
 Sauvegarder le reseau
-Impact de l'assechement des villes plus généraliser
-appli avec streamlit
+Impact de l'assechement des villes plus généralisé
+interface avec streamlit
 Outil d'analyse du reseau
-Peu importe la ligne brisée mais les villes doivent être alimenter à 100%
-
-Commande : 
-uv run streamlit run src/appstreamlit.py
-uv run ruff check .
-uv run --check --fix
-uv run -m pyinstrument 
-uv run -m pyinstrument -m pytest .\src\data.py
-uv run pytest tests/test_data.py
-uv run coverage report
-uv run coverage run --source=src -m pytest
-coverage report -m | grep affichage
-uv run -m pyinstrument -m pytest Test/test_data.py
+Peu importe la ligne brisée, les villes doivent être alimentées
 
 ---
 
-# 🚰 AquaFlow – Application de gestion et d'optimisation de réseau hydraulique
+## Utilisation du fichier reseau.json
 
-**AquaFlow** est une application interactive développée avec Streamlit permettant de modéliser, visualiser et optimiser un réseau hydraulique (sources, villes, nœuds intermédiaires, liaisons). Elle est conçue pour faciliter l'expérimentation, la simulation de scénarios et la prise de décision dans des contextes d'approvisionnement en eau.
+Un fichier reseau.json est disponible à la racine du projet. Il contient un exemple complet de réseau correspondant aux données disponibles dans la partie **Consigne**.
+
+➕ Pour l’utiliser :
+    Dans l'application Streamlit, cliquez sur "Charger un réseau", puis sélectionnez reseau.json puis Demo. Cela permet de tester directement l’ensemble des fonctionnalités.
 
 ---
 
-## 🌟 Fonctionnalités principales
+## Partie généralisation
 
-- **Création interactive du réseau** : ajout de sources, villes, nœuds intermédiaires et liaisons.
-- **Affichage graphique** :
-  - Carte simple du réseau.
-  - Carte avec affichage des flots et des liaisons saturées.
-- **Optimisations** :
-  - Manuelle : sélection de liaisons à améliorer.
-  - Automatique : satisfaction de contraintes ou scénarios simulés.
-- **Persistance** :
-  - Sauvegarde/chargement des réseaux via des fichiers JSON.
-- **Simulations avancées** :
-  - Assèchement de sources.
-  - Objectifs personnalisés (ex. : 100% des villes alimentées).
+Notre application permet de visualiser votre réseau mais également d'explorer des scénarios plus complexes : 
 
+- 💧 **Assèchement de sources** : sélectionnez une ou plusieurs sources à désactiver et visualisez l'impact sur le réseau.
+
+- 🛠️ **Nombre variable de travaux** : choisissez autant de liaisons que vous voulez améliorer.
+
+- 📈 Objectif : **satisfaire à 100% les villes** :
+Vous pouvez tester si le réseau actuel permet de répondre à la demande.
+Sinon, une optimisation automatique vous proposera les meilleurs travaux à effectuer.
+
+- 🔁 **Tests en cascade** :
+Si vous ne réinitialisez pas le réseau, vous pouvez appliquer plusieurs scénarios successifs (par exemple : assèchement + ajouter des nouveaux agents + satisfaction à 100%).
 ---
 
 ## 🚀 Lancer l'application
@@ -116,41 +162,16 @@ L'interface web se lance dans votre navigateur. Vous pouvez alors :
 
 ---
 
-## Installation
-
-Clonez le dépôt et installez les dépendances :
-```bash
-git clone https://github.com/MatDepussay/Projet04
-cd Projet04
-pip install -r requirements.txt4
-```
-
---- 
-
-## Architecture du projet 
+## Commandes utiles (environnement uv)
 
 ```bash
-Projet04/
-│
-├── src/                            ← Code source principal
-│   ├── __init__.py
-│   ├── appstramlit.py              ← Fichier principal pour lancer Streamlit
-│   ├── data.py                     ← Fonctions de traitement des données
-│   └── affichage.py                ← Fonctions pour afficher les graphes
-│
-├── tests/                          ← Tests unitaires
-│   ├── __init__.py
-│   ├── test_affichage.py
-│   ├── test_data.py
-│   └── test_function.py
-│
-├── assets/                         ← Images, fichiers statiques
-│   └── reseau_satisfaction_finale.png
-│
-├── requirements.txt               ← Dépendances installables
-├── README.md                      ← Documentation
-├── .coveragerc                    ← Config couverture de test
-├── pyproject.toml                 ← Fichier de config (Black, isort, etc.)
-└── streamlit_app.sh               ← Script de lancement (optionnel)
+uv run streamlit run src/appstreamlit.py
+uv run ruff check .
+uv run --check --fix
+uv run -m pyinstrument -m pytest .\src\data.py
+uv run pytest tests/test_data.py
+uv run coverage report
+uv run coverage run --source=src -m pytest
+coverage report -m | grep affichage
+uv run -m pyinstrument -m pytest Test/test_data.py
 ```
-
